@@ -1,0 +1,17 @@
+name: notes_store
+description: Account-scoped durable local storage for OwnNotes.
+version: 0.1.0
+publish_to: none
+environment:
+  sdk: '>=3.12.2 <4.0.0'
+dependencies:
+  drift: ^2.34.3
+  notes_protocol:
+    path: ../notes_protocol
+  uuid: ^4.5.3
+dev_dependencies:
+  http: ^1.6.0
+  build_runner: ^2.10.0
+  drift_dev: ^2.34.3
+  test: ^1.26.3
+  lints: ^6.0.0

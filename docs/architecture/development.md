@@ -21,7 +21,7 @@ required identity instead of using GitHub-generated merge commits.
 ## Structure and verification
 
 `packages/notes_protocol` contains no Flutter, storage or UI dependencies.
-Future `apps/mobile` owns accounts, Drift, synchronization, features and native
+`apps/mobile` owns accounts, Drift, synchronization, features and native
 adapters. No screen calls Notes REST directly. Avoid large mixed-responsibility
 files; keep logical changes independently reviewable.
 
@@ -30,9 +30,8 @@ mobile flows with a fresh application run, not only hot reload. Track analyzed,
 designed, implemented, automated and live-device evidence separately. Do not
 mark unused helpers or unconnected screens as completed features.
 
-For Flutter tests use one runner per checkout. The OwnTalk wrapper
-`tool/flutter_test_lock.py` is a reference for a future project-specific lock;
-it is not included here. Never kill every dart/flutter process by image name.
+For Flutter tests use one runner per checkout. The Linux verification script `tool/check_mobile.sh` uses an exclusive file
+lock. Other hosts must preserve the same single-runner rule. Never kill every dart/flutter process by image name.
 Stop only positively identified workers of the affected checkout.
 
 Use `.candidate` test identities with isolated data. Test upgrade installation

@@ -4,3 +4,5 @@ library;
 export 'src/client.dart';
 export 'src/models.dart';
 export 'src/server_base.dart';
+
+export 'src/login.dart';

@@ -71,3 +71,11 @@ The 00a package also starts the protocol portion of slice 01. It does not close
 - Provision OwnNotes-specific Sentry/Rybbit projects; never reuse OwnTalk IDs.
 - Select the real supported Nextcloud/Notes matrix after slice 00b, not from XML
   ranges alone. Estimates remain provisional until protocol/editor spikes pass.
+
+## Implementation checkpoint
+
+The candidate now includes Login Flow transport, generated Android/iOS Flutter
+projects, ARB screens, secure-account adapter, Drift drafts and foreground sync
+with explicit recovery. See `candidate.md` and `../acceptance/status.md`. These
+are partial implementations of slices 01–07; their live/native/full-scope gates
+remain open. The table above records completion gates, not an absence of code.
