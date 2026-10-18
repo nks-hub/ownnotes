@@ -12,6 +12,10 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - run: python3 tool/check_git_identity.py
       - uses: dart-lang/setup-dart@v1
         with:
           sdk: '3.13.5'

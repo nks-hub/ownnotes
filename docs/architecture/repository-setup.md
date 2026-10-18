@@ -1,24 +1,28 @@
 # Repository setup
 
-Target: nks-hub/ownnotes, private until licensing and distribution decisions are
-resolved. The current GitHub connector can write existing repositories but does
-not expose repository creation. Its browser fallback requires GitHub sign-in.
+The user created the private repository https://github.com/nks-hub/ownnotes.
+It was verified empty on 2026-10-18. The local origin points to that repository.
+No source has been uploaded yet.
 
-From a trusted workstation with GitHub CLI authenticated and organization
-creation rights, in the local repository:
+The GitHub connector commit/file creation operations do not expose author or
+committer fields. They must not be used to guess the required identity. Local
+Git has no authenticated credential helper; the remote check fails with
+authentication required. Do not paste tokens into chat or commit them.
+
+From an authenticated workstation, restore the supplied Git bundle or use this
+checkout, then run:
 
 ```bash
-gh repo create nks-hub/ownnotes --private --source . --remote origin --push
-```
-
-If the repository has already been created, do not run that creation command:
-
-```bash
-git remote add origin https://github.com/nks-hub/ownnotes.git
+git config user.name LuRy
+git config user.email lury@lury.cz
+git config core.hooksPath .githooks
+python3 tool/check_git_identity.py
+git remote -v
 git push -u origin main
 ```
 
-Create an empty remote without a generated README/license to preserve the initial
-history. Never force-push over existing content. Verify repository owner,
-visibility and remote commit after upload. This document does not imply that the
-remote has already been created.
+When restoring from a bundle, set origin to
+https://github.com/nks-hub/ownnotes.git first. Do not recreate the repository or
+initialize it through GitHub with generated files. Never force-push over existing
+content. After upload verify the remote SHA and CI result. A local check does not
+constitute a successful remote push or CI run.

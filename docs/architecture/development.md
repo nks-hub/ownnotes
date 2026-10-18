@@ -9,8 +9,14 @@ fields before pushing.
 ```bash
 git config user.name LuRy
 git config user.email lury@lury.cz
+git config core.hooksPath .githooks
 git log -1 --format=fuller
 ```
+
+The pre-push hook and CI verify author and committer on every reachable commit.
+CI checks the PR head rather than GitHub's synthetic merge commit. New clones
+must install the hook with the command above. Prepare merges locally with the
+required identity instead of using GitHub-generated merge commits.
 
 ## Structure and verification
 
