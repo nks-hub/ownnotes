@@ -19,6 +19,12 @@ jobs:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - run: python3 tool/check_git_identity.py
+      # The NDK and CMake pulled in by plugins no longer fit next to the
+      # preinstalled toolchains this job does not use.
+      - name: Free disk space
+        run: |
+          sudo rm -r /usr/share/dotnet /opt/ghc /usr/local/share/boost /opt/hostedtoolcache/CodeQL /usr/share/swift || true
+          df -h /
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.47.7'
