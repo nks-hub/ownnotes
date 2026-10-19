@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/telemetry.dart';
 import 'core/telemetry_bootstrap.dart';
+import 'data/background.dart';
 import 'data/runtime.dart';
 import 'features/home.dart';
 import 'features/lock.dart';
@@ -38,6 +39,7 @@ class _StartupState extends State<Startup> {
         return;
       }
       setState(() => _runtime = runtime);
+      scheduleBackgroundSync().catchError((Object _) {});
     } catch (_) {
       await runtime.close();
       if (mounted) setState(() => _failed = true);

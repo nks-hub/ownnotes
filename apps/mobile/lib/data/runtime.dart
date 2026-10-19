@@ -36,8 +36,16 @@ final class AppRuntime {
     accounts = AccountRepository(database, vault);
     sync = SyncCoordinator(database, clientFor);
   }
+
+  /// The app and the background worker may run in one process; sharing the
+  /// connection there lets the note list see the worker's writes at once.
   factory AppRuntime.production() => AppRuntime(
-    NotesDatabase(driftDatabase(name: 'ownnotes_candidate')),
+    NotesDatabase(
+      driftDatabase(
+        name: 'ownnotes_candidate',
+        native: const DriftNativeOptions(shareAcrossIsolates: true),
+      ),
+    ),
     const SecureVault(),
   );
   final NotesDatabase database;

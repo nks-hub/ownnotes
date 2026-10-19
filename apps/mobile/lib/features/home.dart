@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:notes_store/notes_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../data/background.dart';
 import '../data/keep_import.dart';
 import '../data/runtime.dart';
 import '../l10n/app_localizations.dart';
@@ -40,7 +41,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     super.initState();
     _loadSort();
     _lifecycle = AppLifecycleListener(
-      onHide: () => _retry?.cancel(),
+      onHide: () {
+        _retry?.cancel();
+        // Always: an editor may have saved its last change only just now.
+        syncWhenOnline().catchError((Object _) {});
+      },
       onResume: () {
         final id = _shown;
         if (id != null) _sync(id, quiet: true);
