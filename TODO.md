@@ -28,8 +28,10 @@ per-note remembered view mode, or honouring the server's `noteMode=preview`.
 
 Everyday features the original app has:
 
-- [ ] Background sync (periodic worker through the one coordinator).
-- [ ] Home-screen widget (note list, one note) and a "new note" shortcut.
+- [ ] iOS: background sync (BGTaskScheduler) and a WidgetKit widget.
+      Android has both. The widget needs the App Group registered in the
+      Apple developer portal (see below); background tasks never run in the
+      simulator, so both need a signed build on an iPhone.
 
 ### Earlier
 
@@ -45,6 +47,26 @@ Everyday features the original app has:
       gates in [status](docs/acceptance/status.md).
 
 ## Done
+
+- 2026-10-19 Android background sync and home-screen widget, verified on
+  Galaxy S9 (`bc8b14c`, `8e3d490` and the WorkManager commit):
+  - a per-account lease in the database lets the app and the WorkManager
+    worker take turns; only the lease holder recovers interrupted writes;
+    schema 1 databases gain the lease table on upgrade (tested);
+  - periodic sync every 15 minutes with network, plus a one-off run queued
+    when the app goes to the background. On S9 an edit made offline was
+    uploaded by the worker while the app process was killed. With battery
+    saver on, Android blocks background network for the app, so the run
+    waits until saver is off or the app is opened;
+  - widget with the five latest notes and "+"; a tap opens the note, "+"
+    opens a new note also from a cold start; titles are hidden while the
+    app lock is on; launcher shortcut "New note"; the background worker
+    redraws the widget after its sync, since the app draws only while open;
+  - a new note left empty is discarded instead of reaching the server as
+    "New note".
+  - iOS simulator build with all new plugins (local_auth, shared_preferences,
+    workmanager, home_widget) builds on the build Mac and starts; Face ID usage text
+    added to Info.plist.
 
 - 2026-10-19 Second batch from the analysis, verified on Galaxy S9 (candidate
   build, Docker server):

@@ -1,5 +1,7 @@
 import 'dart:io';
+import 'package:home_widget/home_widget.dart';
 import 'package:workmanager/workmanager.dart';
+import 'notes_widget.dart';
 import 'runtime.dart';
 
 const _task = 'ownnotes-sync';
@@ -19,6 +21,16 @@ void backgroundDispatcher() {
         } catch (_) {
           // Offline or refused; drafts stay and the next run tries again.
         }
+      }
+      // The app redraws the widget only while it is open.
+      final shown = await HomeWidget.getWidgetData<String>('account');
+      if (shown != null && await db.account(shown) != null) {
+        await publishNotesWidget(
+          shown,
+          await db.watchNotes(shown).first,
+          locked: await HomeWidget.getWidgetData<bool>('locked') ?? false,
+          untitled: '…',
+        );
       }
       return true;
     } finally {

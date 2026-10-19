@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 import 'package:archive/archive_io.dart';
 import 'package:file_picker/file_picker.dart';
@@ -11,6 +10,7 @@ import 'package:notes_store/notes_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../data/background.dart';
 import '../data/keep_import.dart';
+import '../data/notes_widget.dart';
 import '../data/runtime.dart';
 import '../data/settings.dart';
 import '../l10n/app_localizations.dart';
@@ -34,7 +34,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   String? _again;
   bool _byTitle = false;
   StreamSubscription<Uri?>? _widgetClicks;
-  String? _widgetData;
   Timer? _retry;
   final _autoSynced = <String>{};
   late final AppLifecycleListener _lifecycle;
@@ -80,27 +79,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     if (link.host != 'note' || id == null) return;
     final note = await ref.read(runtimeProvider).database.note(accountId, id);
     if (note != null && mounted) await _edit(note);
-  }
-
-  /// The widget shows the five latest notes of the shown account; with the
-  /// app lock on it shows no titles.
-  void _publishWidget(List<LocalNote> notes, AppLocalizations l) {
-    if (!Platform.isAndroid) return;
-    final locked = ref.read(settingsProvider).lock;
-    final data = jsonEncode([
-      if (!locked)
-        for (final n in notes.take(5)) {'id': n.id, 'title': _shownTitle(n, l)},
-    ]);
-    if ('$locked$data' == _widgetData) return;
-    _widgetData = '$locked$data';
-    HomeWidget.saveWidgetData<bool>('locked', locked)
-        .then((_) => HomeWidget.saveWidgetData<String>('notes', data))
-        .then(
-          (_) => HomeWidget.updateWidget(
-            qualifiedAndroidName: 'com.nkshub.nextcloudnotes.NotesWidget',
-          ),
-        )
-        .catchError((Object _) => null);
   }
 
   @override
@@ -482,7 +460,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                             n.syncState == 'sending',
                                       )
                                       .length;
-                                  _publishWidget(notes, l);
+                                  publishNotesWidget(
+                                    account.id,
+                                    notes,
+                                    locked: ref.read(settingsProvider).lock,
+                                    untitled: l.untitled,
+                                  );
                                   final problem = ref
                                       .read(runtimeProvider)
                                       .sync
