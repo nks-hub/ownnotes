@@ -51,8 +51,10 @@ fetched duplicate is removed; a dirty duplicate becomes an unbound recovery copy
 Foreign-key relations are currently limited to mutation operations; additional
 entities must extend reconciliation transactionally when introduced.
 
-Updates of title/category are held locally until attachment move verification
-exists. Content/favorite updates use a partial PUT and quoted If-Match. All
+Title/category changes are sent like other fields; the server's resulting file
+name (it may add "(2)") is adopted. Only notes that reference `.attachments.`
+hold such a change for a decision until attachment move verification exists.
+Updates use a partial PUT and quoted If-Match. All
 unconfirmed outcomes remain explicit decisions. Server normalization can also
 produce a nonmatching receipt; this is presented for review, not silently ignored.
 

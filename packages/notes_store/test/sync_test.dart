@@ -142,6 +142,61 @@ void main() {
     expect(puts.single.containsKey('title'), isFalse);
     expect((await db.note('a', untitled))!.syncState, 'clean');
   });
+  group('rename', () {
+    Future<LocalNote> edited(String content) async {
+      await db.markDeleted('a', id);
+      await db.applyPull('a', 0, [
+        parseNote({...remote(50), 'content': content}),
+      ]);
+      final note = await (db.select(
+        db.localNotes,
+      )..where((n) => n.remoteId.equals(50))).getSingle();
+      await db.saveDraft(
+        accountId: 'a',
+        id: note.id,
+        revision: note.revision,
+        title: 'Renamed',
+        content: content,
+        category: 'Work',
+        favorite: false,
+      );
+      return note;
+    }
+
+    test('title and category changes are sent without attachments', () async {
+      final note = await edited('plain text');
+      final puts = <Map<String, Object?>>[];
+      final renamed = {
+        ...remote(50),
+        'etag': 'etag2',
+        'title': 'Renamed (2)',
+        'category': 'Work',
+        'content': 'plain text',
+      };
+      await coordinator((r) async {
+        if (r.method == 'PUT') {
+          puts.add(jsonDecode(r.body) as Map<String, Object?>);
+          return response(renamed);
+        }
+        return response(puts.isEmpty ? [] : [renamed]);
+      }).sync('a');
+      expect(puts.single, {'title': 'Renamed', 'category': 'Work'});
+      final stored = (await db.note('a', note.id))!;
+      expect(stored.syncState, 'clean');
+      expect(stored.title, 'Renamed (2)');
+    });
+
+    test('a note with attachments still asks before moving', () async {
+      final note = await edited('![x](.attachments.50/x.png)');
+      var puts = 0;
+      await coordinator((r) async {
+        if (r.method == 'PUT') puts++;
+        return response([]);
+      }).sync('a');
+      expect(puts, 0);
+      expect((await db.note('a', note.id))!.syncState, 'needsDecision');
+    });
+  });
   test('offline edits stay drafts instead of becoming decisions', () async {
     var online = false;
     var posts = 0;

@@ -206,9 +206,12 @@ final class SyncCoordinator {
           await _decision(operation, 'missing_etag');
           return;
         }
-        // Moving existing attachment folders is not safely confirmed by a note
-        // response alone. Keep such edits local until move recovery is available.
-        if (fields.containsKey('category') || fields.containsKey('title')) {
+        // A rename or category change moves the note file. Moving its
+        // attachment folder is not confirmed by a note response alone, so
+        // only notes that reference attachments wait for a decision.
+        final moves =
+            fields.containsKey('category') || fields.containsKey('title');
+        if (moves && (intent['content']! as String).contains('.attachments.')) {
           await _decision(operation, 'move_integrity_required');
           return;
         }
@@ -217,6 +220,8 @@ final class SyncCoordinator {
           etag: etag,
           patch: NotePatch(
             content: fields['content'] as String?,
+            title: fields['title'] as String?,
+            category: fields['category'] as String?,
             favorite: fields['favorite'] as bool?,
           ),
         );
@@ -293,15 +298,19 @@ final class SyncCoordinator {
     );
     // The title is the server's file name: on CREATE it may fill an empty
     // title or add "(2)" to a taken one. That is an accepted outcome.
-    final create = operation.kind == 'create';
+    // Also on a rename: the server may add "(2)" when the name is taken.
+    final named =
+        operation.kind == 'create' ||
+        ((intent['fields'] as Map<String, Object?>?)?.containsKey('title') ??
+            false);
     final matches =
         result is RemoteNote &&
-        (create || result.title == intent['title']) &&
+        (named || result.title == intent['title']) &&
         result.content == intent['content'] &&
         result.category == intent['category'] &&
         result.favorite == intent['favorite'];
     final adoptTitle =
-        create && result is RemoteNote && current.title == intent['title'];
+        named && result is RemoteNote && current.title == intent['title'];
     await (database.update(
       database.localNotes,
     )..where((n) => n.id.equals(current.id))).write(
