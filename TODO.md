@@ -27,6 +27,12 @@ switches to preview without the user asking.
 
 ## Done
 
+- 2026-10-19 Offline edits no longer turn into conflicts. Before, a write
+  attempted without network was treated as "maybe applied" and needed a
+  decision; now a sync first checks that the server answers and otherwise
+  leaves the edit as a plain draft (`de675e4`). Verified on Galaxy S9: edit
+  offline, force-stop, network back, relaunch, uploaded without a decision.
+  Note: the earlier S9 "conflict" check went through this path as well.
 - 2026-10-19 Login screen: "Cancel" while waiting for the browser, so a flow
   broken on the server side ("State token missing") can be restarted at once.
   Widget tests cover the poll retry after a network failure and the cancel.
