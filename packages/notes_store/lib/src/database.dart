@@ -118,7 +118,13 @@ class NotesDatabase extends _$NotesDatabase {
   }) => transaction(() async {
     final current = await note(accountId, id);
     if (current == null) throw StateError('note_missing');
-    if (current.readonly) throw StateError('note_readonly');
+    // The server lets a read-only note change its favorite star only.
+    if (current.readonly &&
+        (title != current.title ||
+            content != current.content ||
+            category != current.category)) {
+      throw StateError('note_readonly');
+    }
     if (current.syncState == 'recoveryArchived') {
       throw StateError('recovery_archived');
     }

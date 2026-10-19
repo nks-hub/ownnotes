@@ -184,9 +184,7 @@ final class SyncCoordinator {
   Future<void> _push(NotesClient client, LocalNote selected) async {
     final operation = await database.transaction(() async {
       final current = await database.note(selected.accountId, selected.id);
-      if (current == null || current.syncState != 'draft' || current.readonly) {
-        return null;
-      }
+      if (current == null || current.syncState != 'draft') return null;
       final open =
           await (database.select(database.operations)..where(
                 (o) =>
@@ -215,6 +213,10 @@ final class SyncCoordinator {
             current.favorite != current.baseFavorite)
           'favorite': current.favorite,
       };
+      // A read-only note may only send its favorite star.
+      if (current.readonly && fields.keys.any((k) => k != 'favorite')) {
+        return null;
+      }
       if (fields.isEmpty) {
         await (database.update(database.localNotes)
               ..where((n) => n.id.equals(current.id)))

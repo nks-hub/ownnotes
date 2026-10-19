@@ -314,6 +314,40 @@ void main() {
     expect(queries.map((q) => q.containsKey('pruneBefore')), [true, false]);
     expect((await db.select(db.localNotes).get()).length, 3);
   });
+  test('a read-only note can change only its favorite star', () async {
+    await db.markDeleted('a', id);
+    await db.applyPull('a', 0, [
+      parseNote({...remote(80), 'readonly': true}),
+    ]);
+    final note = await (db.select(
+      db.localNotes,
+    )..where((n) => n.remoteId.equals(80))).getSingle();
+    Future<int> save({String content = 'local', bool favorite = true}) =>
+        db.saveDraft(
+          accountId: 'a',
+          id: note.id,
+          revision: note.revision,
+          title: 'Title',
+          content: content,
+          category: '',
+          favorite: favorite,
+        );
+    await expectLater(save(content: 'edited'), throwsStateError);
+    await save();
+    final puts = <Object?>[];
+    final starred = {...remote(80), 'readonly': true, 'favorite': true};
+    await coordinator((r) async {
+      if (r.method == 'PUT') {
+        puts.add(jsonDecode(r.body));
+        return response(starred);
+      }
+      return response([starred]);
+    }).sync('a');
+    expect(puts, [
+      {'favorite': true},
+    ]);
+    expect((await db.note('a', note.id))!.syncState, 'clean');
+  });
   group('rejected update', () {
     Future<LocalNote> edited() async {
       await db.markDeleted('a', id);
