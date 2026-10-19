@@ -28,27 +28,10 @@ per-note remembered view mode, or honouring the server's `noteMode=preview`.
 
 Server behaviour the client must match:
 
-- [ ] A new note without a title is named from its first line, cleaned like
-      the server does (`* | / \ : " < > ?` removed, no leading dots, first
-      line, 100 characters). Today the server names it "New note".
-- [ ] A category the server cleans (`a//b/`, `:` in the name, leading dot) is
-      accepted like a server-chosen title, not shown as a conflict.
-- [ ] Renaming a note with attachments without changing its category needs
-      no decision: the file stays in the same folder, so `.attachments.<id>`
-      stays next to it.
-- [ ] An upload rejected by the server (403 read-only, 423 locked, 507 storage
-      full, 500) re-reads the note. If nothing was applied, the note stays
-      unsent with a reason and is retried, instead of becoming a decision.
-- [ ] Cheaper pulls: `pruneBefore` from the first chunk's `Last-Modified`,
-      unchanged notes arrive as id only.
 - [ ] Favorite can be toggled on a read-only note (the server allows it).
 
 Everyday features the original app has:
 
-- [ ] Tick checkboxes (`- [ ]`) in preview; the tick edits the raw Markdown.
-- [ ] Banner "N notes not sent" with the reason.
-- [ ] Sort: last modified / title A–Z.
-- [ ] Sync again when the network comes back while the app is open.
 - [ ] Share to an existing note (append) as well as a new one.
 - [ ] Editor: monospace font and text size.
 - [ ] Search inside the open note.
@@ -72,6 +55,23 @@ Everyday features the original app has:
       gates in [status](docs/acceptance/status.md).
 
 ## Done
+
+- 2026-10-19 From the server and original-app analysis, verified on Galaxy S9
+  (candidate build) against the Docker server:
+  - a new note without a title takes its first line as the server would
+    name it (`ecb141e`; on S9 "Nakup na S9" reached the server);
+  - server-cleaned categories (`Work//Sub/` -> `Work/Sub`, checked live) and
+    renames of notes with attachments no longer need a decision (`ecb141e`);
+  - an update the server rejects (423 locked, 507, 500) is re-read; if
+    nothing was applied, the note stays queued with a reason (`ecb141e`);
+  - incremental pulls with `pruneBefore`, unknown id-only notes fall back to
+    a full pull (`b47607f`, server behaviour checked live in `36627c1`);
+  - checkboxes tick in preview and edit the raw Markdown (`63122a6`; on S9
+    `- [x] chleba` reached the server);
+  - banner "Not sent yet: N" with the reason, and an automatic retry every
+    30 s while the app is open (`63122a6`; on S9 an offline edit uploaded
+    24 s after the network came back, no tap);
+  - sort by title or last change, remembered (`63122a6`).
 
 - 2026-10-19 Release identity: **OwnNotes**, `com.nkshub.nextcloudnotes` on Android and iOS, candidate builds via `--android-project-arg=candidate=true`; upload keystore and release signing without debug fallback; app icon (`tool/make_icons.py`); Play upload script (`tool/play_upload.py`, checked against the API: package not found until the app exists). Signed release APK verified on Galaxy S9: login, pull and a new note reached the server.
 - 2026-10-19 Preview shows images attached to the note (`.attachments.<id>/...`) through the Notes attachment API with the account credentials (`74aee59`); remote http images stay placeholders. Verified on Galaxy S9 with a real attachment on the Docker server.
