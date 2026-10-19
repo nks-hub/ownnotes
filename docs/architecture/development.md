@@ -34,6 +34,12 @@ For Flutter tests use one runner per checkout. The Linux verification script `to
 lock. Other hosts must preserve the same single-runner rule. Never kill every dart/flutter process by image name.
 Stop only positively identified workers of the affected checkout.
 
+`packages/notes_protocol/test/live_server_test.dart` runs the client against a
+real server when `OWNNOTES_LIVE_URL`, `OWNNOTES_LIVE_USER` and
+`OWNNOTES_LIVE_PASSWORD` are set; otherwise it is skipped. Use a dedicated
+account without 2FA. The test creates and deletes its own notes. Never commit
+the credentials.
+
 Use `.candidate` test identities with isolated data. Test upgrade installation
 without clearing production accounts. Include actual HTTP-to-DB-to-UI paths,
 offline edits, process death, account switches and schema upgrades.
@@ -63,7 +69,9 @@ Do not reuse reference-app telemetry identifiers.
 
 ## Builds and release
 
-The reference Windows SDK path is C:\work\sources\flutter-sdk\flutter.
+Use the Flutter version from `.flutter-version`; the mobile lockfile does not
+resolve with older SDKs. On the reference Windows workstation it lives in
+C:\work\sources\flutter-sdk-3.47.7\flutter, separate from the shared SDK.
 Apple builds run on the build Mac under a regular user, not root. Native tools, SDK versions,
 minimum OS versions and signing profiles must be inspected at build time.
 Historical simulator failures are not permanent compatibility facts.

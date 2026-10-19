@@ -5,10 +5,15 @@ Date: 2026-10-18. This candidate is not the completed product plan.
 ## Local evidence
 
 - Flutter 3.47.7, framework `abaf9c523780a608bd46686fd5e53740a07077f8`.
-- Dart 3.13.5, Linux x64. Dependency resolutions are committed separately for
+- Dart 3.13.5, Linux x64; re-verified on Windows x64 with the same SDK. Dependency resolutions are committed separately for
   protocol, storage and mobile packages.
 - Protocol: 67 passing tests, including 14 Login Flow tests and four real
-  loopback HTTP transport tests. No live Nextcloud tests.
+  loopback HTTP transport tests.
+- Live server (2026-10-19, Nextcloud 34.0.4, Notes 6.1.0, dedicated test
+  account): create, read, If-None-Match 304, partial PUT with If-Match, stale
+  If-Match 412 with remote detail, cursor paging with `chunkSize=1`, delete,
+  404 after delete and 401 for a wrong password all pass. Unicode Markdown
+  round-trips unchanged. Login Flow v2 has not been run live yet.
 - Storage/synchronization: 13 passing tests using real SQLite. Covers close/reopen
   persistence, account isolation, secure-store failure, orphan recovery, stale
   local edits, late reads, lost CREATE response, interrupted operation, identity
