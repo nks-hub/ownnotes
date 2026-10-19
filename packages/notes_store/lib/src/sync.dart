@@ -4,11 +4,19 @@ import 'package:notes_protocol/notes_protocol.dart';
 import 'package:uuid/uuid.dart';
 import 'database.dart';
 
-/// One foreground coordinator per database. Background workers are not enabled.
+/// One coordinator per process (the app, a background worker). They share
+/// the database and take turns through a per-account lease, renewed before
+/// every request; the client timeout is far shorter than [lease].
 /// A persisted sending operation is never replayed automatically after a crash.
 final class SyncCoordinator {
-  SyncCoordinator(this.database, this.clientFor);
+  SyncCoordinator(
+    this.database,
+    this.clientFor, {
+    this.lease = const Duration(minutes: 2),
+  });
   final NotesDatabase database;
+  final Duration lease;
+  final String _owner = const Uuid().v4();
   final Future<NotesClient> Function(Account account) clientFor;
   final Map<String, Future<void>> _running = {};
   final Map<String, String> _problems = {};
@@ -25,11 +33,27 @@ final class SyncCoordinator {
     return result.whenComplete(() => _running.remove(accountId));
   }
 
-  /// Call once during startup, before accepting sync requests.
-  Future<void> recoverInterruptedWrites() => database.transaction(() async {
-    final interrupted = await (database.select(
-      database.operations,
-    )..where((o) => o.state.equals('sending'))).get();
+  /// Call once during startup. An account whose lease another process holds
+  /// is skipped: its worker is still sending, nothing was interrupted.
+  Future<void> recoverInterruptedWrites() async {
+    for (final account in await database.select(database.accounts).get()) {
+      if (!await database.holdLease(account.id, _owner, lease)) continue;
+      try {
+        await _recover(account.id);
+      } finally {
+        await database.releaseLease(account.id, _owner);
+      }
+    }
+  }
+
+  /// With the lease held, a sending operation belongs to a worker that died
+  /// or lost its lease; a late receipt from it no longer matches 'sending'.
+  Future<void> _recover(String accountId) => database.transaction(() async {
+    final interrupted =
+        await (database.select(database.operations)..where(
+              (o) => o.accountId.equals(accountId) & o.state.equals('sending'),
+            ))
+            .get();
     for (final operation in interrupted) {
       await _decision(operation, 'interrupted_write');
     }
@@ -37,11 +61,23 @@ final class SyncCoordinator {
 
   Future<void> _sync(String accountId) async {
     _problems.remove(accountId);
+    // Another process is syncing this account; its results land in the
+    // shared database.
+    if (!await database.holdLease(accountId, _owner, lease)) return;
     try {
+      await _recover(accountId);
       await _pass(accountId);
     } catch (e) {
       _problems[accountId] = _reason(e);
       rethrow;
+    } finally {
+      await database.releaseLease(accountId, _owner);
+    }
+  }
+
+  Future<void> _keepLease(String accountId) async {
+    if (!await database.holdLease(accountId, _owner, lease)) {
+      throw StateError('sync_lease_lost');
     }
   }
 
@@ -78,10 +114,12 @@ final class SyncCoordinator {
     }
     for (final draft in drafts) {
       if (await database.account(accountId) == null) return;
+      await _keepLease(accountId);
       await _push(client, draft);
     }
     for (final note in deletions) {
       if (await database.account(accountId) == null) return;
+      await _keepLease(accountId);
       await _delete(client, note);
     }
     if (await database.account(accountId) == null) return;
@@ -110,6 +148,7 @@ final class SyncCoordinator {
     final listed = <int>{};
     final sent = <int>{};
     do {
+      await _keepLease(accountId);
       final page = await client.list(cursor: cursor, pruneBefore: pruneBefore);
       // The first chunk's Last-Modified is when the whole listing started.
       if (cursor == null) watermark = page.lastModified;

@@ -57,18 +57,62 @@ class Operations extends Table {
   Set<Column<Object>> get primaryKey => {id};
 }
 
-@DriftDatabase(tables: [Accounts, LocalNotes, Operations])
+/// Which coordinator (app or background worker) may send for an account.
+class SyncLeases extends Table {
+  TextColumn get accountId =>
+      text().references(Accounts, #id, onDelete: KeyAction.cascade)();
+  TextColumn get owner => text()();
+  IntColumn get expiresAt => integer()();
+  @override
+  Set<Column<Object>> get primaryKey => {accountId};
+}
+
+@DriftDatabase(tables: [Accounts, LocalNotes, Operations, SyncLeases])
 class NotesDatabase extends _$NotesDatabase {
   NotesDatabase(super.executor);
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) => m.createAll(),
+    onUpgrade: (m, from, to) async {
+      if (from < 2) await m.createTable(syncLeases);
+    },
     beforeOpen: (_) async {
       await customStatement('PRAGMA foreign_keys = ON');
+      // The app and a background worker may open the file at the same time.
+      await customStatement('PRAGMA busy_timeout = 5000');
     },
   );
+
+  /// Takes or extends the account's lease for [owner]. One statement, so two
+  /// processes cannot both win. False while another owner's lease is valid.
+  Future<bool> holdLease(String accountId, String owner, Duration ttl) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    try {
+      final changed = await customUpdate(
+        'INSERT INTO sync_leases (account_id, owner, expires_at) '
+        'VALUES (?1, ?2, ?3) ON CONFLICT (account_id) DO UPDATE '
+        'SET owner = excluded.owner, expires_at = excluded.expires_at '
+        'WHERE sync_leases.owner = excluded.owner '
+        'OR sync_leases.expires_at <= ?4',
+        variables: [
+          Variable.withString(accountId),
+          Variable.withString(owner),
+          Variable.withInt(now + ttl.inMilliseconds),
+          Variable.withInt(now),
+        ],
+        updates: {syncLeases},
+      );
+      return changed > 0;
+    } on Object {
+      return false; // The account was removed meanwhile (foreign key).
+    }
+  }
+
+  Future<void> releaseLease(String accountId, String owner) => (delete(
+    syncLeases,
+  )..where((l) => l.accountId.equals(accountId) & l.owner.equals(owner))).go();
   Stream<List<Account>> watchAccounts() => select(accounts).watch();
   Future<Account?> account(String id) =>
       (select(accounts)..where((a) => a.id.equals(id))).getSingleOrNull();

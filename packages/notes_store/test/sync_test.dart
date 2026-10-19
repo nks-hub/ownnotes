@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:drift/drift.dart' hide isNull, isNotNull;
 import 'package:drift/native.dart';
 import 'package:http/http.dart' as http;
@@ -347,6 +348,56 @@ void main() {
       {'favorite': true},
     ]);
     expect((await db.note('a', note.id))!.syncState, 'clean');
+  });
+  group('lease', () {
+    test('a sync waits while another process holds the lease', () async {
+      expect(
+        await db.holdLease('a', 'worker', const Duration(minutes: 2)),
+        isTrue,
+      );
+      var requests = 0;
+      await coordinator((r) async {
+        requests++;
+        return response([]);
+      }).sync('a');
+      expect(requests, 0);
+      expect((await db.note('a', id))!.syncState, 'draft');
+    });
+
+    test('an expired lease is taken over and its write recovered', () async {
+      await db.holdLease('a', 'dead worker', Duration.zero);
+      await db
+          .into(db.operations)
+          .insert(
+            OperationsCompanion.insert(
+              id: 'op',
+              accountId: 'a',
+              noteId: id,
+              revision: 2,
+              kind: 'create',
+              payload: '{}',
+              state: const Value('sending'),
+            ),
+          );
+      final sync = coordinator((r) async => response([]));
+      await sync.recoverInterruptedWrites();
+      expect((await db.note('a', id))!.syncState, 'needsDecision');
+      await sync.sync('a');
+      expect(await db.select(db.syncLeases).get(), isEmpty);
+    });
+
+    test('a database from schema 1 gains the lease table', () async {
+      final dir = await Directory.systemTemp.createTemp('ownnotes-schema-');
+      addTearDown(() => dir.delete(recursive: true));
+      final file = File('${dir.path}/notes.sqlite');
+      final first = NotesDatabase(NativeDatabase(file));
+      await first.customStatement('DROP TABLE sync_leases');
+      await first.customStatement('PRAGMA user_version = 1');
+      await first.close();
+      final upgraded = NotesDatabase(NativeDatabase(file));
+      addTearDown(upgraded.close);
+      expect(await upgraded.select(upgraded.syncLeases).get(), isEmpty);
+    });
   });
   group('rejected update', () {
     Future<LocalNote> edited() async {
