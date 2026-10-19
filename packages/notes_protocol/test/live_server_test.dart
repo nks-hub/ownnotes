@@ -112,6 +112,39 @@ void main() {
     skip: skip,
   );
 
+  test('pruneBefore lists unchanged notes as id only', () async {
+    final first = await api.list();
+    final since = first.lastModified!.millisecondsSinceEpoch ~/ 1000;
+    // lastUpdate has second resolution; a change must land after `since`.
+    await Future<void>.delayed(const Duration(seconds: 2));
+    final note =
+        await api.create(
+              content: 'pruned',
+              title: 'ownnotes-prune-${DateTime.now().microsecondsSinceEpoch}',
+            )
+            as RemoteNote;
+    created.add(note.id);
+    final later = await api.list(pruneBefore: since);
+    expect(later.notes.whereType<RemoteNote>().map((n) => n.id), [note.id]);
+    expect(
+      later.notes.whereType<NoteIdOnly>().map((n) => n.id).toSet(),
+      first.notes.map((n) => n.id).toSet(),
+    );
+  }, skip: skip);
+
+  test('the server cleans titles and categories', () async {
+    final note =
+        await api.create(
+              content: 'x',
+              title: 'a: b? ${DateTime.now().microsecondsSinceEpoch}',
+              category: 'Work//Sub/',
+            )
+            as RemoteNote;
+    created.add(note.id);
+    expect(note.title, startsWith('a b '));
+    expect(note.category, 'Work/Sub');
+  }, skip: skip);
+
   test('wrong password is rejected without a body leak', () async {
     final bad = NotesClient(
       base: ServerBase.parse(url!),
