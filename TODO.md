@@ -26,18 +26,8 @@ view mode per note, and can save an empty editor before the note has loaded.
 OwnNotes keeps avoiding all three. Never add: a rich-text WebView editor, a
 per-note remembered view mode, or honouring the server's `noteMode=preview`.
 
-Server behaviour the client must match:
-
-- [ ] Favorite can be toggled on a read-only note (the server allows it).
-
 Everyday features the original app has:
 
-- [ ] Share to an existing note (append) as well as a new one.
-- [ ] Editor: monospace font and text size.
-- [ ] Search inside the open note.
-- [ ] App lock (biometrics/device PIN) and blocking screenshots.
-- [ ] Remove an account from the device.
-- [ ] Export all notes of an account as a Markdown zip.
 - [ ] Background sync (periodic worker through the one coordinator).
 - [ ] Home-screen widget (note list, one note) and a "new note" shortcut.
 
@@ -55,6 +45,19 @@ Everyday features the original app has:
       gates in [status](docs/acceptance/status.md).
 
 ## Done
+
+- 2026-10-19 Second batch from the analysis, verified on Galaxy S9 (candidate
+  build, Docker server):
+  - Settings screen (`5885e3a`): monospace font and text size for the editor;
+    app lock with fingerprint/face/phone PIN (cold start and return from the
+    background ask, cancel leaves a lock screen, a phone without screen lock
+    cannot turn it on, and removing the phone PIN later does not lock the
+    owner out); block screenshots (Android, persists across restarts);
+    export of all notes as a Markdown zip with category folders; removing
+    the account warns how many notes are not on the server yet.
+  - Find in the open note, share into an existing note (appended at the
+    end) or a new one, favorite star on read-only notes (`207aed4`,
+    `1e5adb7`).
 
 - 2026-10-19 From the server and original-app analysis, verified on Galaxy S9
   (candidate build) against the Docker server:
