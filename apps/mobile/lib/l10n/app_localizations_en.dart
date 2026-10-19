@@ -234,7 +234,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String removeAccountUnsent(int count) {
-    return 'Remove the account? $count notes are not on the server yet and will be lost. You can export them first.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count notes are not on the server yet and will be lost.',
+      one: '1 note is not on the server yet and will be lost.',
+    );
+    return 'Remove the account? $_temp0 You can export them first.';
   }
 
   @override
@@ -242,4 +248,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get unlock => 'Unlock';
+
+  @override
+  String get findInNote => 'Find in note';
+
+  @override
+  String get findNext => 'Next match';
+
+  @override
+  String get notFound => 'Not found';
+
+  @override
+  String get shareTo => 'Where should the shared text go?';
 }

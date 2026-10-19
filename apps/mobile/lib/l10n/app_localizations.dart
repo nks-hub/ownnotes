@@ -509,7 +509,7 @@ abstract class AppLocalizations {
   /// No description provided for @removeAccountUnsent.
   ///
   /// In en, this message translates to:
-  /// **'Remove the account? {count} notes are not on the server yet and will be lost. You can export them first.'**
+  /// **'Remove the account? {count, plural, one{1 note is not on the server yet and will be lost.} other{{count} notes are not on the server yet and will be lost.}} You can export them first.'**
   String removeAccountUnsent(int count);
 
   /// No description provided for @unlockReason.
@@ -523,6 +523,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Unlock'**
   String get unlock;
+
+  /// No description provided for @findInNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Find in note'**
+  String get findInNote;
+
+  /// No description provided for @findNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next match'**
+  String get findNext;
+
+  /// No description provided for @notFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Not found'**
+  String get notFound;
+
+  /// No description provided for @shareTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Where should the shared text go?'**
+  String get shareTo;
 }
 
 class _AppLocalizationsDelegate

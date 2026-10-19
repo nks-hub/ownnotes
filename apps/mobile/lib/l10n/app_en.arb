@@ -83,12 +83,16 @@
   "exportFailed": "Export failed.",
   "removeAccount": "Remove account from this phone",
   "removeAccountConfirm": "Remove the account from this phone? Notes on the server stay.",
-  "removeAccountUnsent": "Remove the account? {count} notes are not on the server yet and will be lost. You can export them first.",
+  "removeAccountUnsent": "Remove the account? {count, plural, one{1 note is not on the server yet and will be lost.} other{{count} notes are not on the server yet and will be lost.}} You can export them first.",
   "@removeAccountUnsent": {
     "placeholders": {
       "count": {"type": "int"}
     }
   },
   "unlockReason": "Unlock OwnNotes",
-  "unlock": "Unlock"
+  "unlock": "Unlock",
+  "findInNote": "Find in note",
+  "findNext": "Next match",
+  "notFound": "Not found",
+  "shareTo": "Where should the shared text go?"
 }

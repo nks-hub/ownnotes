@@ -234,7 +234,14 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String removeAccountUnsent(int count) {
-    return 'Odebrat účet? $count poznámek ještě není na serveru a ztratí se. Nejdřív je můžeš exportovat.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count poznámek ještě není na serveru a ztratí se.',
+      few: '$count poznámky ještě nejsou na serveru a ztratí se.',
+      one: '1 poznámka ještě není na serveru a ztratí se.',
+    );
+    return 'Odebrat účet? $_temp0 Nejdřív je můžeš exportovat.';
   }
 
   @override
@@ -242,4 +249,16 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get unlock => 'Odemknout';
+
+  @override
+  String get findInNote => 'Hledat v poznámce';
+
+  @override
+  String get findNext => 'Další výskyt';
+
+  @override
+  String get notFound => 'Nenalezeno';
+
+  @override
+  String get shareTo => 'Kam uložit sdílený text?';
 }

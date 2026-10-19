@@ -48,6 +48,30 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
   bool _dirty = false;
   bool _failed = false;
   bool _preview = false;
+  bool _finding = false;
+  final _find = TextEditingController();
+  final _textFocus = FocusNode();
+
+  /// Selects the next match after the cursor, wrapping to the start.
+  void _findNext() {
+    final query = _find.text.toLowerCase();
+    if (query.isEmpty) return;
+    final text = _text.text.toLowerCase();
+    var at = text.indexOf(query, _text.selection.end.clamp(0, text.length));
+    if (at < 0) at = text.indexOf(query);
+    if (at < 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context)!.notFound)),
+      );
+      return;
+    }
+    _text.selection = TextSelection(
+      baseOffset: at,
+      extentOffset: at + query.length,
+    );
+    _textFocus.requestFocus();
+  }
+
   bool _allowPop = false;
   final _images = <String, Future<List<int>>>{};
   int _boxes = 0;
@@ -136,7 +160,9 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
 
   Future<void> _save() {
     _debounce?.cancel();
-    if (!_dirty || widget.note.readonly) return _tail;
+    // A read-only note can still save its favorite star; its text fields
+    // cannot change.
+    if (!_dirty) return _tail;
     final title = _title.text, content = _text.text, category = _category.text;
     final favorite = _favorite;
     final db = ref.read(runtimeProvider).database;
@@ -222,6 +248,8 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
     _title.dispose();
     _text.dispose();
     _category.dispose();
+    _find.dispose();
+    _textFocus.dispose();
     super.dispose();
   }
 
@@ -235,11 +263,37 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
       },
       child: Scaffold(
         appBar: AppBar(
-          title: Text(l.appTitle),
+          title: _finding
+              ? TextField(
+                  controller: _find,
+                  autofocus: true,
+                  textInputAction: TextInputAction.search,
+                  decoration: InputDecoration(
+                    hintText: l.findInNote,
+                    border: InputBorder.none,
+                  ),
+                  onSubmitted: (_) => _findNext(),
+                )
+              : Text(l.appTitle),
           actions: [
+            if (_finding)
+              IconButton(
+                tooltip: l.findNext,
+                onPressed: _findNext,
+                icon: const Icon(Icons.arrow_downward),
+              ),
+            if (!_preview)
+              IconButton(
+                tooltip: _finding ? l.cancel : l.findInNote,
+                onPressed: () => setState(() => _finding = !_finding),
+                icon: Icon(_finding ? Icons.close : Icons.search),
+              ),
             IconButton(
               tooltip: _preview ? l.edit : l.preview,
-              onPressed: () => setState(() => _preview = !_preview),
+              onPressed: () => setState(() {
+                _preview = !_preview;
+                _finding = false;
+              }),
               icon: Icon(
                 _preview ? Icons.edit_outlined : Icons.visibility_outlined,
               ),
@@ -297,6 +351,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
             padding: const EdgeInsets.all(16),
             child: TextField(
               controller: _text,
+              focusNode: _textFocus,
               readOnly: widget.note.readonly,
               expands: !compact,
               minLines: compact ? 6 : null,
@@ -338,12 +393,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
             ),
             IconButton(
               tooltip: l.favorite,
-              onPressed: widget.note.readonly
-                  ? null
-                  : () {
-                      _favorite = !_favorite;
-                      _changed();
-                    },
+              onPressed: () {
+                _favorite = !_favorite;
+                _changed();
+              },
               icon: Icon(_favorite ? Icons.star : Icons.star_border),
             ),
           ],

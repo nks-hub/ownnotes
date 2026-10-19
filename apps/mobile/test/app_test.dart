@@ -162,6 +162,7 @@ void main() {
   testWidgets('text shared from another app becomes a new note', (
     tester,
   ) async {
+    final server = <Map<String, Object?>>[];
     var shared = <String, String>{
       'title': 'From Keep',
       'text': '- [ ] milk\n- [x] bread',
@@ -178,13 +179,24 @@ void main() {
       () async => AppRuntime(
         NotesDatabase(NativeDatabase.memory()),
         Vault(),
-        transport: () => MockClient(
-          (r) async => http.Response(
-            '[]',
+        transport: () => MockClient((r) async {
+          // Created notes are kept so they stay listed (and offered).
+          if (r.method == 'POST') {
+            final sent = jsonDecode(r.body) as Map<String, Object?>;
+            server.add({
+              ...sent,
+              'id': 100 + server.length,
+              'etag': 'e${server.length}',
+              'readonly': false,
+              'modified': 10,
+            });
+          }
+          return http.Response(
+            jsonEncode(r.method == 'POST' ? server.last : server),
             200,
             headers: {'content-type': 'application/json'},
-          ),
-        ),
+          );
+        }),
       ),
     ))!;
     addTearDown(runtime.close);
@@ -197,18 +209,19 @@ void main() {
         ),
       ),
     );
+    Future<void> settle() => tester.runAsync(() async {
+      for (var i = 0; i < 20; i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+    });
     await tester.pumpWidget(
       ProviderScope(
         overrides: [runtimeProvider.overrideWithValue(runtime)],
         child: const OwnNotesApp(),
       ),
     );
-    await tester.runAsync(() async {
-      for (var i = 0; i < 20; i++) {
-        await Future<void>.delayed(const Duration(milliseconds: 20));
-        await tester.pump();
-      }
-    });
+    await settle();
 
     expect(find.widgetWithText(TextField, 'From Keep'), findsOneWidget);
     expect(
@@ -240,12 +253,35 @@ void main() {
       }
     });
     await tester.pump(const Duration(seconds: 1));
+    // Existing notes are offered too; this one goes to a new note.
+    await tester.tap(find.widgetWithText(SimpleDialogOption, 'New note'));
+    await settle();
     await tester.runAsync(() async {
       final db = runtime.database;
       final titles = (await db.select(db.localNotes).get()).map((n) => n.title);
       expect(titles, containsAll(['From Keep', 'Call the garage']));
     });
     expect(find.widgetWithText(TextField, 'Call the garage'), findsOneWidget);
+
+    // A third share is appended to an existing note.
+    shared = {'title': '', 'text': '- [ ] eggs'};
+    await tester.runAsync(() async {
+      tester.binding.defaultBinaryMessenger.handlePlatformMessage(
+        'com.nkshub.nextcloudnotes/share',
+        const StandardMethodCodec().encodeMethodCall(
+          const MethodCall('shared'),
+        ),
+        (_) {},
+      );
+    });
+    await settle();
+    await tester.pump(const Duration(seconds: 1));
+    await tester.tap(find.widgetWithText(SimpleDialogOption, 'From Keep'));
+    await settle();
+    expect(
+      find.widgetWithText(TextField, '- [ ] milk\n- [x] bread\n\n- [ ] eggs'),
+      findsOneWidget,
+    );
     await tester.pumpWidget(const SizedBox());
     await tester.pumpAndSettle();
   });
@@ -536,6 +572,27 @@ void main() {
     await settle();
     await tester.tap(find.text('Tasks'));
     await settle();
+    // Find in note selects the next match and wraps around.
+    await tester.tap(find.byTooltip('Find in note'));
+    await settle();
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Find in note'),
+      '[ ]',
+    );
+    await tester.testTextInput.receiveAction(TextInputAction.search);
+    await settle();
+    final editor = tester.widget<TextField>(
+      find.byWidgetPredicate((w) => w is TextField && w.expands),
+    );
+    expect(
+      editor.controller!.selection,
+      const TextSelection(baseOffset: 2, extentOffset: 5),
+    );
+    await tester.tap(find.byTooltip('Next match'));
+    await tester.tap(find.byTooltip('Next match'));
+    await tester.tap(find.byTooltip('Next match'));
+    await settle();
+    expect(editor.controller!.selection.baseOffset, 2);
     await tester.tap(find.byTooltip('Preview'));
     await settle();
     expect(find.byType(Checkbox), findsNWidgets(2));

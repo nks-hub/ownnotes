@@ -73,11 +73,68 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
     if (shared == null || !mounted) return;
     final text = shared['text'] ?? '';
-    await _create(
-      accountId,
-      title: _titleOr(shared['title'] ?? '', text),
-      content: text,
-    );
+    // An open editor saved its text when the app went to the background.
+    Navigator.of(context).popUntil((route) => route.isFirst);
+    final db = ref.read(runtimeProvider).database;
+    final recent = (await ref.read(notesProvider(accountId).future))
+        .where(
+          (n) =>
+              !n.readonly && (n.syncState == 'clean' || n.syncState == 'draft'),
+        )
+        .take(8)
+        .toList();
+    if (!mounted) return;
+    final l = AppLocalizations.of(context)!;
+    // Dismissing the dialog still keeps the text, as a new note.
+    final target = recent.isEmpty
+        ? null
+        : await showDialog<LocalNote>(
+            context: context,
+            builder: (context) => SimpleDialog(
+              title: Text(l.shareTo),
+              children: [
+                SimpleDialogOption(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text(l.newNote),
+                ),
+                for (final note in recent)
+                  SimpleDialogOption(
+                    onPressed: () => Navigator.of(context).pop(note),
+                    child: Text(
+                      _shownTitle(note, l),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+              ],
+            ),
+          );
+    if (target == null) {
+      await _create(
+        accountId,
+        title: _titleOr(shared['title'] ?? '', text),
+        content: text,
+      );
+      return;
+    }
+    try {
+      final current = (await db.note(accountId, target.id))!;
+      await db.saveDraft(
+        accountId: accountId,
+        id: current.id,
+        revision: current.revision,
+        title: current.title,
+        content: current.content.isEmpty
+            ? text
+            : '${current.content.trimRight()}\n\n$text',
+        category: current.category,
+        favorite: current.favorite,
+      );
+      final updated = await db.note(accountId, current.id);
+      if (mounted && updated != null) await _edit(updated);
+    } catch (_) {
+      // The note changed meanwhile; the text is not lost, it becomes a note.
+      await _create(accountId, content: text);
+    }
   }
 
   static String _titleOr(String title, String text) =>

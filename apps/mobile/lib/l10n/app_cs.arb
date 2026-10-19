@@ -68,7 +68,11 @@
   "exportFailed": "Export se nepovedl.",
   "removeAccount": "Odebrat účet z telefonu",
   "removeAccountConfirm": "Odebrat účet z tohoto telefonu? Poznámky na serveru zůstanou.",
-  "removeAccountUnsent": "Odebrat účet? {count} poznámek ještě není na serveru a ztratí se. Nejdřív je můžeš exportovat.",
+  "removeAccountUnsent": "Odebrat účet? {count, plural, one{1 poznámka ještě není na serveru a ztratí se.} few{{count} poznámky ještě nejsou na serveru a ztratí se.} other{{count} poznámek ještě není na serveru a ztratí se.}} Nejdřív je můžeš exportovat.",
   "unlockReason": "Odemkni OwnNotes",
-  "unlock": "Odemknout"
+  "unlock": "Odemknout",
+  "findInNote": "Hledat v poznámce",
+  "findNext": "Další výskyt",
+  "notFound": "Nenalezeno",
+  "shareTo": "Kam uložit sdílený text?"
 }
