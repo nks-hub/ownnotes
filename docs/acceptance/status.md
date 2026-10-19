@@ -13,7 +13,12 @@ Date: 2026-10-18. This candidate is not the completed product plan.
   account): create, read, If-None-Match 304, partial PUT with If-Match, stale
   If-Match 412 with remote detail, cursor paging with `chunkSize=1`, delete,
   404 after delete and 401 for a wrong password all pass. Unicode Markdown
-  round-trips unchanged. Login Flow v2 has not been run live yet.
+  round-trips unchanged.
+- Android emulator (API 34, debug APK `com.nkshub.nextcloudnotes.candidate`,
+  2026-10-19): Login Flow v2 in Chrome against the same server, grant, return to
+  the app and account shown; note created in the app reached the server after
+  sync; a server-side content/favorite change was pulled into list and editor.
+  No restart, offline, conflict UI or second-account scenario was run.
 - Storage/synchronization: 13 passing tests using real SQLite. Covers close/reopen
   persistence, account isolation, secure-store failure, orphan recovery, stale
   local edits, late reads, lost CREATE response, interrupted operation, identity
@@ -22,9 +27,8 @@ Date: 2026-10-18. This candidate is not the completed product plan.
   exercises mocked HTTP → NotesClient → real SQLite → Riverpod → UI → editor save.
 - Analyzer: clean for all three packages after fixes; verification scripts enforce
   formatting and fatal analyzer infos.
-- Android/iOS project generated. Neither Android APK nor iOS app has been built
-  locally. No Android SDK/device or Apple build environment is configured here.
-- Private GitHub repository exists; source push and remote CI have not happened.
+- Android debug APK built on Windows with Flutter 3.47.7. iOS has not been built.
+- Source pushed to the private GitHub repository on 2026-10-19.
 
 ## Remaining acceptance gates
 

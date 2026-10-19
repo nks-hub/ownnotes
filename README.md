@@ -56,7 +56,7 @@ root containers, `TAR_OPTIONS=--no-same-owner` may be needed for SDK extraction.
 
 Android and iOS candidate identifier: `com.nkshub.nextcloudnotes.candidate`. Production
 identifiers, signing and distribution remain unconfigured. GitHub CI includes
-an Android debug build, but no remote CI result exists until source is pushed.
+an Android debug build.
 
 ## Documentation
 
@@ -68,6 +68,5 @@ an Android debug build, but no remote CI result exists until source is pushed.
 - [Protocol sources](contracts/notes/README.md)
 - [Original supplied research](docs/research/original-plan.cs.md)
 
-The private repository `nks-hub/ownnotes` exists. Local Git push authentication
-is still unavailable; source publication must be verified separately. All commits
+Source is published in the private repository `nks-hub/ownnotes`. All commits
 must have author and committer `LuRy <lury@lury.cz>`. Final licensing is undecided.

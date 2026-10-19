@@ -1,28 +1,21 @@
 # Repository setup
 
-The user created the private repository https://github.com/nks-hub/ownnotes.
-It was verified empty on 2026-10-18. The local origin points to that repository.
-No source has been uploaded yet.
+Source lives in the private repository https://github.com/nks-hub/ownnotes.
+The first push happened on 2026-10-19 over SSH (`git@github.com:nks-hub/ownnotes.git`)
+from a checkout restored from the supplied Git bundle.
 
 The GitHub connector commit/file creation operations do not expose author or
-committer fields. They must not be used to guess the required identity. Local
-Git has no authenticated credential helper; the remote check fails with
-authentication required. Do not paste tokens into chat or commit them.
-
-From an authenticated workstation, restore the supplied Git bundle or use this
-checkout, then run:
+committer fields. Do not use them to create commits. Push from a local checkout
+with the required identity:
 
 ```bash
 git config user.name LuRy
 git config user.email lury@lury.cz
 git config core.hooksPath .githooks
 python3 tool/check_git_identity.py
-git remote -v
-git push -u origin main
+git push
 ```
 
-When restoring from a bundle, set origin to
-https://github.com/nks-hub/ownnotes.git first. Do not recreate the repository or
-initialize it through GitHub with generated files. Never force-push over existing
-content. After upload verify the remote SHA and CI result. A local check does not
-constitute a successful remote push or CI run.
+Do not recreate the repository or initialize it through GitHub with generated
+files. Never force-push over existing content. After a push verify the remote SHA
+and the CI result. A local check does not constitute a successful remote CI run.
