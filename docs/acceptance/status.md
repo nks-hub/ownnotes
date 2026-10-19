@@ -19,6 +19,12 @@ Date: 2026-10-18. This candidate is not the completed product plan.
   the app and account shown; note created in the app reached the server after
   sync; a server-side content/favorite change was pulled into list and editor.
   No restart, offline, conflict UI or second-account scenario was run.
+- Physical devices (2026-10-19, debug APK): Galaxy S21 / Android 15 with
+  Samsung Internet against a test Nextcloud server and Galaxy S9 / Android 10 with
+  Chrome against a second Nextcloud 34.0.4 (Docker). Login, automatic pull on
+  start and automatic upload after leaving the editor confirmed on the server.
+  The S21 exposed the background network restriction that ended Login Flow v2
+  polling; fixed in `d856727` and re-verified from the server access log.
 - Storage/synchronization: 13 passing tests using real SQLite. Covers close/reopen
   persistence, account isolation, secure-store failure, orphan recovery, stale
   local edits, late reads, lost CREATE response, interrupted operation, identity
