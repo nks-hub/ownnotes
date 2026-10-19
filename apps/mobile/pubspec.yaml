@@ -32,6 +32,7 @@ dependencies:
   shared_preferences: ^2.5.6
   local_auth: 3.0.2
   workmanager: ^0.10.10
+  home_widget: ^0.10.0
 dev_dependencies:
   flutter_test:
     sdk: flutter

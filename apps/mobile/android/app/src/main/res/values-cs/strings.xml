@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_title">OwnNotes</string>
+    <string name="widget_new">Nová poznámka</string>
+    <string name="widget_empty">Zatím žádné poznámky.</string>
+    <string name="widget_locked">Se zámkem aplikace jsou poznámky skryté.</string>
+    <string name="widget_description">Poslední poznámky a tlačítko pro novou.</string>
+</resources>

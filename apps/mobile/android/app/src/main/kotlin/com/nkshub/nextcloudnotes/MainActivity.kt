@@ -1,8 +1,13 @@
 package com.nkshub.nextcloudnotes
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.view.WindowManager
+import androidx.core.content.pm.ShortcutInfoCompat
+import androidx.core.content.pm.ShortcutManagerCompat
+import androidx.core.graphics.drawable.IconCompat
+import es.antonborri.home_widget.HomeWidgetLaunchIntent
 import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -20,6 +25,20 @@ class MainActivity : FlutterFragmentActivity() {
         // A recreated activity still carries the old intent; it was taken already.
         if (savedInstanceState == null) shared = sharedText(intent)
         super.onCreate(savedInstanceState)
+        // Long press on the launcher icon: "New note", handled like the
+        // widget's "+" (home_widget launch intent with ownnotes://new).
+        ShortcutManagerCompat.pushDynamicShortcut(
+            this,
+            ShortcutInfoCompat.Builder(this, "new_note")
+                .setShortLabel(getString(R.string.widget_new))
+                .setIcon(IconCompat.createWithResource(this, R.mipmap.ic_launcher))
+                .setIntent(
+                    Intent(this, MainActivity::class.java)
+                        .setAction(HomeWidgetLaunchIntent.HOME_WIDGET_LAUNCH_ACTION)
+                        .setData(Uri.parse("ownnotes://new")),
+                )
+                .build(),
+        )
     }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {

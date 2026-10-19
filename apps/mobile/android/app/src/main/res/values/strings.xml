@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_title">OwnNotes</string>
+    <string name="widget_new">New note</string>
+    <string name="widget_empty">No notes yet.</string>
+    <string name="widget_locked">Notes are hidden while the app lock is on.</string>
+    <string name="widget_description">Latest notes and a button for a new one.</string>
+</resources>

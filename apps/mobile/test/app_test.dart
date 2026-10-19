@@ -510,6 +510,58 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     await tester.pumpAndSettle();
   });
+  testWidgets('a new note left empty is discarded', (tester) async {
+    final methods = <String>[];
+    final runtime = (await tester.runAsync(
+      () async => AppRuntime(
+        NotesDatabase(NativeDatabase.memory()),
+        Vault(),
+        transport: () => MockClient((r) async {
+          methods.add(r.method);
+          return http.Response(
+            '[]',
+            200,
+            headers: {'content-type': 'application/json'},
+          );
+        }),
+      ),
+    ))!;
+    addTearDown(runtime.close);
+    await tester.runAsync(
+      () => runtime.accounts.add(
+        LoginCredentials(
+          server: ServerBase.parse('https://cloud.test'),
+          loginName: 'test',
+          appPassword: 'secret',
+        ),
+      ),
+    );
+    Future<void> settle() => tester.runAsync(() async {
+      for (var i = 0; i < 20; i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+    });
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [runtimeProvider.overrideWithValue(runtime)],
+        child: const OwnNotesApp(),
+      ),
+    );
+    await settle();
+    await tester.tap(find.byTooltip('New note'));
+    await settle();
+    await tester.pageBack();
+    await settle();
+
+    expect(methods, isNot(contains('POST')));
+    await tester.runAsync(() async {
+      final db = runtime.database;
+      expect(await db.select(db.localNotes).get(), isEmpty);
+    });
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
+  });
   test('task marks skip fenced code', () {
     const text = '- [ ] a\n```\n- [ ] code\n```\n1. [x] b';
     expect(taskMarks(text).map((i) => text[i]), [' ', 'x']);

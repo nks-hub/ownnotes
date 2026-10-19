@@ -197,6 +197,21 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
   Future<void> _leave() async {
     await _save();
     if (!mounted || _failed || _dirty) return;
+    // A new note left empty would reach the server as "New note".
+    if (widget.note.remoteId == null &&
+        _title.text.trim().isEmpty &&
+        _text.text.trim().isEmpty &&
+        _category.text.trim().isEmpty) {
+      try {
+        await ref
+            .read(runtimeProvider)
+            .database
+            .markDeleted(widget.note.accountId, widget.note.id);
+      } catch (_) {
+        // Already sending; it stays like any other note.
+      }
+      if (!mounted) return;
+    }
     setState(() => _allowPop = true);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) Navigator.of(context).pop();

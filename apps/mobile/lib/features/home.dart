@@ -1,14 +1,18 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
 import 'package:archive/archive_io.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:home_widget/home_widget.dart';
 import 'package:notes_store/notes_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../data/background.dart';
 import '../data/keep_import.dart';
 import '../data/runtime.dart';
+import '../data/settings.dart';
 import '../l10n/app_localizations.dart';
 import 'editor.dart';
 import 'login.dart';
@@ -29,6 +33,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   bool _busy = false;
   String? _again;
   bool _byTitle = false;
+  StreamSubscription<Uri?>? _widgetClicks;
+  String? _widgetData;
   Timer? _retry;
   final _autoSynced = <String>{};
   late final AppLifecycleListener _lifecycle;
@@ -54,11 +60,53 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       },
     );
     _share.setMethodCallHandler((_) => _takeShared());
+    if (Platform.isAndroid) {
+      _widgetClicks = HomeWidget.widgetClicked.listen(_openLink);
+    }
+  }
+
+  /// Links from the home-screen widget and the launcher shortcut:
+  /// `ownnotes://new` and `ownnotes://note/<local id>`.
+  Future<void> _openLink(Uri? link) async {
+    final accountId = _shown;
+    if (link == null || link.scheme != 'ownnotes' || accountId == null) return;
+    if (!mounted) return;
+    Navigator.of(context).popUntil((route) => route.isFirst);
+    if (link.host == 'new') {
+      await _create(accountId);
+      return;
+    }
+    final id = link.pathSegments.firstOrNull;
+    if (link.host != 'note' || id == null) return;
+    final note = await ref.read(runtimeProvider).database.note(accountId, id);
+    if (note != null && mounted) await _edit(note);
+  }
+
+  /// The widget shows the five latest notes of the shown account; with the
+  /// app lock on it shows no titles.
+  void _publishWidget(List<LocalNote> notes, AppLocalizations l) {
+    if (!Platform.isAndroid) return;
+    final locked = ref.read(settingsProvider).lock;
+    final data = jsonEncode([
+      if (!locked)
+        for (final n in notes.take(5)) {'id': n.id, 'title': _shownTitle(n, l)},
+    ]);
+    if ('$locked$data' == _widgetData) return;
+    _widgetData = '$locked$data';
+    HomeWidget.saveWidgetData<bool>('locked', locked)
+        .then((_) => HomeWidget.saveWidgetData<String>('notes', data))
+        .then(
+          (_) => HomeWidget.updateWidget(
+            qualifiedAndroidName: 'com.nkshub.nextcloudnotes.NotesWidget',
+          ),
+        )
+        .catchError((Object _) => null);
   }
 
   @override
   void dispose() {
     _share.setMethodCallHandler(null);
+    _widgetClicks?.cancel();
     _retry?.cancel();
     _lifecycle.dispose();
     super.dispose();
@@ -273,6 +321,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final accounts = ref.watch(accountsProvider);
+    // The widget hides titles while the app lock is on.
+    ref.watch(settingsProvider.select((s) => s.lock));
     return accounts.when(
       loading: () =>
           const Scaffold(body: Center(child: CircularProgressIndicator())),
@@ -286,6 +336,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             _sync(account.id, quiet: true);
             _takeShared();
+            if (Platform.isAndroid) {
+              HomeWidget.initiallyLaunchedFromHomeWidget().then(_openLink);
+            }
           });
         }
         return Scaffold(
@@ -429,6 +482,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                             n.syncState == 'sending',
                                       )
                                       .length;
+                                  _publishWidget(notes, l);
                                   final problem = ref
                                       .read(runtimeProvider)
                                       .sync

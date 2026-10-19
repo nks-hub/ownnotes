@@ -92,3 +92,8 @@ kotlin {
 flutter {
     source = "../.."
 }
+
+dependencies {
+    // Launcher shortcut "New note" in MainActivity.
+    implementation("androidx.core:core-ktx:1.16.0")
+}
