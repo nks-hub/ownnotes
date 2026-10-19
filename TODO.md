@@ -26,14 +26,18 @@ switches to preview without the user asking.
       session asked for a fresh login during grant).
 - [ ] Login screen: widget test for poll retry; needs injectable HTTP client
       and URL launcher.
-- [ ] Verify the three product goals on devices: process death during save,
-      offline edit + server edit conflict, editor never auto-switching.
 - [ ] Remaining delivery slices from
       [implementation plan](docs/architecture/implementation-plan.md) and
       gates in [status](docs/acceptance/status.md).
 
 ## Done
 
+- 2026-10-19 Product goals checked on Galaxy S9 (Android 10, Docker server):
+  offline edit while the same note changed on the server, app force-stopped,
+  network back, relaunch. The phone text survived, the server text was not
+  overwritten, the note showed as a conflict with both versions side by side;
+  "Keep local changes" uploaded the phone text and the note became clean.
+  The editor opens in raw Markdown every time; preview only via its button.
 - 2026-10-19 Telemetry like OwnTalk: Sentry (own self-hosted project) and
   Rybbit (own mobile site), configured only at build time from ignored
   `apps/mobile/telemetry.env`. Verified on Galaxy S21: release-gate error
