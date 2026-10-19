@@ -367,6 +367,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Import failed. The file is not a Google Takeout zip with Keep notes.'**
   String get importFailed;
+
+  /// No description provided for @delete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get delete;
+
+  /// No description provided for @deleteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this note? It is also deleted on the server.'**
+  String get deleteConfirm;
 }
 
 class _AppLocalizationsDelegate

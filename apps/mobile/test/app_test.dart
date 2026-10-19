@@ -240,6 +240,78 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     await tester.pumpAndSettle();
   });
+  testWidgets('deleting from the editor removes the note on the server', (
+    tester,
+  ) async {
+    final requests = <String>[];
+    var exists = true;
+    final note = {
+      'id': 7,
+      'etag': 'etag1',
+      'title': 'From HTTP',
+      'content': '# original',
+      'category': '',
+      'favorite': false,
+      'readonly': false,
+      'modified': 10,
+    };
+    final runtime = (await tester.runAsync(
+      () async => AppRuntime(
+        NotesDatabase(NativeDatabase.memory()),
+        Vault(),
+        transport: () => MockClient((r) async {
+          requests.add('${r.method} ${r.url.pathSegments.last}');
+          if (r.method == 'DELETE') exists = false;
+          if (r.method == 'GET' && r.url.pathSegments.last == '7') {
+            return http.Response('', 304);
+          }
+          return http.Response(
+            jsonEncode(r.method == 'DELETE' || !exists ? [] : [note]),
+            200,
+            headers: {'content-type': 'application/json'},
+          );
+        }),
+      ),
+    ))!;
+    addTearDown(runtime.close);
+    await tester.runAsync(
+      () => runtime.accounts.add(
+        LoginCredentials(
+          server: ServerBase.parse('https://cloud.test'),
+          loginName: 'test',
+          appPassword: 'secret',
+        ),
+      ),
+    );
+    Future<void> settle() => tester.runAsync(() async {
+      for (var i = 0; i < 20; i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+    });
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [runtimeProvider.overrideWithValue(runtime)],
+        child: const OwnNotesApp(),
+      ),
+    );
+    await settle();
+    await tester.tap(find.text('From HTTP'));
+    await settle();
+    await tester.tap(find.byTooltip('Delete'));
+    await settle();
+    await tester.tap(find.widgetWithText(TextButton, 'Delete'));
+    await settle();
+
+    expect(requests, contains('DELETE 7'));
+    expect(find.text('From HTTP'), findsNothing);
+    await tester.runAsync(() async {
+      final db = runtime.database;
+      expect(await db.select(db.localNotes).get(), isEmpty);
+    });
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
+  });
   testWidgets('opening pulls without a tap; leaving the editor uploads', (
     tester,
   ) async {

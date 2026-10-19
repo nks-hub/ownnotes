@@ -96,6 +96,44 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
     });
   }
 
+  Future<void> _delete() async {
+    final l = AppLocalizations.of(context)!;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        content: Text(l.deleteConfirm),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(l.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(l.delete),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    _debounce?.cancel();
+    _dirty = false;
+    await _tail;
+    try {
+      await ref
+          .read(runtimeProvider)
+          .database
+          .markDeleted(widget.note.accountId, widget.note.id);
+    } catch (_) {
+      if (mounted) setState(() => _failed = true);
+      return;
+    }
+    if (!mounted) return;
+    setState(() => _allowPop = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) Navigator.of(context).pop();
+    });
+  }
+
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
@@ -130,6 +168,12 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
               onPressed: _save,
               icon: const Icon(Icons.save_outlined),
             ),
+            if (!widget.note.readonly)
+              IconButton(
+                tooltip: l.delete,
+                onPressed: _delete,
+                icon: const Icon(Icons.delete_outline),
+              ),
           ],
         ),
         body: SafeArea(

@@ -44,5 +44,7 @@
   "decisionFailed": "Rozhodnutí se nepodařilo použít. Načti poznámku a porovnej ji znovu.",
   "importKeep": "Importovat z Google Keep (zip z Takeoutu)",
   "importDone": "Importováno poznámek: {count}",
-  "importFailed": "Import se nepovedl. Soubor není zip z Google Takeoutu s poznámkami Keep."
+  "importFailed": "Import se nepovedl. Soubor není zip z Google Takeoutu s poznámkami Keep.",
+  "delete": "Smazat",
+  "deleteConfirm": "Smazat poznámku? Smaže se i na serveru."
 }

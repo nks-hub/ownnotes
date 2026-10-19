@@ -81,7 +81,7 @@ class NotesDatabase extends _$NotesDatabase {
             ..where(
               (n) =>
                   n.accountId.equals(accountId) &
-                  n.syncState.equals('recoveryArchived').not(),
+                  n.syncState.isNotIn(['recoveryArchived', 'deleting']),
             )
             ..orderBy([(n) => OrderingTerm.desc(n.updatedAt)]))
           .watch();
@@ -122,6 +122,7 @@ class NotesDatabase extends _$NotesDatabase {
     if (current.syncState == 'recoveryArchived') {
       throw StateError('recovery_archived');
     }
+    if (current.syncState == 'deleting') throw StateError('note_deleted');
     if (current.revision != revision) {
       throw StateError('local_revision_changed');
     }
@@ -142,14 +143,57 @@ class NotesDatabase extends _$NotesDatabase {
     );
     return revision + 1;
   });
+
+  /// A note never uploaded goes away at once; an uploaded one is hidden and
+  /// waits for the next sync to delete it on the server.
+  Future<void> markDeleted(String accountId, String id) =>
+      transaction(() async {
+        final current = await note(accountId, id);
+        if (current == null) return;
+        if (current.readonly) throw StateError('note_readonly');
+        if (current.syncState == 'sending') throw StateError('note_sending');
+        if (current.remoteId == null) {
+          await (delete(localNotes)..where((n) => n.id.equals(id))).go();
+          return;
+        }
+        // Undecided operations are superseded by the user's decision to delete.
+        await (update(operations)..where(
+              (o) =>
+                  o.noteId.equals(id) & o.state.isNotIn(['done', 'dismissed']),
+            ))
+            .write(const OperationsCompanion(state: Value('dismissed')));
+        await (update(localNotes)..where((n) => n.id.equals(id))).write(
+          LocalNotesCompanion(
+            syncState: const Value('deleting'),
+            revision: Value(current.revision + 1),
+          ),
+        );
+      });
+
+  /// Removes synced notes the server no longer lists. Only clean rows go:
+  /// local edits and pending deletions are never lost to a listing.
+  Future<void> census(String accountId, int epoch, Set<int> remoteIds) =>
+      transaction(() async {
+        final a = await account(accountId);
+        if (a == null || a.mutationEpoch != epoch) return;
+        await (delete(localNotes)..where(
+              (n) =>
+                  n.accountId.equals(accountId) &
+                  n.syncState.equals('clean') &
+                  n.remoteId.isNotNull() &
+                  n.remoteId.isNotIn(remoteIds),
+            ))
+            .go();
+      });
+
   Future<int> readEpoch(String accountId) async {
     final a = await account(accountId);
     if (a == null) throw StateError('account_missing');
     return a.mutationEpoch;
   }
 
-  /// Pull never deletes based on a census: server scope is not versioned.
   /// Dirty drafts remain untouched, including when the remote is unreadable.
+  /// Removal of notes deleted elsewhere is [census], after the last page.
   Future<bool> applyPull(
     String accountId,
     int epoch,

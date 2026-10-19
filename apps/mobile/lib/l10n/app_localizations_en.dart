@@ -151,4 +151,11 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get importFailed =>
       'Import failed. The file is not a Google Takeout zip with Keep notes.';
+
+  @override
+  String get delete => 'Delete';
+
+  @override
+  String get deleteConfirm =>
+      'Delete this note? It is also deleted on the server.';
 }

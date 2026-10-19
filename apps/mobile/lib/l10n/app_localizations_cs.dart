@@ -153,4 +153,10 @@ class AppLocalizationsCs extends AppLocalizations {
   @override
   String get importFailed =>
       'Import se nepovedl. Soubor není zip z Google Takeoutu s poznámkami Keep.';
+
+  @override
+  String get delete => 'Smazat';
+
+  @override
+  String get deleteConfirm => 'Smazat poznámku? Smaže se i na serveru.';
 }

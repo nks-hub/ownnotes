@@ -40,26 +40,85 @@ final class SyncCoordinator {
                   n.accountId.equals(accountId) & n.syncState.equals('draft'),
             ))
             .get();
+    final deletions =
+        await (database.select(database.localNotes)..where(
+              (n) =>
+                  n.accountId.equals(accountId) &
+                  n.syncState.equals('deleting'),
+            ))
+            .get();
     // A write that fails in transport cannot prove it was not applied and
     // becomes a decision. Send only right after the server answered, so an
     // offline edit stays a plain draft (and this throws to report offline).
-    if (drafts.isNotEmpty) await client.list(chunkSize: 1);
+    if (drafts.isNotEmpty || deletions.isNotEmpty) {
+      await client.list(chunkSize: 1);
+    }
     for (final draft in drafts) {
       if (await database.account(accountId) == null) return;
       await _push(client, draft);
+    }
+    for (final note in deletions) {
+      if (await database.account(accountId) == null) return;
+      await _delete(client, note);
     }
     if (await database.account(accountId) == null) return;
     final epoch = await database.readEpoch(accountId);
     String? cursor;
     final seenCursors = <String>{};
+    final listed = <int>{};
     do {
       final page = await client.list(cursor: cursor);
       if (!await database.applyPull(accountId, epoch, page.notes)) return;
+      listed.addAll(page.notes.map((n) => n.id));
       cursor = page.cursor;
       if (cursor != null && !seenCursors.add(cursor)) {
         throw const NotesProtocolException('repeated_chunk_cursor');
       }
     } while (cursor != null);
+    await database.census(accountId, epoch, listed);
+  }
+
+  /// DELETE has no If-Match on the server, so the note is read first: a
+  /// version changed elsewhere is restored instead of being thrown away.
+  /// Retrying is safe; a note already gone answers 404.
+  Future<void> _delete(NotesClient client, LocalNote note) async {
+    final remoteId = note.remoteId!;
+    final etag = note.etag;
+    Future<void> forget() =>
+        (database.delete(database.localNotes)..where(
+              (n) => n.id.equals(note.id) & n.syncState.equals('deleting'),
+            ))
+            .go();
+    try {
+      final read = await client.get(remoteId, ifNoneMatch: etag);
+      if (read is RemoteNote && read.etag != etag) {
+        await (database.update(database.localNotes)..where(
+              (n) => n.id.equals(note.id) & n.syncState.equals('deleting'),
+            ))
+            .write(
+              LocalNotesCompanion(
+                title: Value(read.title),
+                content: Value(read.content),
+                category: Value(read.category),
+                favorite: Value(read.favorite),
+                readonly: Value(read.readonly),
+                etag: Value(read.etag),
+                baseTitle: Value(read.title),
+                baseContent: Value(read.content),
+                baseCategory: Value(read.category),
+                baseFavorite: Value(read.favorite),
+                syncState: const Value('clean'),
+              ),
+            );
+        return;
+      }
+      await client.delete(remoteId);
+      await forget();
+    } on NotesHttpException catch (e) {
+      if (e.statusCode == 404) await forget();
+    } on MutationUncertain {
+      // Stays "deleting"; the next sync reads it again.
+    }
   }
 
   Future<void> _push(NotesClient client, LocalNote selected) async {

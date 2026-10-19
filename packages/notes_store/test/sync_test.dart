@@ -94,14 +94,17 @@ void main() {
   test('CREATE accepts the file name the server chose', () async {
     // Empty title becomes "New note"; a taken name gets a "(2)" suffix.
     final untitled = await db.createDraft('a', content: 'text only');
+    final stored = <Map<String, Object>>[];
     final sync = coordinator((r) async {
-      if (r.method != 'POST') return response([]);
+      if (r.method != 'POST') return response(stored);
       final sent = jsonDecode(r.body) as Map<String, Object?>;
-      return response({
+      final note = {
         ...remote(sent['content'] == 'text only' ? 21 : 22),
         'title': sent['title'] == '' ? 'New note' : 'Title (2)',
-        'content': sent['content']!,
-      });
+        'content': sent['content']! as String,
+      };
+      stored.add(note);
+      return response(note);
     });
     await sync.sync('a');
     final named = (await db.note('a', id))!;
@@ -123,15 +126,18 @@ void main() {
       favorite: false,
     );
     final puts = <Map<String, Object?>>[];
+    final updated = {
+      ...remote(21),
+      'etag': 'etag2',
+      'title': 'New note',
+      'content': 'more text',
+    };
     await coordinator((r) async {
-      if (r.method != 'PUT') return response([]);
+      if (r.method != 'PUT') {
+        return response([updated, stored.firstWhere((n) => n['id'] == 22)]);
+      }
       puts.add(jsonDecode(r.body) as Map<String, Object?>);
-      return response({
-        ...remote(21),
-        'etag': 'etag2',
-        'title': 'New note',
-        'content': 'more text',
-      });
+      return response(updated);
     }).sync('a');
     expect(puts.single.containsKey('title'), isFalse);
     expect((await db.note('a', untitled))!.syncState, 'clean');
@@ -145,7 +151,7 @@ void main() {
         posts++;
         return response(remote(31));
       }
-      return response([]);
+      return response(posts == 0 ? [] : [remote(31)]);
     });
     await expectLater(sync.sync('a'), throwsA(isA<NotesTransportException>()));
     expect((await db.note('a', id))!.syncState, 'draft');
@@ -154,6 +160,83 @@ void main() {
     await sync.sync('a');
     expect(posts, 1);
     expect((await db.note('a', id))!.syncState, 'clean');
+  });
+  group('delete', () {
+    // A synced note with remote id 40, etag "etag1".
+    Future<String> synced() async {
+      await db.applyPull('a', 0, [parseNote(remote(40))]);
+      final rows = await (db.select(
+        db.localNotes,
+      )..where((n) => n.remoteId.equals(40))).get();
+      return rows.single.id;
+    }
+
+    test('a never uploaded note is removed locally only', () async {
+      final requests = <String>[];
+      await db.markDeleted('a', id);
+      await coordinator((r) async {
+        requests.add(r.method);
+        return response([]);
+      }).sync('a');
+      expect(await db.note('a', id), isNull);
+      expect(requests, ['GET']);
+    });
+
+    test('an unchanged note is deleted on the server', () async {
+      await db.markDeleted('a', id);
+      final note = await synced();
+      await db.markDeleted('a', note);
+      expect(await db.watchNotes('a').first, isEmpty);
+      final requests = <String>[];
+      await coordinator((r) async {
+        requests.add('${r.method} ${r.url.pathSegments.last}');
+        if (r.method == 'GET' && r.url.pathSegments.last == '40') {
+          expect(r.headers['If-None-Match'], '"etag1"');
+          return http.Response('', 304);
+        }
+        return response([]);
+      }).sync('a');
+      expect(requests, contains('DELETE 40'));
+      expect(await db.note('a', note), isNull);
+    });
+
+    test('a note changed on the server comes back instead', () async {
+      await db.markDeleted('a', id);
+      final note = await synced();
+      await db.markDeleted('a', note);
+      var deletes = 0;
+      final changed = {...remote(40), 'etag': 'etag2', 'content': 'newer'};
+      await coordinator((r) async {
+        if (r.method == 'DELETE') deletes++;
+        if (r.url.pathSegments.last == '40') return response(changed);
+        return response([changed]);
+      }).sync('a');
+      expect(deletes, 0);
+      final restored = (await db.note('a', note))!;
+      expect(restored.syncState, 'clean');
+      expect(restored.content, 'newer');
+    });
+
+    test('a note gone from the server disappears unless edited', () async {
+      final gone = await synced();
+      await db.applyPull('a', 0, [parseNote(remote(41))]);
+      final edited = (await (db.select(
+        db.localNotes,
+      )..where((n) => n.remoteId.equals(41))).getSingle());
+      await db.saveDraft(
+        accountId: 'a',
+        id: edited.id,
+        revision: edited.revision,
+        title: 'Title',
+        content: 'kept',
+        category: '',
+        favorite: false,
+      );
+      await db.markDeleted('a', id);
+      await db.census('a', await db.readEpoch('a'), {});
+      expect(await db.note('a', gone), isNull);
+      expect((await db.note('a', edited.id))!.content, 'kept');
+    });
   });
   test('lost CREATE response is never retried', () async {
     var creates = 0;
