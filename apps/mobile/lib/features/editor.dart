@@ -7,6 +7,27 @@ import 'package:notes_store/notes_store.dart';
 import '../data/runtime.dart';
 import '../l10n/app_localizations.dart';
 
+/// Offsets of the mark between the brackets of each task item (`- [ ]`,
+/// `1. [x]`) in the order the preview shows its checkboxes. Fenced code is
+/// skipped because it renders no checkboxes.
+List<int> taskMarks(String text) {
+  final item = RegExp(r'^\s*(?:[-+*]|\d+[.)])\s+\[[ xX]\]');
+  final marks = <int>[];
+  var offset = 0;
+  var fenced = false;
+  for (final line in text.split('\n')) {
+    final start = line.trimLeft();
+    if (start.startsWith('```') || start.startsWith('~~~')) {
+      fenced = !fenced;
+    } else if (!fenced) {
+      final match = item.firstMatch(line);
+      if (match != null) marks.add(offset + match.end - 2);
+    }
+    offset += line.length + 1;
+  }
+  return marks;
+}
+
 class EditorScreen extends ConsumerStatefulWidget {
   const EditorScreen({required this.note, super.key});
   final LocalNote note;
@@ -28,6 +49,29 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
   bool _preview = false;
   bool _allowPop = false;
   final _images = <String, Future<List<int>>>{};
+  int _boxes = 0;
+
+  /// The preview builds checkboxes in document order, so the n-th one is the
+  /// n-th task item in the raw text. A tick edits that one character.
+  Widget _checkbox(bool value) {
+    final index = _boxes++;
+    return Checkbox(
+      value: value,
+      onChanged: widget.note.readonly
+          ? null
+          : (_) {
+              final mark = taskMarks(_text.text).elementAtOrNull(index);
+              if (mark == null) return;
+              final text = _text.text;
+              _text.text = text.replaceRange(
+                mark,
+                mark + 1,
+                text[mark] == ' ' ? 'x' : ' ',
+              );
+              _changed();
+            },
+    );
+  }
 
   /// Attachments of this note (`.attachments.<id>/…`) load through the Notes
   /// API with the account's credentials. Remote URLs stay placeholders: the
@@ -229,6 +273,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
       label: l.imageUnavailable,
       child: const Icon(Icons.image_not_supported_outlined),
     );
+    _boxes = 0;
     final Widget text = _preview
         ? (compact
               ? Padding(
@@ -237,12 +282,14 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
                     data: _text.text,
                     selectable: true,
                     sizedImageBuilder: (c) => _image(c, image),
+                    checkboxBuilder: _checkbox,
                   ),
                 )
               : Markdown(
                   data: _text.text,
                   selectable: true,
                   sizedImageBuilder: (c) => _image(c, image),
+                  checkboxBuilder: _checkbox,
                 ))
         : Padding(
             padding: const EdgeInsets.all(16),

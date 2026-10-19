@@ -9,6 +9,7 @@ import 'package:http/testing.dart';
 import 'package:notes_protocol/notes_protocol.dart';
 import 'package:notes_store/notes_store.dart';
 import 'package:nextcloudnotes/data/runtime.dart';
+import 'package:nextcloudnotes/features/editor.dart';
 import 'package:nextcloudnotes/main.dart';
 
 class Vault implements CredentialVault {
@@ -470,6 +471,127 @@ void main() {
       final stored = await db.select(db.localNotes).getSingle();
       expect(stored.syncState, 'clean');
     });
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
+  });
+  test('task marks skip fenced code', () {
+    const text = '- [ ] a\n```\n- [ ] code\n```\n1. [x] b';
+    expect(taskMarks(text).map((i) => text[i]), [' ', 'x']);
+    expect(taskMarks(text).last, text.lastIndexOf('x'));
+  });
+  testWidgets('a checkbox ticked in preview edits the Markdown', (
+    tester,
+  ) async {
+    var etag = 'etag1';
+    var content = '- [ ] a\n```\n- [ ] code\n```\n- [ ] b';
+    Map<String, Object> note() => {
+      'id': 7,
+      'etag': etag,
+      'title': 'Tasks',
+      'content': content,
+      'category': '',
+      'favorite': false,
+      'readonly': false,
+      'modified': 10,
+    };
+    final runtime = (await tester.runAsync(
+      () async => AppRuntime(
+        NotesDatabase(NativeDatabase.memory()),
+        Vault(),
+        transport: () => MockClient((r) async {
+          if (r.method == 'PUT') {
+            content = (jsonDecode(r.body) as Map)['content'] as String;
+            etag = 'etag2';
+          }
+          return http.Response(
+            jsonEncode(r.url.pathSegments.last == 'notes' ? [note()] : note()),
+            200,
+            headers: {'content-type': 'application/json'},
+          );
+        }),
+      ),
+    ))!;
+    addTearDown(runtime.close);
+    await tester.runAsync(
+      () => runtime.accounts.add(
+        LoginCredentials(
+          server: ServerBase.parse('https://cloud.test'),
+          loginName: 'test',
+          appPassword: 'secret',
+        ),
+      ),
+    );
+    Future<void> settle() => tester.runAsync(() async {
+      for (var i = 0; i < 20; i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+    });
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [runtimeProvider.overrideWithValue(runtime)],
+        child: const OwnNotesApp(),
+      ),
+    );
+    await settle();
+    await tester.tap(find.text('Tasks'));
+    await settle();
+    await tester.tap(find.byTooltip('Preview'));
+    await settle();
+    expect(find.byType(Checkbox), findsNWidgets(2));
+    await tester.tap(find.byType(Checkbox).last);
+    await tester.pump(const Duration(milliseconds: 400));
+    await settle();
+    expect(tester.widget<Checkbox>(find.byType(Checkbox).last).value, isTrue);
+    await tester.pageBack();
+    await settle();
+
+    expect(content, '- [ ] a\n```\n- [ ] code\n```\n- [x] b');
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
+  });
+  testWidgets('unsent notes show a count and the reason', (tester) async {
+    final runtime = (await tester.runAsync(
+      () async => AppRuntime(
+        NotesDatabase(NativeDatabase.memory()),
+        Vault(),
+        transport: () => MockClient((_) async => throw Exception('offline')),
+      ),
+    ))!;
+    addTearDown(runtime.close);
+    final accountId = (await tester.runAsync(() async {
+      await runtime.accounts.add(
+        LoginCredentials(
+          server: ServerBase.parse('https://cloud.test'),
+          loginName: 'test',
+          appPassword: 'secret',
+        ),
+      );
+      final account = (await runtime.database.watchAccounts().first).single;
+      await runtime.database.createDraft(
+        account.id,
+        content: '# Written offline',
+      );
+      return account.id;
+    }))!;
+    Future<void> settle() => tester.runAsync(() async {
+      for (var i = 0; i < 20; i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+        await tester.pump();
+      }
+    });
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [runtimeProvider.overrideWithValue(runtime)],
+        child: const OwnNotesApp(),
+      ),
+    );
+    await settle();
+
+    expect(runtime.sync.problem(accountId), 'offline');
+    expect(find.text('Not sent yet: 1'), findsOneWidget);
+    expect(find.textContaining('No connection'), findsOneWidget);
+    expect(find.text('Written offline'), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
     await tester.pumpAndSettle();
   });

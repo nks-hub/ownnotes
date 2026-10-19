@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'package:archive/archive_io.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:notes_store/notes_store.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../data/keep_import.dart';
 import '../data/runtime.dart';
 import '../l10n/app_localizations.dart';
@@ -24,15 +26,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   String _search = '';
   bool _busy = false;
   String? _again;
+  bool _byTitle = false;
+  Timer? _retry;
   final _autoSynced = <String>{};
   late final AppLifecycleListener _lifecycle;
 
   static const _share = MethodChannel('com.nkshub.nextcloudnotes/share');
+  static const _sortKey = 'sortByTitle';
 
   @override
   void initState() {
     super.initState();
+    _loadSort();
     _lifecycle = AppLifecycleListener(
+      onHide: () => _retry?.cancel(),
       onResume: () {
         final id = _shown;
         if (id != null) _sync(id, quiet: true);
@@ -46,6 +53,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   void dispose() {
     _share.setMethodCallHandler(null);
+    _retry?.cancel();
     _lifecycle.dispose();
     super.dispose();
   }
@@ -71,25 +79,34 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  /// The server does not derive a title from text; it would name the note
-  /// "New note", so an imported note without one takes its first line.
-  static String _titleOr(String title, String text) {
-    if (title.trim().isNotEmpty) return title;
-    final line = text
-        .split('\n')
-        .map((l) => l.trim())
-        .firstWhere((l) => l.isNotEmpty, orElse: () => '');
-    return line.length > 100 ? line.substring(0, 100) : line;
+  static String _titleOr(String title, String text) =>
+      title.trim().isNotEmpty ? title : titleFromContent(text);
+
+  Future<void> _loadSort() async {
+    try {
+      final byTitle = await SharedPreferencesAsync().getBool(_sortKey);
+      if (mounted && byTitle != null) setState(() => _byTitle = byTitle);
+    } catch (_) {
+      // Preferences are a convenience; the default order still works.
+    }
+  }
+
+  void _toggleSort() {
+    setState(() => _byTitle = !_byTitle);
+    SharedPreferencesAsync().setBool(_sortKey, _byTitle).ignore();
   }
 
   /// Quiet runs are automatic (start, resume, after editing); offline is
-  /// normal there, so only a manual sync reports failure.
+  /// normal there, so only a manual sync reports failure. A failed run is
+  /// retried while the app stays in front, so notes upload once the
+  /// network is back.
   Future<void> _sync(String accountId, {bool quiet = false}) async {
     if (_busy) {
       // The running pass may have started before the latest local edit.
       _again = accountId;
       return;
     }
+    _retry?.cancel();
     setState(() => _busy = true);
     try {
       do {
@@ -104,7 +121,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         );
       }
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) {
+        setState(() => _busy = false);
+        if (ref.read(runtimeProvider).sync.problem(accountId) != null) {
+          _retry = Timer(
+            const Duration(seconds: 30),
+            () => _sync(accountId, quiet: true),
+          );
+        }
+      }
     }
   }
 
@@ -224,6 +249,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 PopupMenuButton<void>(
                   itemBuilder: (_) => [
                     PopupMenuItem(
+                      onTap: _toggleSort,
+                      child: Text(_byTitle ? l.sortByModified : l.sortByTitle),
+                    ),
+                    PopupMenuItem(
                       onTap: () => _importKeep(account.id),
                       child: Text(l.importKeep),
                     ),
@@ -312,6 +341,26 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                                 .contains(_search),
                                       )
                                       .toList();
+                                  if (_byTitle) {
+                                    filtered.sort(
+                                      (a, b) => _shownTitle(a, l)
+                                          .toLowerCase()
+                                          .compareTo(
+                                            _shownTitle(b, l).toLowerCase(),
+                                          ),
+                                    );
+                                  }
+                                  final unsent = notes
+                                      .where(
+                                        (n) =>
+                                            n.syncState == 'draft' ||
+                                            n.syncState == 'sending',
+                                      )
+                                      .length;
+                                  final problem = ref
+                                      .read(runtimeProvider)
+                                      .sync
+                                      .problem(account.id);
                                   final list = filtered.isEmpty
                                       ? ListView(
                                           physics:
@@ -321,6 +370,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                       : _list(filtered, l);
                                   return Column(
                                     children: [
+                                      if (unsent > 0 && !_busy)
+                                        ListTile(
+                                          leading: const Icon(
+                                            Icons.cloud_off_outlined,
+                                          ),
+                                          title: Text(l.unsent(unsent)),
+                                          subtitle: problem == null
+                                              ? null
+                                              : Text(_reason(problem, l)),
+                                        ),
                                       if (categories.isNotEmpty)
                                         SizedBox(
                                           height: 56,
@@ -372,6 +431,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
+  /// A note not uploaded yet shows the name the server will give it.
+  static String _shownTitle(LocalNote n, AppLocalizations l) {
+    final title = n.title.trim().isEmpty
+        ? titleFromContent(n.content)
+        : n.title;
+    return title.isEmpty ? l.untitled : title;
+  }
+
+  static String _reason(String problem, AppLocalizations l) =>
+      switch (problem) {
+        'offline' => l.reasonOffline,
+        'auth' => l.reasonAuth,
+        'locked' => l.reasonLocked,
+        'storage_full' => l.reasonStorageFull,
+        _ => l.reasonServer,
+      };
+
   Widget _list(List<LocalNote> filtered, AppLocalizations l) =>
       ListView.builder(
         physics: const AlwaysScrollableScrollPhysics(),
@@ -382,7 +458,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             key: ValueKey(n.id),
             minVerticalPadding: 16,
             title: Text(
-              n.title.isEmpty ? l.untitled : n.title,
+              _shownTitle(n, l),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),

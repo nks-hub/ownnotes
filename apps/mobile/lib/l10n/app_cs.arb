@@ -47,5 +47,13 @@
   "importFailed": "Import se nepovedl. Soubor není zip z Google Takeoutu s poznámkami Keep.",
   "delete": "Smazat",
   "deleteConfirm": "Smazat poznámku? Smaže se i na serveru.",
-  "allCategories": "Vše"
+  "allCategories": "Vše",
+  "unsent": "Zatím neodesláno: {count}",
+  "reasonOffline": "Bez připojení. Poznámky se odešlou samy, až bude síť.",
+  "reasonAuth": "Server odmítl přihlášení. Přidej účet znovu.",
+  "reasonLocked": "Soubor je na serveru zamčený. Zkusí se to znovu za chvíli.",
+  "reasonStorageFull": "Na serveru došlo místo.",
+  "reasonServer": "Server odpověděl chybou. Zkusí se to znovu za chvíli.",
+  "sortByTitle": "Řadit podle názvu",
+  "sortByModified": "Řadit podle poslední změny"
 }

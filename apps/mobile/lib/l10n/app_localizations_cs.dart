@@ -162,4 +162,33 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get allCategories => 'Vše';
+
+  @override
+  String unsent(int count) {
+    return 'Zatím neodesláno: $count';
+  }
+
+  @override
+  String get reasonOffline =>
+      'Bez připojení. Poznámky se odešlou samy, až bude síť.';
+
+  @override
+  String get reasonAuth => 'Server odmítl přihlášení. Přidej účet znovu.';
+
+  @override
+  String get reasonLocked =>
+      'Soubor je na serveru zamčený. Zkusí se to znovu za chvíli.';
+
+  @override
+  String get reasonStorageFull => 'Na serveru došlo místo.';
+
+  @override
+  String get reasonServer =>
+      'Server odpověděl chybou. Zkusí se to znovu za chvíli.';
+
+  @override
+  String get sortByTitle => 'Řadit podle názvu';
+
+  @override
+  String get sortByModified => 'Řadit podle poslední změny';
 }

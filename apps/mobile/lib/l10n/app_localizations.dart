@@ -385,6 +385,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'All'**
   String get allCategories;
+
+  /// No description provided for @unsent.
+  ///
+  /// In en, this message translates to:
+  /// **'Not sent yet: {count}'**
+  String unsent(int count);
+
+  /// No description provided for @reasonOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'No connection. Notes upload on their own when it is back.'**
+  String get reasonOffline;
+
+  /// No description provided for @reasonAuth.
+  ///
+  /// In en, this message translates to:
+  /// **'The server refused the login. Add the account again.'**
+  String get reasonAuth;
+
+  /// No description provided for @reasonLocked.
+  ///
+  /// In en, this message translates to:
+  /// **'The file is locked on the server. Trying again shortly.'**
+  String get reasonLocked;
+
+  /// No description provided for @reasonStorageFull.
+  ///
+  /// In en, this message translates to:
+  /// **'The server storage is full.'**
+  String get reasonStorageFull;
+
+  /// No description provided for @reasonServer.
+  ///
+  /// In en, this message translates to:
+  /// **'The server answered with an error. Trying again shortly.'**
+  String get reasonServer;
+
+  /// No description provided for @sortByTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort by title'**
+  String get sortByTitle;
+
+  /// No description provided for @sortByModified.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort by last change'**
+  String get sortByModified;
 }
 
 class _AppLocalizationsDelegate

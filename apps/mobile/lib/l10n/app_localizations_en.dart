@@ -161,4 +161,34 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get allCategories => 'All';
+
+  @override
+  String unsent(int count) {
+    return 'Not sent yet: $count';
+  }
+
+  @override
+  String get reasonOffline =>
+      'No connection. Notes upload on their own when it is back.';
+
+  @override
+  String get reasonAuth =>
+      'The server refused the login. Add the account again.';
+
+  @override
+  String get reasonLocked =>
+      'The file is locked on the server. Trying again shortly.';
+
+  @override
+  String get reasonStorageFull => 'The server storage is full.';
+
+  @override
+  String get reasonServer =>
+      'The server answered with an error. Trying again shortly.';
+
+  @override
+  String get sortByTitle => 'Sort by title';
+
+  @override
+  String get sortByModified => 'Sort by last change';
 }
