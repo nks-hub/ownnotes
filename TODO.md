@@ -28,6 +28,13 @@ switches to preview without the user asking.
 
 ## Done
 
+- 2026-10-19 Renaming a note or changing its category no longer ends as a
+  decision for notes without attachments (`234cbb7`); verified on Galaxy S9:
+  the file moved to `/Notes/Test/Renamed on S9.md`. Notes that reference
+  `.attachments.` still ask, until attachment moves are verified.
+- 2026-10-19 Category filter chips, pull to refresh, and an editor that
+  scrolls instead of overflowing with the keyboard up in landscape (found on
+  Galaxy S9) (`a42c75a`).
 - 2026-10-19 iOS "Share → OwnNotes": ShareExtension target stores shared
   text (plus the page URL from Safari) in the App Group; the app turns it
   into a note when it comes to the front. Verified on the iPhone 17 Pro
