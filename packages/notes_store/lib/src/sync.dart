@@ -40,6 +40,10 @@ final class SyncCoordinator {
                   n.accountId.equals(accountId) & n.syncState.equals('draft'),
             ))
             .get();
+    // A write that fails in transport cannot prove it was not applied and
+    // becomes a decision. Send only right after the server answered, so an
+    // offline edit stays a plain draft (and this throws to report offline).
+    if (drafts.isNotEmpty) await client.list(chunkSize: 1);
     for (final draft in drafts) {
       if (await database.account(accountId) == null) return;
       await _push(client, draft);

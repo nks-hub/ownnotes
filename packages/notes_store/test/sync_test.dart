@@ -136,6 +136,25 @@ void main() {
     expect(puts.single.containsKey('title'), isFalse);
     expect((await db.note('a', untitled))!.syncState, 'clean');
   });
+  test('offline edits stay drafts instead of becoming decisions', () async {
+    var online = false;
+    var posts = 0;
+    final sync = coordinator((r) async {
+      if (!online) throw Exception('no network');
+      if (r.method == 'POST') {
+        posts++;
+        return response(remote(31));
+      }
+      return response([]);
+    });
+    await expectLater(sync.sync('a'), throwsA(isA<NotesTransportException>()));
+    expect((await db.note('a', id))!.syncState, 'draft');
+    expect(await db.select(db.operations).get(), isEmpty);
+    online = true;
+    await sync.sync('a');
+    expect(posts, 1);
+    expect((await db.note('a', id))!.syncState, 'clean');
+  });
   test('lost CREATE response is never retried', () async {
     var creates = 0;
     Future<http.Response> handle(http.Request r) async {
@@ -191,6 +210,7 @@ void main() {
   });
   test('late receipt cannot resurrect removed account', () async {
     final sync = coordinator((r) async {
+      if (r.method != 'POST') return response([]);
       await (db.delete(db.accounts)..where((a) => a.id.equals('a'))).go();
       return response(remote(17));
     });
