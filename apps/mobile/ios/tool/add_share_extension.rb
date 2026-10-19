@@ -21,7 +21,7 @@ ext.build_configurations.each do |config|
   s = config.build_settings
   s['INFOPLIST_FILE'] = 'ShareExtension/Info.plist'
   s['CODE_SIGN_ENTITLEMENTS'] = 'ShareExtension/ShareExtension.entitlements'
-  s['PRODUCT_BUNDLE_IDENTIFIER'] = 'com.nkshub.nextcloudnotes.candidate.ShareExtension'
+  s['PRODUCT_BUNDLE_IDENTIFIER'] = 'com.nkshub.nextcloudnotes.ShareExtension'
   s['PRODUCT_NAME'] = '$(TARGET_NAME)'
   s['SWIFT_VERSION'] = '5.0'
   s['TARGETED_DEVICE_FAMILY'] = '1,2'

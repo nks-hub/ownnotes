@@ -40,7 +40,8 @@ real server when `OWNNOTES_LIVE_URL`, `OWNNOTES_LIVE_USER` and
 account without 2FA. The test creates and deletes its own notes. Never commit
 the credentials.
 
-Use `.candidate` test identities with isolated data. Test upgrade installation
+Use the `.candidate` build (`--android-project-arg=candidate=true`) for tests
+on a phone that also has the real app, so test data stays isolated. Test upgrade installation
 without clearing production accounts. Include actual HTTP-to-DB-to-UI paths,
 offline edits, process death, account switches and schema upgrades.
 

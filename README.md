@@ -54,9 +54,13 @@ with that command installed. Windows runners must serialize this checkout too.
 Build-host SDK telemetry is suppressed by the verification scripts. On restricted
 root containers, `TAR_OPTIONS=--no-same-owner` may be needed for SDK extraction.
 
-Android and iOS candidate identifier: `com.nkshub.nextcloudnotes.candidate`. Production
-identifiers, signing and distribution remain unconfigured. GitHub CI includes
-an Android debug build.
+The app is **OwnNotes**, `com.nkshub.nextcloudnotes` on Android and iOS, and
+ships through Google Play. A build to test beside the installed app uses
+`--android-project-arg=candidate=true`, which gives
+`com.nkshub.nextcloudnotes.candidate` labelled "OwnNotes Candidate". Release
+builds need `apps/mobile/android/key.properties` (gitignored) pointing at the
+upload keystore; there is no fallback to the debug key. GitHub CI includes an
+Android debug build.
 
 ## Documentation
 
