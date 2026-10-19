@@ -17,6 +17,8 @@ switches to preview without the user asking.
 
 ## Open
 
+- [ ] Create the app **OwnNotes** (`com.nkshub.nextcloudnotes`) in Google Play Console (web only, owner login). Texts, icon and data safety answers: [docs/store/play-listing.md](docs/store/play-listing.md). Then upload with `tool/play_upload.py` (draft status until the first publish).
+- [ ] Privacy policy URL for the Play listing (Sentry and Rybbit telemetry).
 - [ ] Keep import: images and audio from Takeout are skipped until
       attachment upload exists (slice 10).
 - [ ] iOS App Group `group.com.nkshub.nextcloudnotes` and the ShareExtension
@@ -28,6 +30,7 @@ switches to preview without the user asking.
 
 ## Done
 
+- 2026-10-19 Release identity: **OwnNotes**, `com.nkshub.nextcloudnotes` on Android and iOS, candidate builds via `--android-project-arg=candidate=true`; upload keystore and release signing without debug fallback; app icon (`tool/make_icons.py`); Play upload script (`tool/play_upload.py`, checked against the API: package not found until the app exists). Signed release APK verified on Galaxy S9: login, pull and a new note reached the server.
 - 2026-10-19 Preview shows images attached to the note (`.attachments.<id>/...`) through the Notes attachment API with the account credentials (`74aee59`); remote http images stay placeholders. Verified on Galaxy S9 with a real attachment on the Docker server.
 - 2026-10-19 Renaming a note or changing its category no longer ends as a
   decision for notes without attachments (`234cbb7`); verified on Galaxy S9:
