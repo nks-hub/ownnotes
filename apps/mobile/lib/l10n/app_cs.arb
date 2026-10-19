@@ -55,5 +55,20 @@
   "reasonStorageFull": "Na serveru došlo místo.",
   "reasonServer": "Server odpověděl chybou. Zkusí se to znovu za chvíli.",
   "sortByTitle": "Řadit podle názvu",
-  "sortByModified": "Řadit podle poslední změny"
+  "sortByModified": "Řadit podle poslední změny",
+  "settings": "Nastavení",
+  "monospace": "Neproporcionální písmo v editoru",
+  "textSize": "Velikost textu v editoru",
+  "appLock": "Zámek aplikace",
+  "appLockHint": "Po návratu do aplikace chce otisk prstu, obličej nebo PIN telefonu.",
+  "appLockUnavailable": "Telefon nemá nastavený zámek obrazovky.",
+  "blockScreenshots": "Zakázat snímky obrazovky",
+  "exportNotes": "Exportovat poznámky (zip)",
+  "exportDone": "Exportováno poznámek: {count}",
+  "exportFailed": "Export se nepovedl.",
+  "removeAccount": "Odebrat účet z telefonu",
+  "removeAccountConfirm": "Odebrat účet z tohoto telefonu? Poznámky na serveru zůstanou.",
+  "removeAccountUnsent": "Odebrat účet? {count} poznámek ještě není na serveru a ztratí se. Nejdřív je můžeš exportovat.",
+  "unlockReason": "Odemkni OwnNotes",
+  "unlock": "Odemknout"
 }

@@ -5,6 +5,7 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:notes_store/notes_store.dart';
 import '../data/runtime.dart';
+import '../data/settings.dart';
 import '../l10n/app_localizations.dart';
 
 /// Offsets of the mark between the brackets of each task item (`- [ ]`,
@@ -269,6 +270,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
   }
 
   Widget _body(AppLocalizations l, {required bool compact}) {
+    final settings = ref.watch(settingsProvider);
     final image = Semantics(
       label: l.imageUnavailable,
       child: const Icon(Icons.image_not_supported_outlined),
@@ -301,6 +303,13 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
               maxLines: null,
               textAlignVertical: TextAlignVertical.top,
               keyboardType: TextInputType.multiline,
+              style: TextStyle(
+                fontSize: settings.fontSize,
+                fontFamily: settings.monospace ? 'monospace' : null,
+                fontFamilyFallback: settings.monospace
+                    ? const ['Menlo', 'Courier']
+                    : null,
+              ),
               decoration: InputDecoration(
                 hintText: l.content,
                 border: InputBorder.none,

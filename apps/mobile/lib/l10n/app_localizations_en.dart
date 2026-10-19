@@ -191,4 +191,55 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sortByModified => 'Sort by last change';
+
+  @override
+  String get settings => 'Settings';
+
+  @override
+  String get monospace => 'Monospace font in the editor';
+
+  @override
+  String get textSize => 'Editor text size';
+
+  @override
+  String get appLock => 'App lock';
+
+  @override
+  String get appLockHint =>
+      'Asks for fingerprint, face or the phone PIN when you come back to the app.';
+
+  @override
+  String get appLockUnavailable => 'This phone has no screen lock set up.';
+
+  @override
+  String get blockScreenshots => 'Block screenshots';
+
+  @override
+  String get exportNotes => 'Export notes (zip)';
+
+  @override
+  String exportDone(int count) {
+    return 'Exported $count notes';
+  }
+
+  @override
+  String get exportFailed => 'Export failed.';
+
+  @override
+  String get removeAccount => 'Remove account from this phone';
+
+  @override
+  String get removeAccountConfirm =>
+      'Remove the account from this phone? Notes on the server stay.';
+
+  @override
+  String removeAccountUnsent(int count) {
+    return 'Remove the account? $count notes are not on the server yet and will be lost. You can export them first.';
+  }
+
+  @override
+  String get unlockReason => 'Unlock OwnNotes';
+
+  @override
+  String get unlock => 'Unlock';
 }

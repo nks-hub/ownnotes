@@ -433,6 +433,96 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sort by last change'**
   String get sortByModified;
+
+  /// No description provided for @settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get settings;
+
+  /// No description provided for @monospace.
+  ///
+  /// In en, this message translates to:
+  /// **'Monospace font in the editor'**
+  String get monospace;
+
+  /// No description provided for @textSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Editor text size'**
+  String get textSize;
+
+  /// No description provided for @appLock.
+  ///
+  /// In en, this message translates to:
+  /// **'App lock'**
+  String get appLock;
+
+  /// No description provided for @appLockHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Asks for fingerprint, face or the phone PIN when you come back to the app.'**
+  String get appLockHint;
+
+  /// No description provided for @appLockUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'This phone has no screen lock set up.'**
+  String get appLockUnavailable;
+
+  /// No description provided for @blockScreenshots.
+  ///
+  /// In en, this message translates to:
+  /// **'Block screenshots'**
+  String get blockScreenshots;
+
+  /// No description provided for @exportNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Export notes (zip)'**
+  String get exportNotes;
+
+  /// No description provided for @exportDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Exported {count} notes'**
+  String exportDone(int count);
+
+  /// No description provided for @exportFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Export failed.'**
+  String get exportFailed;
+
+  /// No description provided for @removeAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove account from this phone'**
+  String get removeAccount;
+
+  /// No description provided for @removeAccountConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove the account from this phone? Notes on the server stay.'**
+  String get removeAccountConfirm;
+
+  /// No description provided for @removeAccountUnsent.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove the account? {count} notes are not on the server yet and will be lost. You can export them first.'**
+  String removeAccountUnsent(int count);
+
+  /// No description provided for @unlockReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock OwnNotes'**
+  String get unlockReason;
+
+  /// No description provided for @unlock.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock'**
+  String get unlock;
 }
 
 class _AppLocalizationsDelegate

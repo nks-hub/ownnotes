@@ -65,5 +65,30 @@
   "reasonStorageFull": "The server storage is full.",
   "reasonServer": "The server answered with an error. Trying again shortly.",
   "sortByTitle": "Sort by title",
-  "sortByModified": "Sort by last change"
+  "sortByModified": "Sort by last change",
+  "settings": "Settings",
+  "monospace": "Monospace font in the editor",
+  "textSize": "Editor text size",
+  "appLock": "App lock",
+  "appLockHint": "Asks for fingerprint, face or the phone PIN when you come back to the app.",
+  "appLockUnavailable": "This phone has no screen lock set up.",
+  "blockScreenshots": "Block screenshots",
+  "exportNotes": "Export notes (zip)",
+  "exportDone": "Exported {count} notes",
+  "@exportDone": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "exportFailed": "Export failed.",
+  "removeAccount": "Remove account from this phone",
+  "removeAccountConfirm": "Remove the account from this phone? Notes on the server stay.",
+  "removeAccountUnsent": "Remove the account? {count} notes are not on the server yet and will be lost. You can export them first.",
+  "@removeAccountUnsent": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "unlockReason": "Unlock OwnNotes",
+  "unlock": "Unlock"
 }

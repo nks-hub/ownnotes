@@ -12,6 +12,7 @@ import '../l10n/app_localizations.dart';
 import 'editor.dart';
 import 'login.dart';
 import 'recovery.dart';
+import 'settings.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -248,6 +249,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               if (account != null)
                 PopupMenuButton<void>(
                   itemBuilder: (_) => [
+                    PopupMenuItem(
+                      onTap: () => Navigator.of(context).push<void>(
+                        MaterialPageRoute(
+                          settings: const RouteSettings(name: '/settings'),
+                          builder: (_) => SettingsScreen(account: account),
+                        ),
+                      ),
+                      child: Text(l.settings),
+                    ),
                     PopupMenuItem(
                       onTap: _toggleSort,
                       child: Text(_byTitle ? l.sortByModified : l.sortByTitle),

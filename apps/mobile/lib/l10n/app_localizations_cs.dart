@@ -191,4 +191,55 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get sortByModified => 'Řadit podle poslední změny';
+
+  @override
+  String get settings => 'Nastavení';
+
+  @override
+  String get monospace => 'Neproporcionální písmo v editoru';
+
+  @override
+  String get textSize => 'Velikost textu v editoru';
+
+  @override
+  String get appLock => 'Zámek aplikace';
+
+  @override
+  String get appLockHint =>
+      'Po návratu do aplikace chce otisk prstu, obličej nebo PIN telefonu.';
+
+  @override
+  String get appLockUnavailable => 'Telefon nemá nastavený zámek obrazovky.';
+
+  @override
+  String get blockScreenshots => 'Zakázat snímky obrazovky';
+
+  @override
+  String get exportNotes => 'Exportovat poznámky (zip)';
+
+  @override
+  String exportDone(int count) {
+    return 'Exportováno poznámek: $count';
+  }
+
+  @override
+  String get exportFailed => 'Export se nepovedl.';
+
+  @override
+  String get removeAccount => 'Odebrat účet z telefonu';
+
+  @override
+  String get removeAccountConfirm =>
+      'Odebrat účet z tohoto telefonu? Poznámky na serveru zůstanou.';
+
+  @override
+  String removeAccountUnsent(int count) {
+    return 'Odebrat účet? $count poznámek ještě není na serveru a ztratí se. Nejdřív je můžeš exportovat.';
+  }
+
+  @override
+  String get unlockReason => 'Odemkni OwnNotes';
+
+  @override
+  String get unlock => 'Odemknout';
 }

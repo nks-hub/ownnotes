@@ -4,6 +4,7 @@ import 'core/telemetry.dart';
 import 'core/telemetry_bootstrap.dart';
 import 'data/runtime.dart';
 import 'features/home.dart';
+import 'features/lock.dart';
 import 'l10n/app_localizations.dart';
 
 Future<void> main() => runWithTelemetry(
@@ -98,6 +99,7 @@ class OwnNotesApp extends StatelessWidget {
         brightness: Brightness.dark,
       ),
     ),
+    builder: (context, child) => AppLock(child: child!),
     home: const HomeScreen(),
   );
 }
