@@ -19,14 +19,26 @@ switches to preview without the user asking.
 
 - [ ] Keep import: images and audio from Takeout are skipped until
       attachment upload exists (slice 10).
-- [ ] iOS share extension for the same "Share to OwnNotes" flow (needs an
-      extension target and App Group).
+- [ ] iOS App Group `group.com.nkshub.nextcloudnotes` and the ShareExtension
+      bundle id must be registered in the Apple developer portal before a
+      signed device/TestFlight build (simulator works without it).
 - [ ] Remaining delivery slices from
       [implementation plan](docs/architecture/implementation-plan.md) and
       gates in [status](docs/acceptance/status.md).
 
 ## Done
 
+- 2026-10-19 iOS "Share → OwnNotes": ShareExtension target stores shared
+  text (plus the page URL from Safari) in the App Group; the app turns it
+  into a note when it comes to the front. Verified on the iPhone 17 Pro
+  simulator (iOS 26.2, the build Mac) against the Docker server: shared page reached
+  the server as a note with title and address. Target added by
+  `apps/mobile/ios/tool/add_share_extension.rb`.
+- 2026-10-19 Deleting notes (`d8df51f`): delete button with confirmation in
+  the editor; an uploaded note is first re-read, so a version changed
+  elsewhere comes back instead of being lost; notes deleted on the server
+  disappear after the next full sync unless they have local edits. Verified
+  on Galaxy S9 against the Docker server in both directions.
 - 2026-10-19 Offline edits no longer turn into conflicts. Before, a write
   attempted without network was treated as "maybe applied" and needed a
   decision; now a sync first checks that the server answers and otherwise

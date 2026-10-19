@@ -12,5 +12,18 @@ import UIKit
 
   func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
+    guard let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "ShareInbox")
+    else { return }
+    // Same channel as Android's MainActivity; text comes from ShareExtension.
+    FlutterMethodChannel(
+      name: "com.nkshub.nextcloudnotes/share",
+      binaryMessenger: registrar.messenger()
+    ).setMethodCallHandler { call, result in
+      if call.method == "takeShared" {
+        result(ShareInbox.take())
+      } else {
+        result(FlutterMethodNotImplemented)
+      }
+    }
   }
 }

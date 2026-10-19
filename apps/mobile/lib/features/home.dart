@@ -35,6 +35,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       onResume: () {
         final id = _shown;
         if (id != null) _sync(id, quiet: true);
+        // iOS: the share extension leaves text in the App Group meanwhile.
+        _takeShared();
       },
     );
     _share.setMethodCallHandler((_) => _takeShared());
@@ -57,7 +59,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     try {
       shared = await _share.invokeMapMethod<String, String>('takeShared');
     } on MissingPluginException {
-      return; // Only Android registers the share target.
+      return; // Only Android and iOS register the share target.
     }
     if (shared == null || !mounted) return;
     final text = shared['text'] ?? '';
