@@ -36,10 +36,15 @@ base, not newer local text. `sending → needsDecision` covers lost responses,
 conflicts, partial/nonmatching receipts and interrupted startup operations.
 No such operation is replayed automatically.
 
-The coordinator coalesces concurrent calls for one account. This is a foreground
-restriction, not a distributed lease. Do not enable another process/background
-runner against this database until receipt journaling and lease fencing from the
-full synchronization design are implemented.
+The coordinator coalesces concurrent calls for one account. Across processes
+(the app and the Android WorkManager worker) a per-account lease in
+`sync_leases` decides who may send: it is taken with one upsert statement,
+renewed before every request (lease 2 min, request timeout 30 s) and released
+at the end. A sync that cannot take the lease does nothing. Only the lease
+holder turns leftover `sending` operations into `interrupted_write`
+decisions, so a worker that is still running is never declared interrupted;
+a receipt arriving after that no longer matches `sending` and is ignored.
+A receipt journal for such late receipts is not implemented.
 
 Every accepted mutation receipt increments an account mutation epoch. Reads
 capture that epoch, and application rejects obsolete epochs. Dirty rows are not

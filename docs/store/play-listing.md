@@ -18,14 +18,18 @@ a zapisuje.
 Co umí:
 - přihlášení přes prohlížeč (Nextcloud Login Flow), heslo se ukládá do
   zabezpečeného úložiště telefonu
-- psaní bez připojení; změny se odešlou samy po návratu signálu
+- psaní bez připojení; změny se odešlou samy po návratu signálu, i když
+  je aplikace zavřená
 - editor zůstává v čistém Markdownu, náhled se zapíná jen tlačítkem
+- úkoly `- [ ]` se dají odškrtávat přímo v náhledu
 - když se stejná poznámka mezitím změnila jinde, aplikace ukáže obě verze
   a nechá vás vybrat, nic nepřepíše potichu
-- hledání, kategorie, oblíbené, mazání
+- hledání v seznamu i uvnitř poznámky, kategorie, oblíbené, řazení, mazání
 - obrázky z příloh poznámky v náhledu
-- „Sdílet → OwnNotes“ z jiných aplikací, například z Google Keep
-- import poznámek z Google Keep (zip z Google Takeout)
+- „Sdílet → OwnNotes“ z jiných aplikací do nové nebo existující poznámky
+- import poznámek z Google Keep (zip z Google Takeout), export do zipu
+- widget na ploše s posledními poznámkami
+- zámek aplikace otiskem prstu nebo PINem telefonu, zákaz snímků obrazovky
 - více účtů najednou
 
 Potřebujete server Nextcloud s nainstalovanou aplikací Notes.
@@ -44,14 +48,19 @@ plain Markdown files on your server; the app reads and writes them.
 What it does:
 - signs in through the browser (Nextcloud Login Flow) and keeps the app
   password in the phone's secure storage
-- works offline; changes upload on their own when the connection is back
+- works offline; changes upload on their own when the connection is back,
+  also while the app is closed
 - the editor stays raw Markdown, preview only with its button
+- `- [ ]` tasks can be ticked in preview
 - when the same note changed elsewhere, both versions are shown and you
   choose; nothing is overwritten silently
-- search, categories, favorites, delete
+- search in the list and inside a note, categories, favorites, sorting,
+  delete
 - images attached to a note in preview
-- "Share → OwnNotes" from other apps, such as Google Keep
-- import from Google Keep (Google Takeout zip)
+- "Share → OwnNotes" from other apps into a new or an existing note
+- import from Google Keep (Google Takeout zip), export as a zip
+- home-screen widget with the latest notes
+- app lock with fingerprint or the phone PIN, screenshot blocking
 - several accounts at once
 
 Requires a Nextcloud server with the Notes app.
