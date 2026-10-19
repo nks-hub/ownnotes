@@ -48,6 +48,17 @@ Everyday features the original app has:
 
 ## Done
 
+- 2026-10-19 Writing to one note from two devices at once, verified on
+  Galaxy S21 and Galaxy S9 against the Docker server:
+  - a rejected write (412) whose edits touch other lines than the other
+    device's is combined with the server version and sent again; only the
+    same lines changed differently still ask;
+  - an open note syncs every 4 s while the app is in front; what arrives is
+    combined with the text typed meanwhile, the cursor stays in place;
+  - tapping the note text on the S21 in portrait opened the keyboard and
+    closed it at once: the keyboard switched the editor to its scrolling
+    layout, which rebuilt the focused field.
+
 - 2026-10-19 Collisions on one note between two phones (Galaxy S9 and a
   Pixel emulator, both on the Docker server; the S21 was off the network):
   - both edited at once: the second phone never overwrote the server, it

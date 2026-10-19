@@ -521,12 +521,15 @@ void main() {
         NotesDatabase(NativeDatabase.memory()),
         Vault(),
         transport: () => MockClient((r) async {
+          // The server answers a stale If-Match with the note it holds.
+          var status = 200;
           if (r.method == 'PUT') {
-            if (r.headers['If-Match'] != '"$etag"') {
-              return http.Response('', 412);
+            if (r.headers['If-Match'] == '"$etag"') {
+              content = (jsonDecode(r.body) as Map)['content'] as String;
+              etag = '${etag}x';
+            } else {
+              status = 412;
             }
-            content = (jsonDecode(r.body) as Map)['content'] as String;
-            etag = 'etag3';
           }
           final note = {
             'id': 7,
@@ -540,7 +543,7 @@ void main() {
           };
           return http.Response(
             jsonEncode(r.url.pathSegments.last == 'notes' ? [note] : note),
-            200,
+            status,
             headers: {'content-type': 'application/json'},
           );
         }),
@@ -562,6 +565,14 @@ void main() {
         await tester.pump();
       }
     });
+
+    // The editor's own sync runs on its timer, in test time.
+    Future<void> live() async {
+      for (var i = 0; i < 10; i++) {
+        await tester.pump(const Duration(seconds: 1));
+        await settle();
+      }
+    }
 
     await tester.pumpWidget(
       ProviderScope(
@@ -587,9 +598,26 @@ void main() {
     await tester.enterText(field, '# original\nfrom the other phone\nand me');
     await tester.pump(const Duration(milliseconds: 400));
     await settle();
+    // The open editor uploads by itself.
+    await live();
+    expect(content, '# original\nfrom the other phone\nand me');
+
+    // Both write at once: a first line here, a last line on the other phone.
+    content = '$content\ntheirs';
+    etag = 'other';
+    await tester.enterText(
+      field,
+      'mine\n# original\nfrom the other phone\nand me',
+    );
+    await tester.pump(const Duration(milliseconds: 400));
+    await settle();
+    await live();
+    const both = 'mine\n# original\nfrom the other phone\nand me\ntheirs';
+    expect(content, both);
+    expect(tester.widget<TextField>(field).controller!.text, both);
     await tester.pageBack();
     await settle();
-    expect(content, '# original\nfrom the other phone\nand me');
+    expect(content, both);
     await tester.pumpWidget(const SizedBox());
     await tester.pumpAndSettle();
   });

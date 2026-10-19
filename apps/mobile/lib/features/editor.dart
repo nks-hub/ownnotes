@@ -140,40 +140,86 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
     _category = TextEditingController(text: widget.note.category);
     _revision = widget.note.revision;
     _favorite = widget.note.favorite;
+    _saved = widget.note;
     _pulled = ref
         .read(runtimeProvider)
         .database
         .watchNotes(widget.note.accountId)
         .listen(_takePulled);
+    // Another device (or account) writing to the same note sees this one's
+    // text within seconds and the other way round.
+    _live = Timer.periodic(const Duration(seconds: 4), (_) {
+      final state = WidgetsBinding.instance.lifecycleState;
+      if (state != null && state != AppLifecycleState.resumed) return;
+      ref
+          .read(runtimeProvider)
+          .sync
+          .sync(widget.note.accountId)
+          .catchError((Object _) {});
+    });
   }
 
   StreamSubscription<List<LocalNote>>? _pulled;
+  Timer? _live;
 
-  /// A sync may bring a newer server version while the note is open, e.g.
-  /// edited on another phone. Without local edits the editor takes it, so
-  /// the next keystroke does not start from the old text.
+  /// The note as last saved here or taken from the database.
+  late LocalNote _saved;
+
   void _takePulled(List<LocalNote> notes) {
     final note = notes.where((n) => n.id == widget.note.id).firstOrNull;
-    if (note == null ||
-        note.revision <= _revision ||
-        note.syncState != 'clean' ||
-        _dirty ||
-        !mounted) {
-      return;
-    }
-    final cursor = _text.selection;
+    if (note == null || note.revision <= _revision || !mounted) return;
+    _adopt(note);
+  }
+
+  /// A sync changed the note while it is open: a version from another
+  /// device, or that version combined with the text saved here. Whatever
+  /// was typed since the last save is combined with it as well.
+  void _adopt(LocalNote note) {
+    String keep(String saved, String mine, String theirs) =>
+        mine == saved ? theirs : mine;
+    final title = keep(_saved.title, _title.text, note.title);
+    final category = keep(_saved.category, _category.text, note.category);
+    final old = _text.text;
+    final content =
+        mergeThreeWay(_saved.content, old, note.content) ??
+        mergeVersions(old, note.content);
     setState(() {
       _revision = note.revision;
-      _favorite = note.favorite;
-      _title.text = note.title;
-      _category.text = note.category;
-      _text.text = note.content;
-      if (cursor.isValid) {
-        _text.selection = TextSelection.collapsed(
-          offset: cursor.extentOffset.clamp(0, note.content.length),
+      _saved = note;
+      if (!_dirty) _favorite = note.favorite;
+      if (_title.text != title) _title.text = title;
+      if (_category.text != category) _category.text = category;
+      if (old != content) {
+        // The cursor stays at its text: shifted by what changed before it.
+        var same = 0;
+        while (same < old.length &&
+            same < content.length &&
+            old.codeUnitAt(same) == content.codeUnitAt(same)) {
+          same++;
+        }
+        final at = _text.selection.extentOffset;
+        _text.value = TextEditingValue(
+          text: content,
+          selection: TextSelection.collapsed(
+            offset: at <= same
+                ? at
+                : (at + content.length - old.length).clamp(
+                    same,
+                    content.length,
+                  ),
+          ),
         );
       }
+      _dirty =
+          title != note.title ||
+          content != note.content ||
+          category != note.category ||
+          _favorite != note.favorite;
     });
+    if (_dirty) {
+      _debounce?.cancel();
+      _debounce = Timer(const Duration(milliseconds: 350), _save);
+    }
   }
 
   @override
@@ -211,6 +257,13 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
           category: category,
           favorite: favorite,
         );
+        _saved = _saved.copyWith(
+          title: title,
+          content: content,
+          category: category,
+          favorite: favorite,
+          revision: _revision,
+        );
         if (mounted) {
           setState(() {
             _failed = false;
@@ -221,6 +274,17 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
                 _favorite != favorite;
           });
         }
+      } on StateError catch (e) {
+        // A sync changed the note just now; combine and save again.
+        final note = e.message == 'local_revision_changed'
+            ? await db.note(widget.note.accountId, widget.note.id)
+            : null;
+        if (!mounted) return;
+        if (note != null && note.revision > _revision) {
+          _adopt(note);
+        } else {
+          setState(() => _failed = true);
+        }
       } catch (_) {
         if (mounted) setState(() => _failed = true);
       }
@@ -230,6 +294,8 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
 
   Future<void> _leave() async {
     await _save();
+    // A sync may have combined a version from another device meanwhile.
+    if (_dirty && !_failed) await _save();
     if (!mounted || _failed || _dirty) return;
     // A new note left empty would reach the server as "New note".
     if (widget.note.remoteId == null &&
@@ -294,6 +360,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _pulled?.cancel();
+    _live?.cancel();
     _debounce?.cancel();
     _title.dispose();
     _text.dispose();
