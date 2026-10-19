@@ -3,6 +3,7 @@ import 'package:drift/drift.dart';
 import 'package:notes_protocol/notes_protocol.dart';
 import 'package:uuid/uuid.dart';
 import 'database.dart';
+import 'recovery.dart';
 
 /// One coordinator per process (the app, a background worker). They share
 /// the database and take turns through a per-account lease, renewed before
@@ -220,7 +221,11 @@ final class SyncCoordinator {
     }
   }
 
-  Future<void> _push(NotesClient client, LocalNote selected) async {
+  Future<void> _push(
+    NotesClient client,
+    LocalNote selected, {
+    bool retry = true,
+  }) async {
     final operation = await database.transaction(() async {
       final current = await database.note(selected.accountId, selected.id);
       if (current == null || current.syncState != 'draft') return null;
@@ -332,7 +337,12 @@ final class SyncCoordinator {
         );
       }
       await _receipt(operation, result, intent);
-    } on NoteConflict {
+    } on NoteConflict catch (e) {
+      // The server answers 412 with the note it holds now.
+      if (await _rebase(operation, e.remote)) {
+        if (retry) await _push(client, selected, retry: false);
+        return;
+      }
       await _decision(operation, 'remote_conflict');
     } catch (e) {
       // Even an HTTP error can follow a partially applied mutation.
@@ -342,6 +352,82 @@ final class SyncCoordinator {
       }
       await _decision(operation, 'write_outcome_unknown');
     }
+  }
+
+  /// Another device (or account) changed the note since this one read it.
+  /// When the two edits touch different lines, they are combined onto the
+  /// server version and queued again; the same lines changed differently
+  /// still wait for a decision.
+  Future<bool> _rebase(Operation operation, NoteRecord remote) async {
+    if (remote is! RemoteNote || remote.readonly) return false;
+    final read = remote;
+    return database.transaction(() async {
+      final live = await (database.select(
+        database.operations,
+      )..where((o) => o.id.equals(operation.id))).getSingleOrNull();
+      final current = await database.note(
+        operation.accountId,
+        operation.noteId,
+      );
+      if (live?.state != 'sending' ||
+          current == null ||
+          current.remoteId != read.id) {
+        return false;
+      }
+      String? pick(String? base, String local, String remote) =>
+          local == remote || remote == base
+          ? local
+          : local == base
+          ? remote
+          : null;
+      // An empty title keeps the server's file name.
+      final title = pick(
+        current.baseTitle,
+        current.title.trim().isEmpty ? current.baseTitle ?? '' : current.title,
+        read.title,
+      );
+      final category = pick(
+        current.baseCategory,
+        current.category,
+        read.category,
+      );
+      final content = mergeThreeWay(
+        current.baseContent ?? '',
+        current.content,
+        read.content,
+      );
+      if (title == null || category == null || content == null) return false;
+      await (database.update(
+        database.operations,
+      )..where((o) => o.id.equals(operation.id))).write(
+        const OperationsCompanion(
+          state: Value('dismissed'),
+          errorCode: Value('merged'),
+        ),
+      );
+      await (database.update(
+        database.localNotes,
+      )..where((n) => n.id.equals(current.id))).write(
+        LocalNotesCompanion(
+          title: Value(title),
+          content: Value(content),
+          category: Value(category),
+          favorite: Value(
+            current.favorite == current.baseFavorite
+                ? read.favorite
+                : current.favorite,
+          ),
+          etag: Value(read.etag),
+          baseTitle: Value(read.title),
+          baseContent: Value(read.content),
+          baseCategory: Value(read.category),
+          baseFavorite: Value(read.favorite),
+          revision: Value(current.revision + 1),
+          syncState: const Value('draft'),
+        ),
+      );
+      return true;
+    });
   }
 
   /// After a failed update a fresh read shows what the server holds. The old

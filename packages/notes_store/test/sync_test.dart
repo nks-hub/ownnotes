@@ -169,6 +169,65 @@ void main() {
     expect(puts.single.containsKey('title'), isFalse);
     expect((await db.note('a', untitled))!.syncState, 'clean');
   });
+  group('edited on two devices at once', () {
+    Future<LocalNote> edited(String content) async {
+      await db.markDeleted('a', id);
+      await db.applyPull('a', 0, [
+        parseNote({...remote(70), 'content': 'one\ntwo\nthree'}),
+      ]);
+      final note = await (db.select(
+        db.localNotes,
+      )..where((n) => n.remoteId.equals(70))).getSingle();
+      await db.saveDraft(
+        accountId: 'a',
+        id: note.id,
+        revision: note.revision,
+        title: 'Title',
+        content: content,
+        category: '',
+        favorite: false,
+      );
+      return note;
+    }
+
+    Future<List<String>> run(String server) async {
+      var stored = {...remote(70), 'etag': 'etag2', 'content': server};
+      final puts = <String>[];
+      await coordinator((r) async {
+        if (r.method == 'PUT') {
+          puts.add(r.headers['If-Match']!);
+          if (r.headers['If-Match'] != '"${stored['etag']}"') {
+            return http.Response(
+              jsonEncode(stored),
+              412,
+              headers: {'content-type': 'application/json'},
+            );
+          }
+          final sent = jsonDecode(r.body) as Map<String, Object?>;
+          stored = {...stored, 'etag': 'etag3', 'content': sent['content']!};
+          return response(stored);
+        }
+        return response(r.url.pathSegments.last == 'notes' ? [stored] : stored);
+      }).sync('a');
+      return puts;
+    }
+
+    test('different lines are combined and sent again', () async {
+      final note = await edited('ONE\ntwo\nthree');
+      expect(await run('one\ntwo\nTHREE\nfour'), ['"etag1"', '"etag2"']);
+      final stored = (await db.note('a', note.id))!;
+      expect(stored.content, 'ONE\ntwo\nTHREE\nfour');
+      expect(stored.syncState, 'clean');
+    });
+
+    test('the same line changed on both still asks', () async {
+      final note = await edited('ONE\ntwo\nthree');
+      expect(await run('One\ntwo\nthree'), ['"etag1"']);
+      final stored = (await db.note('a', note.id))!;
+      expect(stored.content, 'ONE\ntwo\nthree');
+      expect(stored.syncState, 'needsDecision');
+    });
+  });
   group('rename', () {
     Future<LocalNote> edited(String content) async {
       await db.markDeleted('a', id);

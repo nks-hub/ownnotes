@@ -81,6 +81,51 @@ void main() {
     expect(result.etag, 'fresh');
     expect(result.syncState, 'draft');
   });
+  test('three-way merge combines edits of different lines', () {
+    const base = 'title\n\none\ntwo\nthree';
+    // Different lines changed on each side.
+    expect(
+      mergeThreeWay(
+        base,
+        'title\n\nONE\ntwo\nthree',
+        'title\n\none\ntwo\nTHREE',
+      ),
+      'title\n\nONE\ntwo\nTHREE',
+    );
+    // Both appended at the end: both kept, local first.
+    expect(
+      mergeThreeWay(base, '$base\nmine', '$base\ntheirs'),
+      '$base\nmine\ntheirs',
+    );
+    // The same line added on both sides appears once.
+    expect(mergeThreeWay(base, '$base\nsame', '$base\nsame'), '$base\nsame');
+    // One side deleted a line the other did not touch.
+    expect(
+      mergeThreeWay(base, 'title\n\none\nthree', '$base\nnew'),
+      'title\n\none\nthree\nnew',
+    );
+    // An insertion next to a changed line.
+    expect(
+      mergeThreeWay(
+        base,
+        'title\n\nONE\ntwo\nthree',
+        'title\n\none\nnew\ntwo\nthree',
+      ),
+      'title\n\nONE\nnew\ntwo\nthree',
+    );
+    // The same line changed differently cannot be merged.
+    expect(
+      mergeThreeWay(base, 'title\n\nA\ntwo\nthree', 'title\n\nB\ntwo\nthree'),
+      isNull,
+    );
+    // An insertion inside a range the other side replaced.
+    expect(
+      mergeThreeWay(base, 'title\n\nX\nthree', 'title\n\none\nnew\ntwo\nthree'),
+      isNull,
+    );
+    expect(mergeThreeWay(base, base, 'changed'), 'changed');
+    expect(mergeThreeWay(base, 'changed', base), 'changed');
+  });
   test('stale decision cannot discard newer draft', () async {
     await db.saveDraft(
       accountId: 'a',
