@@ -547,6 +547,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Where should the shared text go?'**
   String get shareTo;
+
+  /// No description provided for @remoteDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'This note was deleted on the server meanwhile. The text on this phone is kept.'**
+  String get remoteDeleted;
+
+  /// No description provided for @uploadAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload it to the server again'**
+  String get uploadAgain;
+
+  /// No description provided for @deleteHere.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete on this phone too'**
+  String get deleteHere;
+
+  /// No description provided for @mergeBoth.
+  ///
+  /// In en, this message translates to:
+  /// **'Combine both versions'**
+  String get mergeBoth;
 }
 
 class _AppLocalizationsDelegate

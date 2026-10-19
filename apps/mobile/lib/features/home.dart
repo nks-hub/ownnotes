@@ -582,6 +582,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   : n.favorite
                   ? Icons.star
                   : Icons.description_outlined,
+              semanticLabel: n.syncState == 'needsDecision' ? l.resolve : null,
             ),
             trailing: n.syncState == 'clean'
                 ? null

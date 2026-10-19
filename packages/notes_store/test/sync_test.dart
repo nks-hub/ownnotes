@@ -454,6 +454,23 @@ void main() {
       }).sync('a');
       expect((await db.note('a', note.id))!.syncState, 'needsDecision');
     });
+
+    test('a note deleted on another phone keeps the local text', () async {
+      final note = await edited();
+      await coordinator((r) async {
+        if (r.method == 'PUT' || r.url.path.endsWith('/60')) {
+          return http.Response('', 404);
+        }
+        return response(<Object>[]);
+      }).sync('a');
+      final stored = (await db.note('a', note.id))!;
+      expect(stored.syncState, 'needsDecision');
+      expect(stored.content, 'changed');
+      final operation = await (db.select(
+        db.operations,
+      )..where((o) => o.noteId.equals(note.id))).getSingle();
+      expect(operation.errorCode, 'remote_deleted');
+    });
   });
   test('offline edits stay drafts instead of becoming decisions', () async {
     var online = false;

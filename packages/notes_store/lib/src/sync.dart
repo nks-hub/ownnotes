@@ -357,6 +357,11 @@ final class SyncCoordinator {
     final NoteReadResult read;
     try {
       read = await client.get(intent['remoteId']! as int);
+    } on NotesHttpException catch (e) {
+      // Deleted on another device meanwhile; the local text stays.
+      if (e.statusCode != 404) return false;
+      await _decision(operation, 'remote_deleted');
+      return true;
     } catch (_) {
       return false;
     }

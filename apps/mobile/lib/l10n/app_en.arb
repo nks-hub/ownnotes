@@ -94,5 +94,9 @@
   "findInNote": "Find in note",
   "findNext": "Next match",
   "notFound": "Not found",
-  "shareTo": "Where should the shared text go?"
+  "shareTo": "Where should the shared text go?",
+  "remoteDeleted": "This note was deleted on the server meanwhile. The text on this phone is kept.",
+  "uploadAgain": "Upload it to the server again",
+  "deleteHere": "Delete on this phone too",
+  "mergeBoth": "Combine both versions"
 }

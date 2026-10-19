@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -506,6 +507,167 @@ void main() {
       final db = runtime.database;
       final stored = await db.select(db.localNotes).getSingle();
       expect(stored.syncState, 'clean');
+    });
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
+  });
+  testWidgets('an open note takes a change made on another phone', (
+    tester,
+  ) async {
+    var etag = 'etag1';
+    var content = '# original';
+    final runtime = (await tester.runAsync(
+      () async => AppRuntime(
+        NotesDatabase(NativeDatabase.memory()),
+        Vault(),
+        transport: () => MockClient((r) async {
+          if (r.method == 'PUT') {
+            if (r.headers['If-Match'] != '"$etag"') {
+              return http.Response('', 412);
+            }
+            content = (jsonDecode(r.body) as Map)['content'] as String;
+            etag = 'etag3';
+          }
+          final note = {
+            'id': 7,
+            'etag': etag,
+            'title': 'Shared',
+            'content': content,
+            'category': '',
+            'favorite': false,
+            'readonly': false,
+            'modified': 10,
+          };
+          return http.Response(
+            jsonEncode(r.url.pathSegments.last == 'notes' ? [note] : note),
+            200,
+            headers: {'content-type': 'application/json'},
+          );
+        }),
+      ),
+    ))!;
+    addTearDown(runtime.close);
+    final accountId = (await tester.runAsync(
+      () => runtime.accounts.add(
+        LoginCredentials(
+          server: ServerBase.parse('https://cloud.test'),
+          loginName: 'test',
+          appPassword: 'secret',
+        ),
+      ),
+    ))!;
+    Future<void> settle() => tester.runAsync(() async {
+      for (var i = 0; i < 20; i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+        await tester.pump();
+      }
+    });
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [runtimeProvider.overrideWithValue(runtime)],
+        child: const OwnNotesApp(),
+      ),
+    );
+    await settle();
+    await tester.tap(find.text('Shared'));
+    await settle();
+
+    // The other phone saves while this editor is open, then a sync runs.
+    content = '# original\nfrom the other phone';
+    etag = 'etag2';
+    await tester.runAsync(() => runtime.sync.sync(accountId));
+    await settle();
+    final field = find.byWidgetPredicate((w) => w is TextField && w.expands);
+    expect(
+      tester.widget<TextField>(field).controller!.text,
+      '# original\nfrom the other phone',
+    );
+
+    await tester.enterText(field, '# original\nfrom the other phone\nand me');
+    await tester.pump(const Duration(milliseconds: 400));
+    await settle();
+    await tester.pageBack();
+    await settle();
+    expect(content, '# original\nfrom the other phone\nand me');
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
+  });
+  testWidgets('a note deleted on another phone can be deleted here too', (
+    tester,
+  ) async {
+    final requests = <String>[];
+    final runtime = (await tester.runAsync(
+      () async => AppRuntime(
+        NotesDatabase(NativeDatabase.memory()),
+        Vault(),
+        transport: () => MockClient((r) async {
+          requests.add('${r.method} ${r.url.pathSegments.last}');
+          if (r.url.pathSegments.last == 'notes') {
+            return http.Response(
+              '[]',
+              200,
+              headers: {'content-type': 'application/json'},
+            );
+          }
+          return http.Response('', 404);
+        }),
+      ),
+    ))!;
+    addTearDown(runtime.close);
+    await tester.runAsync(() async {
+      final accountId = await runtime.accounts.add(
+        LoginCredentials(
+          server: ServerBase.parse('https://cloud.test'),
+          loginName: 'test',
+          appPassword: 'secret',
+        ),
+      );
+      final db = runtime.database;
+      await db
+          .into(db.localNotes)
+          .insert(
+            LocalNotesCompanion.insert(
+              id: 'n1',
+              accountId: accountId,
+              title: 'Gone',
+              content: 'kept text',
+              remoteId: const Value(7),
+              etag: const Value('e1'),
+              syncState: const Value('needsDecision'),
+              updatedAt: 1,
+            ),
+          );
+    });
+    Future<void> settle() => tester.runAsync(() async {
+      for (var i = 0; i < 20; i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+        await tester.pump();
+      }
+    });
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [runtimeProvider.overrideWithValue(runtime)],
+        child: const OwnNotesApp(),
+      ),
+    );
+    await settle();
+    await tester.tap(find.text('Gone'));
+    await settle();
+    await tester.tap(find.text('Compare server version'));
+    await settle();
+    expect(find.textContaining('deleted on the server'), findsOneWidget);
+    await tester.tap(find.text('Delete on this phone too'));
+    await settle();
+    await settle();
+
+    // The delete reads the note first; 404 means there is nothing to delete.
+    expect(requests.where((r) => r == 'GET 7'), hasLength(2));
+    expect(find.text('Gone'), findsNothing);
+    await tester.runAsync(() async {
+      final db = runtime.database;
+      expect(await db.select(db.localNotes).get(), isEmpty);
     });
     await tester.pumpWidget(const SizedBox());
     await tester.pumpAndSettle();

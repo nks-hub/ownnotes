@@ -260,4 +260,17 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get shareTo => 'Where should the shared text go?';
+
+  @override
+  String get remoteDeleted =>
+      'This note was deleted on the server meanwhile. The text on this phone is kept.';
+
+  @override
+  String get uploadAgain => 'Upload it to the server again';
+
+  @override
+  String get deleteHere => 'Delete on this phone too';
+
+  @override
+  String get mergeBoth => 'Combine both versions';
 }

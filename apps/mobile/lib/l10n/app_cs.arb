@@ -74,5 +74,9 @@
   "findInNote": "Hledat v poznámce",
   "findNext": "Další výskyt",
   "notFound": "Nenalezeno",
-  "shareTo": "Kam uložit sdílený text?"
+  "shareTo": "Kam uložit sdílený text?",
+  "remoteDeleted": "Na serveru tuto poznámku mezitím někdo smazal. Text v telefonu zůstal.",
+  "uploadAgain": "Nahrát znovu na server",
+  "deleteHere": "Smazat i v telefonu",
+  "mergeBoth": "Spojit obě verze"
 }

@@ -54,6 +54,33 @@ void main() {
       expect(await db.readEpoch('a'), 1);
     },
   );
+  test('merged versions keep the lines of both phones', () async {
+    expect(
+      mergeVersions(
+        'List\n\nmilk\nbread\nS9 line\n',
+        'List\n\nmilk\nbread\nEMU line\n',
+      ),
+      'List\n\nmilk\nbread\nS9 line\nEMU line\n',
+    );
+    expect(mergeVersions('a\nb\nc', 'a\nX\nc'), 'a\nb\nX\nc');
+    // Seen on two phones: each added a line, the server also had a line
+    // this phone had not pulled yet; it stays in its place.
+    expect(
+      mergeVersions('a\nb\nmine', 'a\ntheirs earlier\nb\ntheirs'),
+      'a\ntheirs earlier\nb\nmine\ntheirs',
+    );
+    expect(mergeVersions('same', 'same'), 'same');
+    await NoteRecovery(db).useRemote(
+      expected: note,
+      remote: remote,
+      keepLocal: true,
+      content: mergeVersions(note.content, remote.content),
+    );
+    final result = (await db.note('a', note.id))!;
+    expect(result.content, 'local\nserver');
+    expect(result.etag, 'fresh');
+    expect(result.syncState, 'draft');
+  });
   test('stale decision cannot discard newer draft', () async {
     await db.saveDraft(
       accountId: 'a',
@@ -84,6 +111,11 @@ void main() {
       expect(copy.syncState, 'draft');
       expect((await db.watchNotes('a').first).map((n) => n.id), [id]);
       await expectLater(NoteRecovery(db).copyAsNew(note), throwsStateError);
+      // The server note comes back on the next pull.
+      await db.applyPull('a', await db.readEpoch('a'), [remote]);
+      final notes = await db.watchNotes('a').first;
+      expect(notes.map((n) => n.content), containsAll(['local', 'server']));
+      expect((await db.note('a', note.id))!.content, 'local');
     },
   );
 }

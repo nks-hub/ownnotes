@@ -17,6 +17,7 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
   RemoteNote? _remote;
   bool _busy = false;
   bool _failed = false;
+  bool _gone = false;
   Future<void> _read() async {
     setState(() {
       _busy = true;
@@ -30,6 +31,10 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
       final remote = await client.get(widget.note.remoteId!);
       if (remote is! RemoteNote) throw StateError('remote_unavailable');
       if (mounted) setState(() => _remote = remote);
+    } on NotesHttpException catch (e) {
+      if (mounted) {
+        setState(() => e.statusCode == 404 ? _gone = true : _failed = true);
+      }
     } catch (_) {
       if (mounted) setState(() => _failed = true);
     } finally {
@@ -54,11 +59,41 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
 
   Future<void> _copy() async {
     final l = AppLocalizations.of(context)!;
+    // Without a server note there is nothing to duplicate.
+    final confirmed =
+        _gone ||
+        await showDialog<bool>(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: Text(l.newCopy),
+                content: Text(l.copyWarning),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, false),
+                    child: Text(l.cancel),
+                  ),
+                  FilledButton(
+                    onPressed: () => Navigator.pop(context, true),
+                    child: Text(l.confirm),
+                  ),
+                ],
+              ),
+            ) ==
+            true;
+    if (!mounted || !confirmed) return;
+    await _apply((recovery) async {
+      await recovery.copyAsNew(widget.note);
+    });
+  }
+
+  Future<void> _merge(RemoteNote remote) async {
+    final l = AppLocalizations.of(context)!;
+    final merged = mergeVersions(widget.note.content, remote.content);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(l.newCopy),
-        content: Text(l.copyWarning),
+        title: Text(l.mergeBoth),
+        content: SingleChildScrollView(child: SelectableText(merged)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -72,9 +107,14 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
       ),
     );
     if (!mounted || confirmed != true) return;
-    await _apply((recovery) async {
-      await recovery.copyAsNew(widget.note);
-    });
+    await _apply(
+      (r) => r.useRemote(
+        expected: widget.note,
+        remote: remote,
+        keepLocal: true,
+        content: merged,
+      ),
+    );
   }
 
   @override
@@ -99,7 +139,24 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
                   Clipboard.setData(ClipboardData(text: widget.note.content)),
               child: Text(l.copyMarkdown),
             ),
-            if (widget.note.remoteId != null)
+            if (_gone) ...[
+              Text(l.remoteDeleted),
+              FilledButton(
+                onPressed: _busy ? null : _copy,
+                child: Text(l.uploadAgain),
+              ),
+              OutlinedButton(
+                onPressed: _busy
+                    ? null
+                    : () => _apply(
+                        (r) => r.database.markDeleted(
+                          widget.note.accountId,
+                          widget.note.id,
+                        ),
+                      ),
+                child: Text(l.deleteHere),
+              ),
+            ] else if (widget.note.remoteId != null)
               OutlinedButton(
                 onPressed: _busy ? null : _read,
                 child: Text(l.readServer),
@@ -136,11 +193,18 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
                       ),
                 child: Text(l.keepLocal),
               ),
+              OutlinedButton(
+                onPressed: _busy || remote.readonly
+                    ? null
+                    : () => _merge(remote),
+                child: Text(l.mergeBoth),
+              ),
             ],
-            OutlinedButton(
-              onPressed: _busy ? null : _copy,
-              child: Text(l.newCopy),
-            ),
+            if (!_gone)
+              OutlinedButton(
+                onPressed: _busy ? null : _copy,
+                child: Text(l.newCopy),
+              ),
           ],
         ),
       ),

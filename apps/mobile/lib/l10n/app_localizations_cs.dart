@@ -261,4 +261,17 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get shareTo => 'Kam uložit sdílený text?';
+
+  @override
+  String get remoteDeleted =>
+      'Na serveru tuto poznámku mezitím někdo smazal. Text v telefonu zůstal.';
+
+  @override
+  String get uploadAgain => 'Nahrát znovu na server';
+
+  @override
+  String get deleteHere => 'Smazat i v telefonu';
+
+  @override
+  String get mergeBoth => 'Spojit obě verze';
 }

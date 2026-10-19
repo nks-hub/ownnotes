@@ -140,6 +140,40 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
     _category = TextEditingController(text: widget.note.category);
     _revision = widget.note.revision;
     _favorite = widget.note.favorite;
+    _pulled = ref
+        .read(runtimeProvider)
+        .database
+        .watchNotes(widget.note.accountId)
+        .listen(_takePulled);
+  }
+
+  StreamSubscription<List<LocalNote>>? _pulled;
+
+  /// A sync may bring a newer server version while the note is open, e.g.
+  /// edited on another phone. Without local edits the editor takes it, so
+  /// the next keystroke does not start from the old text.
+  void _takePulled(List<LocalNote> notes) {
+    final note = notes.where((n) => n.id == widget.note.id).firstOrNull;
+    if (note == null ||
+        note.revision <= _revision ||
+        note.syncState != 'clean' ||
+        _dirty ||
+        !mounted) {
+      return;
+    }
+    final cursor = _text.selection;
+    setState(() {
+      _revision = note.revision;
+      _favorite = note.favorite;
+      _title.text = note.title;
+      _category.text = note.category;
+      _text.text = note.content;
+      if (cursor.isValid) {
+        _text.selection = TextSelection.collapsed(
+          offset: cursor.extentOffset.clamp(0, note.content.length),
+        );
+      }
+    });
   }
 
   @override
@@ -259,6 +293,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _pulled?.cancel();
     _debounce?.cancel();
     _title.dispose();
     _text.dispose();

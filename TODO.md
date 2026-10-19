@@ -48,6 +48,22 @@ Everyday features the original app has:
 
 ## Done
 
+- 2026-10-19 Collisions on one note between two phones (Galaxy S9 and a
+  Pixel emulator, both on the Docker server; the S21 was off the network):
+  - both edited at once: the second phone never overwrote the server, it
+    showed both versions; "keep local" reached the server and the other
+    phone;
+  - new "Combine both versions": a line-by-line merge keeps the lines of
+    both phones in their order; the result is shown before it is saved;
+  - an open note now takes a version changed on the other phone when it has
+    no local edits (before, the next keystroke started from the old text);
+  - "separate copy" left the original server note hidden on that phone for
+    good; the archived row now gives up the server id and the next pull
+    brings the server version back;
+  - a note edited offline and deleted on the other phone meanwhile: the
+    conflict screen says it was deleted and offers "upload again" or
+    "delete on this phone too" (before: "decision could not be applied").
+
 - 2026-10-19 Android background sync and home-screen widget, verified on
   Galaxy S9 (`bc8b14c`, `8e3d490` and the WorkManager commit):
   - a per-account lease in the database lets the app and the WorkManager
