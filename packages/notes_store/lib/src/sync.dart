@@ -72,9 +72,14 @@ final class SyncCoordinator {
               ))
               .get();
       if (open.isNotEmpty) return null;
+      // An empty title on a stored note means "keep the server's file name"
+      // (e.g. an editor opened before the CREATE receipt named the note).
+      final title = current.remoteId != null && current.title.isEmpty
+          ? current.baseTitle ?? ''
+          : current.title;
       final fields = <String, Object>{
-        if (current.remoteId == null || current.title != current.baseTitle)
-          'title': current.title,
+        if (current.remoteId == null || title != current.baseTitle)
+          'title': title,
         if (current.remoteId == null || current.content != current.baseContent)
           'content': current.content,
         if (current.remoteId == null ||
@@ -94,7 +99,7 @@ final class SyncCoordinator {
       final payload = jsonEncode({
         'remoteId': current.remoteId,
         'etag': current.etag,
-        'title': current.title,
+        'title': title,
         'content': current.content,
         'category': current.category,
         'favorite': current.favorite,
@@ -223,17 +228,23 @@ final class SyncCoordinator {
     )..where((a) => a.id.equals(account.id))).write(
       AccountsCompanion(mutationEpoch: Value(account.mutationEpoch + 1)),
     );
+    // The title is the server's file name: on CREATE it may fill an empty
+    // title or add "(2)" to a taken one. That is an accepted outcome.
+    final create = operation.kind == 'create';
     final matches =
         result is RemoteNote &&
-        result.title == intent['title'] &&
+        (create || result.title == intent['title']) &&
         result.content == intent['content'] &&
         result.category == intent['category'] &&
         result.favorite == intent['favorite'];
+    final adoptTitle =
+        create && result is RemoteNote && current.title == intent['title'];
     await (database.update(
       database.localNotes,
     )..where((n) => n.id.equals(current.id))).write(
       LocalNotesCompanion(
         remoteId: Value(result.id),
+        title: adoptTitle ? Value(result.title) : const Value.absent(),
         etag: result is RemoteNote ? Value(result.etag) : const Value.absent(),
         baseTitle: result is RemoteNote
             ? Value(result.title)
