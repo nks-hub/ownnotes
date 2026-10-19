@@ -28,6 +28,7 @@ switches to preview without the user asking.
 
 ## Done
 
+- 2026-10-19 Preview shows images attached to the note (`.attachments.<id>/...`) through the Notes attachment API with the account credentials (`74aee59`); remote http images stay placeholders. Verified on Galaxy S9 with a real attachment on the Docker server.
 - 2026-10-19 Renaming a note or changing its category no longer ends as a
   decision for notes without attachments (`234cbb7`); verified on Galaxy S9:
   the file moved to `/Notes/Test/Renamed on S9.md`. Notes that reference
