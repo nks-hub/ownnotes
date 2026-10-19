@@ -724,6 +724,62 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     await tester.pumpAndSettle();
   });
+  testWidgets('the keyboard opening keeps the note text focused', (
+    tester,
+  ) async {
+    // Galaxy S21 in portrait: with the keyboard up less than 400 points
+    // remain for the editor.
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 2.625;
+    addTearDown(tester.view.reset);
+    final runtime = (await tester.runAsync(
+      () async => AppRuntime(
+        NotesDatabase(NativeDatabase.memory()),
+        Vault(),
+        transport: () => MockClient(
+          (r) async => http.Response(
+            '[]',
+            200,
+            headers: {'content-type': 'application/json'},
+          ),
+        ),
+      ),
+    ))!;
+    addTearDown(runtime.close);
+    await tester.runAsync(
+      () => runtime.accounts.add(
+        LoginCredentials(
+          server: ServerBase.parse('https://cloud.test'),
+          loginName: 'test',
+          appPassword: 'secret',
+        ),
+      ),
+    );
+    Future<void> settle() => tester.runAsync(() async {
+      for (var i = 0; i < 20; i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+    });
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [runtimeProvider.overrideWithValue(runtime)],
+        child: const OwnNotesApp(),
+      ),
+    );
+    await settle();
+    await tester.tap(find.byTooltip('New note'));
+    await settle();
+    final text = find.widgetWithText(TextField, 'Markdown text');
+    await tester.tap(text);
+    await tester.pump();
+    tester.view.viewInsets = const FakeViewPadding(bottom: 1300);
+    await tester.pump();
+    expect(tester.widget<TextField>(text).focusNode!.hasFocus, isTrue);
+    expect(tester.testTextInput.isVisible, isTrue);
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
+  });
   test('task marks skip fenced code', () {
     const text = '- [ ] a\n```\n- [ ] code\n```\n1. [x] b';
     expect(taskMarks(text).map((i) => text[i]), [' ', 'x']);

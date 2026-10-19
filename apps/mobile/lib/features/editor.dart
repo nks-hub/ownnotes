@@ -306,6 +306,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
+    final keyboard = MediaQuery.viewInsetsOf(context).bottom;
     return PopScope(
       canPop: _allowPop,
       onPopInvokedWithResult: (didPop, _) {
@@ -362,11 +363,13 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
           ],
         ),
         body: SafeArea(
-          // A phone on its side with the keyboard up leaves too little height
-          // for a fixed layout; the editor then scrolls as a whole.
+          // A phone on its side leaves too little height for a fixed layout;
+          // the editor then scrolls as a whole. The keyboard does not count:
+          // switching layout when it opens rebuilds the focused field, which
+          // closes the keyboard again (seen on Galaxy S21 in portrait).
           child: LayoutBuilder(
             builder: (context, constraints) =>
-                _body(l, compact: constraints.maxHeight < 400),
+                _body(l, compact: constraints.maxHeight + keyboard < 400),
           ),
         ),
       ),
