@@ -21,17 +21,15 @@ switches to preview without the user asking.
       attachment upload exists (slice 10).
 - [ ] iOS share extension for the same "Share to OwnNotes" flow (needs an
       extension target and App Group).
-- [ ] Login screen: offer a restart when the browser flow fails on the server
-      side (seen on Samsung Internet: "State token missing" after the browser
-      session asked for a fresh login during grant).
-- [ ] Login screen: widget test for poll retry; needs injectable HTTP client
-      and URL launcher.
 - [ ] Remaining delivery slices from
       [implementation plan](docs/architecture/implementation-plan.md) and
       gates in [status](docs/acceptance/status.md).
 
 ## Done
 
+- 2026-10-19 Login screen: "Cancel" while waiting for the browser, so a flow
+  broken on the server side ("State token missing") can be restarted at once.
+  Widget tests cover the poll retry after a network failure and the cancel.
 - 2026-10-19 A new note without a title (or with a taken one) no longer ends
   as a conflict: the server names the file ("New note", "Title (2)") and the
   app adopts that name. Found on Galaxy S9, fixed in `157726d`.

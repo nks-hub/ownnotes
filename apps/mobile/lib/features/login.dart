@@ -6,23 +6,39 @@ import 'package:url_launcher/url_launcher.dart';
 import '../data/runtime.dart';
 import '../l10n/app_localizations.dart';
 
+Future<bool> _openBrowser(Uri uri) =>
+    launchUrl(uri, mode: LaunchMode.externalApplication);
+
 class LoginScreen extends ConsumerStatefulWidget {
-  const LoginScreen({super.key});
+  const LoginScreen({super.key, this.transport, this.openBrowser});
+
+  /// Test seams; production uses a fresh HTTP client and the system browser.
+  final http.Client? transport;
+  final Future<bool> Function(Uri)? openBrowser;
   @override
   ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _url = TextEditingController();
-  final _transport = http.Client();
+  late final _transport = widget.transport ?? http.Client();
   LoginSession? _session;
   bool _busy = false;
   bool _failed = false;
+  bool _cancelled = false;
   bool _saving = false;
+
+  /// Lets the user start over when the browser side broke (for example an
+  /// expired server session) instead of waiting for the flow to expire.
+  void _cancel() {
+    _cancelled = true;
+    _session?.cancel();
+  }
+
   @override
   void dispose() {
     _session?.cancel();
-    _transport.close();
+    if (widget.transport == null) _transport.close();
     _url.dispose();
     super.dispose();
   }
@@ -31,6 +47,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     setState(() {
       _busy = true;
       _failed = false;
+      _cancelled = false;
     });
     final runtime = ref.read(runtimeProvider);
     try {
@@ -44,10 +61,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         return;
       }
       _session = session;
-      if (!await launchUrl(
-        session.loginUri,
-        mode: LaunchMode.externalApplication,
-      )) {
+      if (!await (widget.openBrowser ?? _openBrowser)(session.loginUri)) {
         throw const LoginException('browser_unavailable');
       }
       while (mounted && !session.isClosed) {
@@ -71,7 +85,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       }
     } catch (_) {
       _session?.cancel();
-      if (mounted) setState(() => _failed = true);
+      if (mounted) setState(() => _failed = !_cancelled);
     } finally {
       if (mounted) {
         setState(() {
@@ -114,6 +128,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   if (_busy) ...[
                     const LinearProgressIndicator(),
                     Text(l.waitingLogin),
+                    if (!_saving)
+                      TextButton(onPressed: _cancel, child: Text(l.cancel)),
                   ],
                   if (_failed)
                     Text(
