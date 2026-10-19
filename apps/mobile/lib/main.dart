@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'core/telemetry.dart';
+import 'core/telemetry_bootstrap.dart';
 import 'data/runtime.dart';
 import 'features/home.dart';
 import 'l10n/app_localizations.dart';
 
-void main() {
-  WidgetsFlutterBinding.ensureInitialized();
-  runApp(const Startup());
-}
+Future<void> main() => runWithTelemetry(
+  config: TelemetryConfig.fromEnvironment(),
+  appBuilder: (observers) => Startup(observers: observers),
+);
 
 class Startup extends StatefulWidget {
-  const Startup({super.key});
+  const Startup({super.key, this.observers = const []});
+  final List<NavigatorObserver> observers;
   @override
   State<Startup> createState() => _StartupState();
 }
@@ -46,7 +49,7 @@ class _StartupState extends State<Startup> {
     if (runtime != null) {
       return ProviderScope(
         overrides: [runtimeProvider.overrideWithValue(runtime)],
-        child: const OwnNotesApp(),
+        child: OwnNotesApp(observers: widget.observers),
       );
     }
     return MaterialApp(
@@ -75,10 +78,14 @@ class _StartupState extends State<Startup> {
 }
 
 class OwnNotesApp extends StatelessWidget {
-  const OwnNotesApp({super.key});
+  const OwnNotesApp({super.key, this.observers = const []});
+
+  /// Route names only, never note ids or titles; see lib/core/telemetry.dart.
+  final List<NavigatorObserver> observers;
   @override
   Widget build(BuildContext context) => MaterialApp(
     title: 'OwnNotes',
+    navigatorObservers: observers,
     debugShowCheckedModeBanner: false,
     localizationsDelegates: AppLocalizations.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,

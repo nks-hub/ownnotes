@@ -68,6 +68,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Future<void> _edit(LocalNote note) async {
     await Navigator.of(context).push<void>(
       MaterialPageRoute(
+        settings: RouteSettings(
+          name: note.syncState == 'needsDecision' ? '/recovery' : '/note',
+        ),
         builder: (_) => note.syncState == 'needsDecision'
             ? RecoveryScreen(note: note)
             : EditorScreen(note: note),
@@ -122,7 +125,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               IconButton(
                 tooltip: l.addAccount,
                 onPressed: () => Navigator.of(context).push<void>(
-                  MaterialPageRoute(builder: (_) => const LoginScreen()),
+                  MaterialPageRoute(
+                    settings: const RouteSettings(name: '/login'),
+                    builder: (_) => const LoginScreen(),
+                  ),
                 ),
                 icon: const Icon(Icons.person_add_outlined),
               ),

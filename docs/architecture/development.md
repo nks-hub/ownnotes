@@ -67,6 +67,21 @@ Sentry owns error handling. Verify actual receipt of a synthetic event and the
 absence of sensitive markers. Define opt-out and truthful store disclosures.
 Do not reuse reference-app telemetry identifiers.
 
+Implementation: `apps/mobile/lib/core/telemetry.dart` (build-time config,
+scrubber, random installation id) and `telemetry_bootstrap.dart` (SDK start).
+Sentry gets crashes without request data, with URLs cut to `scheme://<host>`
+and credentials removed; tracing, screenshots and default PII are off. Rybbit
+gets route names only (`/note`, `/login`, `/recovery`), never note ids or
+titles, with its own error capture off. Build our telemetry-enabled app with:
+
+```bash
+cp apps/mobile/telemetry.env.example apps/mobile/telemetry.env  # fill in
+flutter build apk --dart-define-from-file=telemetry.env
+```
+
+`TELEMETRY_RELEASE_GATE=true` sends one `TelemetryReleaseGateError` after start
+to prove delivery before a release; keep it off for normal builds.
+
 ## Builds and release
 
 Use the Flutter version from `.flutter-version`; the mobile lockfile does not

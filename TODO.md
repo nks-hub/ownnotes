@@ -17,11 +17,6 @@ switches to preview without the user asking.
 
 ## Open
 
-- [ ] Telemetry like OwnTalk: integrate Sentry and Rybbit, create an OwnNotes
-      project on the self-hosted Sentry (Docker) and an OwnNotes site in
-      Rybbit, inject DSN/site ID at build time from ignored `telemetry.env`
-      (`--dart-define-from-file`), strip note content per
-      [development workflow](docs/architecture/development.md#telemetry).
 - [ ] Import from other note apps on Android: Google Keep and the system
       notes app (Samsung Notes). Keep has no public API for personal
       accounts; investigate Android share target ("Share to OwnNotes") and
@@ -39,6 +34,11 @@ switches to preview without the user asking.
 
 ## Done
 
+- 2026-10-19 Telemetry like OwnTalk: Sentry (own self-hosted project) and
+  Rybbit (own mobile site), configured only at build time from ignored
+  `apps/mobile/telemetry.env`. Verified on Galaxy S21: release-gate error
+  arrived in Sentry with only a random installation id; Rybbit received
+  `app_open` and route names `/`, `/note`.
 - 2026-10-19 Notes sync on their own: after login/start, after returning to
   the app and after leaving the editor (`400ce9e`). Before, an edit stayed
   local until the sync button was pressed. Verified on Galaxy S21 (Android
