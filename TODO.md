@@ -17,6 +17,49 @@ switches to preview without the user asking.
 
 ## Open
 
+### From the server and original-app analysis (2026-10-19)
+
+Sources: Notes 6.1.0 server code (routes, `Helper.php`, `NoteUtil.php`,
+`SettingsService.php`) and nextcloud/notes-android 35.1.0 with its issue
+tracker. The original app sends no `If-Match` (last write wins), saves the
+view mode per note, and can save an empty editor before the note has loaded.
+OwnNotes keeps avoiding all three. Never add: a rich-text WebView editor, a
+per-note remembered view mode, or honouring the server's `noteMode=preview`.
+
+Server behaviour the client must match:
+
+- [ ] A new note without a title is named from its first line, cleaned like
+      the server does (`* | / \ : " < > ?` removed, no leading dots, first
+      line, 100 characters). Today the server names it "New note".
+- [ ] A category the server cleans (`a//b/`, `:` in the name, leading dot) is
+      accepted like a server-chosen title, not shown as a conflict.
+- [ ] Renaming a note with attachments without changing its category needs
+      no decision: the file stays in the same folder, so `.attachments.<id>`
+      stays next to it.
+- [ ] An upload rejected by the server (403 read-only, 423 locked, 507 storage
+      full, 500) re-reads the note. If nothing was applied, the note stays
+      unsent with a reason and is retried, instead of becoming a decision.
+- [ ] Cheaper pulls: `pruneBefore` from the first chunk's `Last-Modified`,
+      unchanged notes arrive as id only.
+- [ ] Favorite can be toggled on a read-only note (the server allows it).
+
+Everyday features the original app has:
+
+- [ ] Tick checkboxes (`- [ ]`) in preview; the tick edits the raw Markdown.
+- [ ] Banner "N notes not sent" with the reason.
+- [ ] Sort: last modified / title A–Z.
+- [ ] Sync again when the network comes back while the app is open.
+- [ ] Share to an existing note (append) as well as a new one.
+- [ ] Editor: monospace font and text size.
+- [ ] Search inside the open note.
+- [ ] App lock (biometrics/device PIN) and blocking screenshots.
+- [ ] Remove an account from the device.
+- [ ] Export all notes of an account as a Markdown zip.
+- [ ] Background sync (periodic worker through the one coordinator).
+- [ ] Home-screen widget (note list, one note) and a "new note" shortcut.
+
+### Earlier
+
 - [ ] Create the app **OwnNotes** (`com.nkshub.nextcloudnotes`) in Google Play Console (web only, owner login). Texts, icon and data safety answers: [docs/store/play-listing.md](docs/store/play-listing.md). Then upload with `tool/play_upload.py` (draft status until the first publish).
 - [ ] Privacy policy URL for the Play listing (Sentry and Rybbit telemetry).
 - [ ] Keep import: images and audio from Takeout are skipped until

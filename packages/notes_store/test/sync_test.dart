@@ -91,29 +91,55 @@ void main() {
     expect(note.syncState, 'draft');
     expect(await db.applyPull('a', 0, [parseNote(remote(99))]), isFalse);
   });
+  test('titleFromContent follows the server', () {
+    expect(titleFromContent('\n\n# Shopping *list* #\nmilk'), 'Shopping list');
+    expect(titleFromContent('- [ ] buy: milk/eggs?'), '[ ] buy milkeggs');
+    expect(titleFromContent('..hidden\nx'), 'hidden');
+    expect(titleFromContent('a\tb'), 'a b');
+    expect(titleFromContent('č' * 120).runes.length, 100);
+    expect(titleFromContent('  \n '), '');
+  });
   test('CREATE accepts the file name the server chose', () async {
-    // Empty title becomes "New note"; a taken name gets a "(2)" suffix.
+    // A title from the first line, "New note" for an empty text and a
+    // "(2)" suffix for a taken name are all accepted.
     final untitled = await db.createDraft('a', content: 'text only');
+    final blank = await db.createDraft('a');
     final stored = <Map<String, Object>>[];
+    final titles = <Object?>[];
     final sync = coordinator((r) async {
       if (r.method != 'POST') return response(stored);
       final sent = jsonDecode(r.body) as Map<String, Object?>;
+      titles.add(sent['title']);
       final note = {
-        ...remote(sent['content'] == 'text only' ? 21 : 22),
-        'title': sent['title'] == '' ? 'New note' : 'Title (2)',
+        ...remote(
+          sent['content'] == 'text only'
+              ? 21
+              : sent['content'] == ''
+              ? 23
+              : 22,
+        ),
+        'title': sent['title'] == ''
+            ? 'New note'
+            : sent['title'] == 'text only'
+            ? 'text only'
+            : 'Title (2)',
         'content': sent['content']! as String,
       };
       stored.add(note);
       return response(note);
     });
     await sync.sync('a');
+    expect(titles, containsAll(['Title', 'text only', '']));
     final named = (await db.note('a', id))!;
     expect(named.syncState, 'clean');
     expect(named.title, 'Title (2)');
     final unnamed = (await db.note('a', untitled))!;
     expect(unnamed.syncState, 'clean');
-    expect(unnamed.title, 'New note');
-    expect(unnamed.baseTitle, 'New note');
+    expect(unnamed.title, 'text only');
+    expect(unnamed.baseTitle, 'text only');
+    final empty = (await db.note('a', blank))!;
+    expect(empty.syncState, 'clean');
+    expect(empty.title, 'New note');
 
     // An editor opened before the receipt still saves an empty title.
     await db.saveDraft(
@@ -129,7 +155,7 @@ void main() {
     final updated = {
       ...remote(21),
       'etag': 'etag2',
-      'title': 'New note',
+      'title': 'text only',
       'content': 'more text',
     };
     await coordinator((r) async {
@@ -194,6 +220,120 @@ void main() {
         return response([]);
       }).sync('a');
       expect(puts, 0);
+      expect((await db.note('a', note.id))!.syncState, 'needsDecision');
+    });
+
+    test('a rename keeps attachments in the same folder', () async {
+      final content = '![x](.attachments.50/x.png)';
+      final note = await edited(content);
+      await db.saveDraft(
+        accountId: 'a',
+        id: note.id,
+        revision: note.revision + 1,
+        title: 'Renamed',
+        content: content,
+        category: '',
+        favorite: false,
+      );
+      final renamed = {
+        ...remote(50),
+        'etag': 'etag2',
+        'title': 'Renamed',
+        'content': content,
+      };
+      final puts = <Map<String, Object?>>[];
+      await coordinator((r) async {
+        if (r.method == 'PUT') {
+          puts.add(jsonDecode(r.body) as Map<String, Object?>);
+          return response(renamed);
+        }
+        return response([renamed]);
+      }).sync('a');
+      expect(puts.single, {'title': 'Renamed'});
+      expect((await db.note('a', note.id))!.syncState, 'clean');
+    });
+
+    test('a category the server cleans is adopted', () async {
+      final note = await edited('plain');
+      final moved = {
+        ...remote(50),
+        'etag': 'etag2',
+        'title': 'Renamed',
+        'category': 'Work',
+        'content': 'plain',
+      };
+      await db.saveDraft(
+        accountId: 'a',
+        id: note.id,
+        revision: note.revision + 1,
+        title: 'Renamed',
+        content: 'plain',
+        category: 'Work//',
+        favorite: false,
+      );
+      await coordinator((r) async {
+        if (r.method == 'PUT') return response(moved);
+        return response([moved]);
+      }).sync('a');
+      final stored = (await db.note('a', note.id))!;
+      expect(stored.syncState, 'clean');
+      expect(stored.category, 'Work');
+    });
+  });
+
+  group('rejected update', () {
+    Future<LocalNote> edited() async {
+      await db.markDeleted('a', id);
+      await db.applyPull('a', 0, [parseNote(remote(60))]);
+      final note = await (db.select(
+        db.localNotes,
+      )..where((n) => n.remoteId.equals(60))).getSingle();
+      await db.saveDraft(
+        accountId: 'a',
+        id: note.id,
+        revision: note.revision,
+        title: 'Title',
+        content: 'changed',
+        category: '',
+        favorite: false,
+      );
+      return note;
+    }
+
+    test('a locked file leaves the note queued with a reason', () async {
+      final note = await edited();
+      final sync = coordinator((r) async {
+        if (r.method == 'PUT') {
+          return http.Response('{"errorType":"Exception"}', 423);
+        }
+        if (r.url.path.endsWith('/60')) return response(remote(60));
+        return response([remote(60)]);
+      });
+      await sync.sync('a');
+      final stored = (await db.note('a', note.id))!;
+      expect(stored.syncState, 'draft');
+      expect(stored.content, 'changed');
+      expect(sync.problem('a'), 'locked');
+    });
+
+    test('an update applied before the error is accepted', () async {
+      final note = await edited();
+      final applied = {...remote(60), 'etag': 'etag2', 'content': 'changed'};
+      await coordinator((r) async {
+        if (r.method == 'PUT') return http.Response('', 500);
+        if (r.url.path.endsWith('/60')) return response(applied);
+        return response([applied]);
+      }).sync('a');
+      expect((await db.note('a', note.id))!.syncState, 'clean');
+    });
+
+    test('a note that became read-only asks for a decision', () async {
+      final note = await edited();
+      await coordinator((r) async {
+        if (r.method == 'PUT') return http.Response('', 403);
+        final readonly = {...remote(60), 'readonly': true};
+        return response(r.url.path.endsWith('/60') ? readonly : [readonly]);
+      }).sync('a');
       expect((await db.note('a', note.id))!.syncState, 'needsDecision');
     });
   });

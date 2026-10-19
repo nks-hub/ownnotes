@@ -11,6 +11,11 @@ final class SyncCoordinator {
   final NotesDatabase database;
   final Future<NotesClient> Function(Account account) clientFor;
   final Map<String, Future<void>> _running = {};
+  final Map<String, String> _problems = {};
+
+  /// Why the last sync of [accountId] left notes unsent: `offline`, `auth`,
+  /// `locked`, `storage_full` or `server`; null when nothing went wrong.
+  String? problem(String accountId) => _problems[accountId];
 
   Future<void> sync(String accountId) {
     final existing = _running[accountId];
@@ -31,6 +36,24 @@ final class SyncCoordinator {
   });
 
   Future<void> _sync(String accountId) async {
+    _problems.remove(accountId);
+    try {
+      await _pass(accountId);
+    } catch (e) {
+      _problems[accountId] = _reason(e);
+      rethrow;
+    }
+  }
+
+  static String _reason(Object error) => switch (error) {
+    NotesTransportException() || MutationUncertain() => 'offline',
+    NotesHttpException(statusCode: 401) => 'auth',
+    NotesHttpException(statusCode: 423) => 'locked',
+    NotesHttpException(statusCode: 507) => 'storage_full',
+    _ => 'server',
+  };
+
+  Future<void> _pass(String accountId) async {
     final account = await database.account(accountId);
     if (account == null) return;
     final client = await clientFor(account);
@@ -137,9 +160,12 @@ final class SyncCoordinator {
       if (open.isNotEmpty) return null;
       // An empty title on a stored note means "keep the server's file name"
       // (e.g. an editor opened before the CREATE receipt named the note).
-      final title = current.remoteId != null && current.title.isEmpty
+      // A new one is named from its first line, as the Notes web app does.
+      final title = current.title.trim().isNotEmpty
+          ? current.title
+          : current.remoteId != null
           ? current.baseTitle ?? ''
-          : current.title;
+          : titleFromContent(current.content);
       final fields = <String, Object>{
         if (current.remoteId == null || title != current.baseTitle)
           'title': title,
@@ -206,12 +232,13 @@ final class SyncCoordinator {
           await _decision(operation, 'missing_etag');
           return;
         }
-        // A rename or category change moves the note file. Moving its
-        // attachment folder is not confirmed by a note response alone, so
-        // only notes that reference attachments wait for a decision.
-        final moves =
-            fields.containsKey('category') || fields.containsKey('title');
-        if (moves && (intent['content']! as String).contains('.attachments.')) {
+        // A category change moves the note file to another folder. The
+        // server moves `.attachments.<id>` along only when the target has no
+        // such folder, and a note response cannot confirm it, so notes that
+        // reference attachments wait for a decision. A rename stays in the
+        // same folder next to its attachments.
+        if (fields.containsKey('category') &&
+            (intent['content']! as String).contains('.attachments.')) {
           await _decision(operation, 'move_integrity_required');
           return;
         }
@@ -229,10 +256,60 @@ final class SyncCoordinator {
       await _receipt(operation, result, intent);
     } on NoteConflict {
       await _decision(operation, 'remote_conflict');
-    } catch (_) {
+    } catch (e) {
       // Even an HTTP error can follow a partially applied mutation.
+      if (operation.kind == 'update' &&
+          await _reread(client, operation, intent, e)) {
+        return;
+      }
       await _decision(operation, 'write_outcome_unknown');
     }
+  }
+
+  /// After a failed update a fresh read shows what the server holds. The old
+  /// version means nothing was written (a locked file, full storage): the
+  /// note goes back to the queue. Any later write still carries If-Match,
+  /// so a late copy of this request can only end as a conflict.
+  Future<bool> _reread(
+    NotesClient client,
+    Operation operation,
+    Map<String, Object?> intent,
+    Object error,
+  ) async {
+    final NoteReadResult read;
+    try {
+      read = await client.get(intent['remoteId']! as int);
+    } catch (_) {
+      return false;
+    }
+    if (read is! RemoteNote) return false;
+    if (read.etag != intent['etag']) {
+      await _receipt(operation, read, intent);
+      return true;
+    }
+    if (read.readonly) {
+      await _decision(operation, 'remote_readonly');
+      return true;
+    }
+    final reason = _reason(error);
+    _problems[operation.accountId] = reason;
+    await database.transaction(() async {
+      await (database.update(database.operations)..where(
+            (o) => o.id.equals(operation.id) & o.state.equals('sending'),
+          ))
+          .write(
+            OperationsCompanion(
+              state: const Value('dismissed'),
+              errorCode: Value('not_applied_$reason'),
+            ),
+          );
+      await (database.update(database.localNotes)..where(
+            (n) =>
+                n.id.equals(operation.noteId) & n.syncState.equals('sending'),
+          ))
+          .write(const LocalNotesCompanion(syncState: Value('draft')));
+    });
+    return true;
   }
 
   Future<void> _decision(
@@ -299,24 +376,30 @@ final class SyncCoordinator {
     // The title is the server's file name: on CREATE it may fill an empty
     // title or add "(2)" to a taken one. That is an accepted outcome.
     // Also on a rename: the server may add "(2)" when the name is taken.
-    final named =
-        operation.kind == 'create' ||
-        ((intent['fields'] as Map<String, Object?>?)?.containsKey('title') ??
-            false);
+    // A category is a folder path the server cleans the same way (`a//b`).
+    final sent = intent['fields'] as Map<String, Object?>? ?? const {};
+    final create = operation.kind == 'create';
+    final named = create || sent.containsKey('title');
+    final moved = create || sent.containsKey('category');
     final matches =
         result is RemoteNote &&
         (named || result.title == intent['title']) &&
         result.content == intent['content'] &&
-        result.category == intent['category'] &&
+        (moved || result.category == intent['category']) &&
         result.favorite == intent['favorite'];
     final adoptTitle =
-        named && result is RemoteNote && current.title == intent['title'];
+        named &&
+        result is RemoteNote &&
+        (current.title == intent['title'] || current.title.trim().isEmpty);
+    final adoptCategory =
+        moved && result is RemoteNote && current.category == intent['category'];
     await (database.update(
       database.localNotes,
     )..where((n) => n.id.equals(current.id))).write(
       LocalNotesCompanion(
         remoteId: Value(result.id),
         title: adoptTitle ? Value(result.title) : const Value.absent(),
+        category: adoptCategory ? Value(result.category) : const Value.absent(),
         etag: result is RemoteNote ? Value(result.etag) : const Value.absent(),
         baseTitle: result is RemoteNote
             ? Value(result.title)
@@ -349,4 +432,34 @@ final class SyncCoordinator {
       ),
     );
   });
+}
+
+/// The file name the Notes server derives from [content]
+/// (`NoteUtil::stripMarkdown` and `getSafeTitle`): first line without
+/// Markdown marks, `* | / \ : " < > ?` and leading dots, at most 100
+/// characters. Empty when the text has no usable line.
+String titleFromContent(String content) {
+  final text = content
+      .replaceAll(RegExp(r'^\s*[*+-]\s+', multiLine: true), '')
+      .replaceAllMapped(
+        RegExp(r'^#+\s+(.*?)\s*#*$', multiLine: true),
+        (m) => m[1]!,
+      )
+      .replaceAll(RegExp(r'^(=+|-+)$', multiLine: true), '')
+      .replaceAllMapped(
+        RegExp(r'(\*+|_+)(.*?)\1', multiLine: true),
+        (m) => m[2]!,
+      )
+      .replaceAll(RegExp(r'[*|/\\:"<>?]'), '')
+      .replaceAll(RegExp(r'^[.\s]+', multiLine: true), '')
+      .trim();
+  final line = text
+      .split(RegExp(r'\r\n|\n|\r'))
+      .first
+      .trim()
+      .replaceAll(RegExp(r'\s'), ' ');
+  final runes = line.runes.toList();
+  return runes.length > 100
+      ? String.fromCharCodes(runes.take(100)).trim()
+      : line;
 }
