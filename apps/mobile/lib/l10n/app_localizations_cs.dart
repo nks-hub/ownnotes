@@ -141,4 +141,16 @@ class AppLocalizationsCs extends AppLocalizations {
   @override
   String get decisionFailed =>
       'Rozhodnutí se nepodařilo použít. Načti poznámku a porovnej ji znovu.';
+
+  @override
+  String get importKeep => 'Importovat z Google Keep (zip z Takeoutu)';
+
+  @override
+  String importDone(int count) {
+    return 'Importováno poznámek: $count';
+  }
+
+  @override
+  String get importFailed =>
+      'Import se nepovedl. Soubor není zip z Google Takeoutu s poznámkami Keep.';
 }

@@ -139,4 +139,16 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get decisionFailed =>
       'Could not apply the decision. Reload and compare again.';
+
+  @override
+  String get importKeep => 'Import from Google Keep (Takeout .zip)';
+
+  @override
+  String importDone(int count) {
+    return 'Imported $count notes';
+  }
+
+  @override
+  String get importFailed =>
+      'Import failed. The file is not a Google Takeout zip with Keep notes.';
 }

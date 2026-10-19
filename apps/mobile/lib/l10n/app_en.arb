@@ -41,5 +41,13 @@
   "copyWarning": "The server may already contain this note. Creating a separate copy can produce a duplicate. The original recovery record will be retained.",
   "confirm": "Confirm",
   "copyMarkdown": "Copy Markdown",
-  "decisionFailed": "Could not apply the decision. Reload and compare again."
+  "decisionFailed": "Could not apply the decision. Reload and compare again.",
+  "importKeep": "Import from Google Keep (Takeout .zip)",
+  "importDone": "Imported {count} notes",
+  "@importDone": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "importFailed": "Import failed. The file is not a Google Takeout zip with Keep notes."
 }

@@ -17,10 +17,10 @@ switches to preview without the user asking.
 
 ## Open
 
-- [ ] Import from other note apps on Android: Google Keep and the system
-      notes app (Samsung Notes). Keep has no public API for personal
-      accounts; investigate Android share target ("Share to OwnNotes") and
-      Google Takeout Keep export import.
+- [ ] Keep import: images and audio from Takeout are skipped until
+      attachment upload exists (slice 10).
+- [ ] iOS share extension for the same "Share to OwnNotes" flow (needs an
+      extension target and App Group).
 - [ ] Login screen: offer a restart when the browser flow fails on the server
       side (seen on Samsung Internet: "State token missing" after the browser
       session asked for a fresh login during grant).

@@ -349,6 +349,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not apply the decision. Reload and compare again.'**
   String get decisionFailed;
+
+  /// No description provided for @importKeep.
+  ///
+  /// In en, this message translates to:
+  /// **'Import from Google Keep (Takeout .zip)'**
+  String get importKeep;
+
+  /// No description provided for @importDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Imported {count} notes'**
+  String importDone(int count);
+
+  /// No description provided for @importFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Import failed. The file is not a Google Takeout zip with Keep notes.'**
+  String get importFailed;
 }
 
 class _AppLocalizationsDelegate

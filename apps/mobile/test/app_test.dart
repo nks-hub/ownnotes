@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -146,6 +147,96 @@ void main() {
       expect(notes.single.content, '# modified\n\n🙂 **raw**');
       expect(notes.single.syncState, 'draft');
     });
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
+  });
+  testWidgets('text shared from another app becomes a new note', (
+    tester,
+  ) async {
+    var shared = <String, String>{
+      'title': 'From Keep',
+      'text': '- [ ] milk\n- [x] bread',
+    };
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      const MethodChannel('com.nkshub.nextcloudnotes/share'),
+      (call) async {
+        final value = shared;
+        shared = const {};
+        return value.isEmpty ? null : value;
+      },
+    );
+    final runtime = (await tester.runAsync(
+      () async => AppRuntime(
+        NotesDatabase(NativeDatabase.memory()),
+        Vault(),
+        transport: () => MockClient(
+          (r) async => http.Response(
+            '[]',
+            200,
+            headers: {'content-type': 'application/json'},
+          ),
+        ),
+      ),
+    ))!;
+    addTearDown(runtime.close);
+    await tester.runAsync(
+      () => runtime.accounts.add(
+        LoginCredentials(
+          server: ServerBase.parse('https://cloud.test'),
+          loginName: 'test',
+          appPassword: 'secret',
+        ),
+      ),
+    );
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [runtimeProvider.overrideWithValue(runtime)],
+        child: const OwnNotesApp(),
+      ),
+    );
+    await tester.runAsync(() async {
+      for (var i = 0; i < 20; i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+        await tester.pump();
+      }
+    });
+
+    expect(find.widgetWithText(TextField, 'From Keep'), findsOneWidget);
+    expect(
+      find.widgetWithText(TextField, '- [ ] milk\n- [x] bread'),
+      findsOneWidget,
+    );
+    await tester.runAsync(() async {
+      final db = runtime.database;
+      final note = await db.select(db.localNotes).getSingle();
+      expect(note.title, 'From Keep');
+      expect(note.content, '- [ ] milk\n- [x] bread');
+    });
+
+    // A share without a subject takes its title from the first text line.
+    // Shared while the first editor is still open.
+    shared = {'title': '', 'text': '\n  Call the garage  \nabout tyres'};
+    await tester.runAsync(() async {
+      // Not awaited: the handler only returns once the opened editor closes.
+      tester.binding.defaultBinaryMessenger.handlePlatformMessage(
+        'com.nkshub.nextcloudnotes/share',
+        const StandardMethodCodec().encodeMethodCall(
+          const MethodCall('shared'),
+        ),
+        (_) {},
+      );
+      for (var i = 0; i < 20; i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+        await tester.pump();
+      }
+    });
+    await tester.pump(const Duration(seconds: 1));
+    await tester.runAsync(() async {
+      final db = runtime.database;
+      final titles = (await db.select(db.localNotes).get()).map((n) => n.title);
+      expect(titles, containsAll(['From Keep', 'Call the garage']));
+    });
+    expect(find.widgetWithText(TextField, 'Call the garage'), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
     await tester.pumpAndSettle();
   });

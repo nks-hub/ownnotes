@@ -1,6 +1,10 @@
+import 'package:archive/archive_io.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:notes_store/notes_store.dart';
+import '../data/keep_import.dart';
 import '../data/runtime.dart';
 import '../l10n/app_localizations.dart';
 import 'editor.dart';
@@ -22,6 +26,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   final _autoSynced = <String>{};
   late final AppLifecycleListener _lifecycle;
 
+  static const _share = MethodChannel('com.nkshub.nextcloudnotes/share');
+
   @override
   void initState() {
     super.initState();
@@ -31,12 +37,40 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         if (id != null) _sync(id, quiet: true);
       },
     );
+    _share.setMethodCallHandler((_) => _takeShared());
   }
 
   @override
   void dispose() {
+    _share.setMethodCallHandler(null);
     _lifecycle.dispose();
     super.dispose();
+  }
+
+  /// Text shared from another app (Google Keep, Samsung Notes, ...) becomes a
+  /// new note of the shown account. Without an account it waits on the
+  /// platform side until one exists.
+  Future<void> _takeShared() async {
+    final accountId = _shown;
+    if (accountId == null) return;
+    final Map<String, String>? shared;
+    try {
+      shared = await _share.invokeMapMethod<String, String>('takeShared');
+    } on MissingPluginException {
+      return; // Only Android registers the share target.
+    }
+    if (shared == null || !mounted) return;
+    final text = shared['text'] ?? '';
+    var title = shared['title'] ?? '';
+    if (title.trim().isEmpty) {
+      // The server does not derive a title; it would name it "New note".
+      title = text
+          .split('\n')
+          .map((l) => l.trim())
+          .firstWhere((l) => l.isNotEmpty, orElse: () => '');
+      if (title.length > 100) title = title.substring(0, 100);
+    }
+    await _create(accountId, title: title, content: text);
   }
 
   /// Quiet runs are automatic (start, resume, after editing); offline is
@@ -79,10 +113,54 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     if (mounted) await _sync(note.accountId, quiet: true);
   }
 
-  Future<void> _create(String accountId) async {
+  Future<void> _importKeep(String accountId) async {
+    final l = AppLocalizations.of(context)!;
+    final messenger = ScaffoldMessenger.of(context);
+    final picked = await FilePicker.pickFile(
+      type: FileType.custom,
+      allowedExtensions: ['zip'],
+    );
+    final path = picked?.path;
+    if (path == null) return;
+    try {
+      final input = InputFileStream(path);
+      final List<KeepNote> notes;
+      try {
+        notes = readKeepTakeout(ZipDecoder().decodeStream(input));
+      } finally {
+        await input.close();
+      }
+      if (notes.isEmpty) throw const FormatException('no_keep_notes');
+      final db = ref.read(runtimeProvider).database;
+      for (final note in notes) {
+        await db.createDraft(
+          accountId,
+          title: note.title,
+          content: note.content,
+          category: note.category,
+        );
+      }
+      messenger.showSnackBar(
+        SnackBar(content: Text(l.importDone(notes.length))),
+      );
+      await _sync(accountId, quiet: true);
+    } catch (_) {
+      messenger.showSnackBar(SnackBar(content: Text(l.importFailed)));
+    }
+  }
+
+  Future<void> _create(
+    String accountId, {
+    String title = '',
+    String content = '',
+  }) async {
     try {
       final db = ref.read(runtimeProvider).database;
-      final id = await db.createDraft(accountId);
+      final id = await db.createDraft(
+        accountId,
+        title: title,
+        content: content,
+      );
       final note = await db.note(accountId, id);
       if (mounted && note != null) await _edit(note);
     } catch (_) {
@@ -108,9 +186,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             accounts.firstOrNull;
         _shown = account?.id;
         if (account != null && _autoSynced.add(account.id)) {
-          WidgetsBinding.instance.addPostFrameCallback(
-            (_) => _sync(account.id, quiet: true),
-          );
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _sync(account.id, quiet: true);
+            _takeShared();
+          });
         }
         return Scaffold(
           appBar: AppBar(
@@ -132,6 +211,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
                 icon: const Icon(Icons.person_add_outlined),
               ),
+              if (account != null)
+                PopupMenuButton<void>(
+                  itemBuilder: (_) => [
+                    PopupMenuItem(
+                      onTap: () => _importKeep(account.id),
+                      child: Text(l.importKeep),
+                    ),
+                  ],
+                ),
             ],
           ),
           floatingActionButton: account == null

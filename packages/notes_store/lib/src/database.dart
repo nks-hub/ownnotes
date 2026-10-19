@@ -85,15 +85,21 @@ class NotesDatabase extends _$NotesDatabase {
             )
             ..orderBy([(n) => OrderingTerm.desc(n.updatedAt)]))
           .watch();
-  Future<String> createDraft(String accountId) => transaction(() async {
+  Future<String> createDraft(
+    String accountId, {
+    String title = '',
+    String content = '',
+    String category = '',
+  }) => transaction(() async {
     if (await account(accountId) == null) throw StateError('account_missing');
     final id = const Uuid().v4();
     await into(localNotes).insert(
       LocalNotesCompanion.insert(
         id: id,
         accountId: accountId,
-        title: '',
-        content: '',
+        title: title,
+        content: content,
+        category: Value(category),
         updatedAt: DateTime.now().millisecondsSinceEpoch,
       ),
     );

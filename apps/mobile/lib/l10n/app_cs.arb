@@ -41,5 +41,8 @@
   "copyWarning": "Na serveru už tato poznámka může existovat. Samostatná kopie může vytvořit duplicitu. Původní záznam pro obnovu zůstane zachovaný.",
   "confirm": "Potvrdit",
   "copyMarkdown": "Zkopírovat Markdown",
-  "decisionFailed": "Rozhodnutí se nepodařilo použít. Načti poznámku a porovnej ji znovu."
+  "decisionFailed": "Rozhodnutí se nepodařilo použít. Načti poznámku a porovnej ji znovu.",
+  "importKeep": "Importovat z Google Keep (zip z Takeoutu)",
+  "importDone": "Importováno poznámek: {count}",
+  "importFailed": "Import se nepovedl. Soubor není zip z Google Takeoutu s poznámkami Keep."
 }
