@@ -149,4 +149,85 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     await tester.pumpAndSettle();
   });
+  testWidgets('opening pulls without a tap; leaving the editor uploads', (
+    tester,
+  ) async {
+    final requests = <String>[];
+    var etag = 'etag1';
+    var content = '# original';
+    Map<String, Object> note() => {
+      'id': 7,
+      'etag': etag,
+      'title': 'From HTTP',
+      'content': content,
+      'category': '',
+      'favorite': false,
+      'readonly': false,
+      'modified': 10,
+    };
+    final runtime = (await tester.runAsync(
+      () async => AppRuntime(
+        NotesDatabase(NativeDatabase.memory()),
+        Vault(),
+        transport: () => MockClient((r) async {
+          requests.add('${r.method} ${r.url.path}');
+          if (r.method == 'PUT') {
+            expect(r.headers['If-Match'], '"$etag"');
+            content = (jsonDecode(r.body) as Map)['content'] as String;
+            etag = 'etag2';
+          }
+          return http.Response(
+            jsonEncode(r.url.pathSegments.last == 'notes' ? [note()] : note()),
+            200,
+            headers: {'content-type': 'application/json'},
+          );
+        }),
+      ),
+    ))!;
+    addTearDown(runtime.close);
+    await tester.runAsync(
+      () => runtime.accounts.add(
+        LoginCredentials(
+          server: ServerBase.parse('https://cloud.test'),
+          loginName: 'test',
+          appPassword: 'secret',
+        ),
+      ),
+    );
+    Future<void> settle() => tester.runAsync(() async {
+      for (var i = 0; i < 20; i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+        await tester.pump();
+      }
+    });
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [runtimeProvider.overrideWithValue(runtime)],
+        child: const OwnNotesApp(),
+      ),
+    );
+    await settle();
+    expect(find.text('From HTTP'), findsOneWidget);
+    expect(requests, ['GET /index.php/apps/notes/api/v1/notes']);
+
+    await tester.tap(find.text('From HTTP'));
+    await settle();
+    final field = find.byWidgetPredicate((w) => w is TextField && w.expands);
+    await tester.enterText(field, '# edited offline-first');
+    await tester.pump(const Duration(milliseconds: 400));
+    await settle();
+    await tester.pageBack();
+    await settle();
+
+    expect(requests, contains('PUT /index.php/apps/notes/api/v1/notes/7'));
+    expect(content, '# edited offline-first');
+    await tester.runAsync(() async {
+      final db = runtime.database;
+      final stored = await db.select(db.localNotes).getSingle();
+      expect(stored.syncState, 'clean');
+    });
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
+  });
 }

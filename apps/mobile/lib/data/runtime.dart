@@ -31,7 +31,8 @@ final class SecureVault implements CredentialVault {
 }
 
 final class AppRuntime {
-  AppRuntime(this.database, this.vault) {
+  AppRuntime(this.database, this.vault, {http.Client Function()? transport})
+    : _transport = transport ?? http.Client.new {
     accounts = AccountRepository(database, vault);
     sync = SyncCoordinator(database, clientFor);
   }
@@ -43,13 +44,14 @@ final class AppRuntime {
   final CredentialVault vault;
   late final AccountRepository accounts;
   late final SyncCoordinator sync;
+  final http.Client Function() _transport;
   final _clients = <String, http.Client>{};
   Future<NotesClient> clientFor(Account account) async {
     final password = await vault.read(account.credentialRef);
     if (password == null) throw StateError('reauth_required');
     return NotesClient(
       base: ServerBase.parse(account.server),
-      transport: _clients.putIfAbsent(account.id, http.Client.new),
+      transport: _clients.putIfAbsent(account.id, _transport),
       loginName: account.loginName,
       appPassword: password,
     );

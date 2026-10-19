@@ -15,14 +15,47 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   String? _selected;
+  String? _shown;
   String _search = '';
   bool _busy = false;
-  Future<void> _sync(String accountId) async {
+  String? _again;
+  final _autoSynced = <String>{};
+  late final AppLifecycleListener _lifecycle;
+
+  @override
+  void initState() {
+    super.initState();
+    _lifecycle = AppLifecycleListener(
+      onResume: () {
+        final id = _shown;
+        if (id != null) _sync(id, quiet: true);
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _lifecycle.dispose();
+    super.dispose();
+  }
+
+  /// Quiet runs are automatic (start, resume, after editing); offline is
+  /// normal there, so only a manual sync reports failure.
+  Future<void> _sync(String accountId, {bool quiet = false}) async {
+    if (_busy) {
+      // The running pass may have started before the latest local edit.
+      _again = accountId;
+      return;
+    }
     setState(() => _busy = true);
     try {
-      await ref.read(runtimeProvider).sync.sync(accountId);
+      do {
+        _again = null;
+        await ref.read(runtimeProvider).sync.sync(accountId);
+        accountId = _again ?? accountId;
+      } while (_again != null && mounted);
     } catch (_) {
-      if (mounted) {
+      if (mounted && !quiet) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(AppLocalizations.of(context)!.syncFailed)),
         );
@@ -32,13 +65,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
   }
 
-  Future<void> _edit(LocalNote note) => Navigator.of(context).push<void>(
-    MaterialPageRoute(
-      builder: (_) => note.syncState == 'needsDecision'
-          ? RecoveryScreen(note: note)
-          : EditorScreen(note: note),
-    ),
-  );
+  Future<void> _edit(LocalNote note) async {
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute(
+        builder: (_) => note.syncState == 'needsDecision'
+            ? RecoveryScreen(note: note)
+            : EditorScreen(note: note),
+      ),
+    );
+    if (mounted) await _sync(note.accountId, quiet: true);
+  }
+
   Future<void> _create(String accountId) async {
     try {
       final db = ref.read(runtimeProvider).database;
@@ -66,6 +103,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         final account =
             accounts.where((a) => a.id == _selected).firstOrNull ??
             accounts.firstOrNull;
+        _shown = account?.id;
+        if (account != null && _autoSynced.add(account.id)) {
+          WidgetsBinding.instance.addPostFrameCallback(
+            (_) => _sync(account.id, quiet: true),
+          );
+        }
         return Scaffold(
           appBar: AppBar(
             title: Text(l.appTitle),
@@ -93,7 +136,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   child: const Icon(Icons.add),
                 ),
           body: account == null
-              ? Center(child: Text(l.noAccounts))
+              ? _EmptyText(l.noAccounts)
               : Center(
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 1000),
@@ -151,7 +194,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                       )
                                       .toList();
                                   if (filtered.isEmpty) {
-                                    return Center(child: Text(l.noNotes));
+                                    return _EmptyText(l.noNotes);
                                   }
                                   return ListView.builder(
                                     itemCount: filtered.length,
@@ -199,4 +242,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       },
     );
   }
+}
+
+class _EmptyText extends StatelessWidget {
+  const _EmptyText(this.text);
+  final String text;
+  @override
+  Widget build(BuildContext context) => Center(
+    child: Padding(
+      padding: const EdgeInsets.all(24),
+      child: Text(text, textAlign: TextAlign.center),
+    ),
+  );
 }
