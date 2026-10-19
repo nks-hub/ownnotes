@@ -61,16 +61,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
     if (shared == null || !mounted) return;
     final text = shared['text'] ?? '';
-    var title = shared['title'] ?? '';
-    if (title.trim().isEmpty) {
-      // The server does not derive a title; it would name it "New note".
-      title = text
-          .split('\n')
-          .map((l) => l.trim())
-          .firstWhere((l) => l.isNotEmpty, orElse: () => '');
-      if (title.length > 100) title = title.substring(0, 100);
-    }
-    await _create(accountId, title: title, content: text);
+    await _create(
+      accountId,
+      title: _titleOr(shared['title'] ?? '', text),
+      content: text,
+    );
+  }
+
+  /// The server does not derive a title from text; it would name the note
+  /// "New note", so an imported note without one takes its first line.
+  static String _titleOr(String title, String text) {
+    if (title.trim().isNotEmpty) return title;
+    final line = text
+        .split('\n')
+        .map((l) => l.trim())
+        .firstWhere((l) => l.isNotEmpty, orElse: () => '');
+    return line.length > 100 ? line.substring(0, 100) : line;
   }
 
   /// Quiet runs are automatic (start, resume, after editing); offline is
@@ -135,7 +141,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       for (final note in notes) {
         await db.createDraft(
           accountId,
-          title: note.title,
+          title: _titleOr(note.title, note.content),
           content: note.content,
           category: note.category,
         );

@@ -32,6 +32,14 @@ switches to preview without the user asking.
 
 ## Done
 
+- 2026-10-19 A new note without a title (or with a taken one) no longer ends
+  as a conflict: the server names the file ("New note", "Title (2)") and the
+  app adopts that name. Found on Galaxy S9, fixed in `157726d`.
+- 2026-10-19 Import from other apps: Android "Share → OwnNotes" (Google
+  Keep, Samsung Notes, anything sharing text) and Google Keep Takeout zip
+  (menu ⋮). Checklists become `- [ ]`/`- [x]`, the first label becomes the
+  category, trashed notes are skipped, a note without title takes its first
+  line. Verified on Galaxy S9 against the Docker server.
 - 2026-10-19 Product goals checked on Galaxy S9 (Android 10, Docker server):
   offline edit while the same note changed on the server, app force-stopped,
   network back, relaunch. The phone text survived, the server text was not
