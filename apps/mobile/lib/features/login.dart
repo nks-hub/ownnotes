@@ -51,7 +51,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         throw const LoginException('browser_unavailable');
       }
       while (mounted && !session.isClosed) {
-        final credentials = await session.poll();
+        final LoginCredentials? credentials;
+        try {
+          credentials = await session.poll();
+        } on LoginException catch (e) {
+          // Expected while the browser is in front; the session expires itself.
+          if (e.code != 'transport_failed') rethrow;
+          await Future<void>.delayed(const Duration(seconds: 2));
+          continue;
+        }
         if (credentials != null) {
           // Once received, persist even if the screen is closing.
           if (mounted) setState(() => _saving = true);
@@ -94,6 +102,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     controller: _url,
                     enabled: !_busy,
                     keyboardType: TextInputType.url,
+                    textInputAction: TextInputAction.go,
+                    onSubmitted: (_) => _busy ? null : _connect(),
                     autocorrect: false,
                     decoration: InputDecoration(
                       labelText: l.serverUrl,

@@ -129,19 +129,45 @@ void main() {
     );
     expect(session.isClosed, isTrue);
   });
-  test('lost response closes flow and masks transport secrets', () async {
+  test('transport failure keeps flow open and masks secrets', () async {
+    // Android restricts network access of a backgrounded app while the user is
+    // in the browser; such a poll usually never reached the server.
     var calls = 0;
     final client = LoginClient(
       base: base,
       transport: MockClient((r) async {
         if (++calls == 1) return jsonResponse(startBody());
-        throw Exception('secret token and password');
+        if (calls == 2) throw Exception('secret token and password');
+        return jsonResponse(credentials());
       }),
     );
     final session = await client.start();
-    await expectLater(session.poll(), throwsA(errorCode('transport_failed')));
-    await expectLater(session.poll(), throwsA(errorCode('flow_closed')));
-    expect(calls, 2);
+    await expectLater(
+      session.poll(),
+      throwsA(
+        isA<LoginException>()
+            .having((e) => e.code, 'code', 'transport_failed')
+            .having((e) => '$e', 'text', isNot(contains('secret'))),
+      ),
+    );
+    expect(session.isClosed, isFalse);
+    expect((await session.poll())!.loginName, 'user@example.test');
+    expect(session.isClosed, isTrue);
+    expect(calls, 3);
+  });
+  test('oversized poll response stays terminal', () async {
+    var calls = 0;
+    final client = LoginClient(
+      base: base,
+      transport: MockClient(
+        (r) async => ++calls == 1
+            ? jsonResponse(startBody())
+            : http.Response('x' * 65537, 200),
+      ),
+    );
+    final session = await client.start();
+    await expectLater(session.poll(), throwsA(errorCode('response_too_large')));
+    expect(session.isClosed, isTrue);
   });
   test('redirect is not followed', () async {
     final client = LoginClient(

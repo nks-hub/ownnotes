@@ -77,6 +77,13 @@ final class LoginSession {
         loginName: loginName,
         appPassword: password,
       );
+    } on LoginException catch (e) {
+      // A transport failure usually means the poll never reached the server,
+      // so the flow stays open for another poll. If a successful response was
+      // lost instead, later polls keep returning pending until the caller
+      // cancels or the flow expires.
+      if (e.code != 'transport_failed') cancel();
+      rethrow;
     } catch (_) {
       cancel();
       rethrow;
