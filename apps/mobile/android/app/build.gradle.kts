@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "cz.lury.ownnotes"
+    namespace = "com.nkshub.nextcloudnotes"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -15,7 +15,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "cz.lury.ownnotes.candidate"
+        applicationId = "com.nkshub.nextcloudnotes.candidate"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion

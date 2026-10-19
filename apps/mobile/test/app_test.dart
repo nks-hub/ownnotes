@@ -7,8 +7,8 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:notes_protocol/notes_protocol.dart';
 import 'package:notes_store/notes_store.dart';
-import 'package:ownnotes/data/runtime.dart';
-import 'package:ownnotes/main.dart';
+import 'package:nextcloudnotes/data/runtime.dart';
+import 'package:nextcloudnotes/main.dart';
 
 class Vault implements CredentialVault {
   final entries = <String, String>{};

@@ -54,7 +54,7 @@ with that command installed. Windows runners must serialize this checkout too.
 Build-host SDK telemetry is suppressed by the verification scripts. On restricted
 root containers, `TAR_OPTIONS=--no-same-owner` may be needed for SDK extraction.
 
-Android and iOS candidate identifier: `cz.lury.ownnotes.candidate`. Production
+Android and iOS candidate identifier: `com.nkshub.nextcloudnotes.candidate`. Production
 identifiers, signing and distribution remain unconfigured. GitHub CI includes
 an Android debug build, but no remote CI result exists until source is pushed.
 

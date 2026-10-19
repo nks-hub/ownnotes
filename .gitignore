@@ -13,3 +13,8 @@ play-store-key.json
 google-services.json
 GoogleService-Info.plist
 .DS_Store
+.idea/
+.vscode/
+.claude/
+CLAUDE.md
+.playwright-mcp/

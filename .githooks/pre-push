@@ -1,3 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-python3 "$(git rev-parse --show-toplevel)/tool/check_git_identity.py"
+# The Windows python3 is usually a Store stub; the py launcher is the real one.
+python=(python3)
+command -v py >/dev/null 2>&1 && python=(py -3)
+"${python[@]}" "$(git rev-parse --show-toplevel)/tool/check_git_identity.py"

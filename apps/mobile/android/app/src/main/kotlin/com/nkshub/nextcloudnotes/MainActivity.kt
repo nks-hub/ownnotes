@@ -1,4 +1,4 @@
-package cz.lury.ownnotes
+package com.nkshub.nextcloudnotes
 
 import io.flutter.embedding.android.FlutterActivity
 
