@@ -364,6 +364,55 @@ void main() {
     });
   });
 
+  group('attachment', () {
+    test('reads an image by its Markdown path', () async {
+      final api = client((r) async {
+        expect(r.method, 'GET');
+        expect(
+          r.url.path,
+          '/nextcloud/index.php/apps/notes/api/v1/attachment/7',
+        );
+        expect(r.url.queryParameters['path'], '.attachments.7/a b.png');
+        return http.Response.bytes(
+          [1, 2, 3],
+          200,
+          headers: {'content-type': 'image/png'},
+        );
+      });
+      expect(await api.attachment(7, '.attachments.7/a b.png'), [1, 2, 3]);
+    });
+
+    test('refuses paths that leave the note folder and non-images', () async {
+      final api = client(
+        (r) async => http.Response(
+          '<html>',
+          200,
+          headers: {'content-type': 'text/html'},
+        ),
+      );
+      for (final path in [
+        '../secret.png',
+        '/etc/x.png',
+        'https://evil.test/x.png',
+        '.attachments.7//x.png',
+      ]) {
+        await expectLater(
+          api.attachment(7, path),
+          throwsA(isA<NotesProtocolException>()),
+        );
+      }
+      await expectLater(
+        api.attachment(7, '.attachments.7/x.png'),
+        throwsA(
+          isA<NotesProtocolException>().having(
+            (e) => e.code,
+            'code',
+            'not_an_image',
+          ),
+        ),
+      );
+    });
+  });
   test('checked-in wire fixtures are parsed through production decoder', () {
     final fixtures = Directory('../../contracts/notes/fixtures');
     for (final file in fixtures.listSync().whereType<File>()) {

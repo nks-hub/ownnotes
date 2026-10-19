@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -26,6 +27,41 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
   bool _failed = false;
   bool _preview = false;
   bool _allowPop = false;
+  final _images = <String, Future<List<int>>>{};
+
+  /// Attachments of this note (`.attachments.<id>/…`) load through the Notes
+  /// API with the account's credentials. Remote URLs stay placeholders: the
+  /// preview does not contact third-party hosts.
+  // shortcut: no offline cache; an offline preview shows the placeholder.
+  Widget _image(MarkdownImageConfig config, Widget placeholder) {
+    final remoteId = widget.note.remoteId;
+    if (remoteId == null || config.uri.hasScheme) return placeholder;
+    final path = Uri.decodeFull(config.uri.toString());
+    final bytes = _images.putIfAbsent(path, () async {
+      final runtime = ref.read(runtimeProvider);
+      final account = await runtime.database.account(widget.note.accountId);
+      if (account == null) throw StateError('account_missing');
+      return (await runtime.clientFor(account)).attachment(remoteId, path);
+    });
+    return FutureBuilder<List<int>>(
+      future: bytes,
+      builder: (context, snapshot) => switch (snapshot) {
+        AsyncSnapshot(hasData: true, :final data?) => Image.memory(
+          Uint8List.fromList(data),
+          width: config.width,
+          height: config.height,
+          semanticLabel: config.alt,
+          errorBuilder: (_, _, _) => placeholder,
+        ),
+        AsyncSnapshot(hasError: true) => placeholder,
+        _ => const SizedBox.square(
+          dimension: 48,
+          child: Center(child: CircularProgressIndicator()),
+        ),
+      },
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -200,13 +236,13 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
                   child: MarkdownBody(
                     data: _text.text,
                     selectable: true,
-                    sizedImageBuilder: (_) => image,
+                    sizedImageBuilder: (c) => _image(c, image),
                   ),
                 )
               : Markdown(
                   data: _text.text,
                   selectable: true,
-                  sizedImageBuilder: (_) => image,
+                  sizedImageBuilder: (c) => _image(c, image),
                 ))
         : Padding(
             padding: const EdgeInsets.all(16),

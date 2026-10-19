@@ -193,6 +193,30 @@ final class NotesClient {
     }
   }
 
+  /// An image attached to a note, by the relative path the Markdown uses
+  /// (e.g. `.attachments.42/photo.png`).
+  Future<List<int>> attachment(int id, String path) async {
+    noteId(id);
+    final segments = path.split('/');
+    if (path.isEmpty ||
+        path.startsWith('/') ||
+        Uri.tryParse(path)?.hasScheme != false ||
+        segments.any((s) => s.isEmpty || s == '.' || s == '..')) {
+      throw const NotesProtocolException('invalid_attachment_path');
+    }
+    final response = await _request(
+      'GET',
+      ['attachment', '$id'],
+      query: {'path': path},
+    );
+    _expectOk(response, mutation: false);
+    final type = response.headers['content-type']?.toLowerCase() ?? '';
+    if (!type.startsWith('image/')) {
+      throw const NotesProtocolException('not_an_image');
+    }
+    return response.bodyBytes;
+  }
+
   NoteRecord _detail(http.Response response, {int? expectedId}) {
     final note = parseNote(_json(response));
     if (note is NoteIdOnly || (expectedId != null && note.id != expectedId)) {

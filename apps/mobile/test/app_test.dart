@@ -248,6 +248,78 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     await tester.pumpAndSettle();
   });
+  testWidgets('preview shows an image attached to the note', (tester) async {
+    // 1x1 transparent PNG.
+    final png = base64Decode(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
+    );
+    final attachmentPaths = <String>[];
+    final runtime = (await tester.runAsync(
+      () async => AppRuntime(
+        NotesDatabase(NativeDatabase.memory()),
+        Vault(),
+        transport: () => MockClient((r) async {
+          if (r.url.pathSegments.contains('attachment')) {
+            attachmentPaths.add(r.url.queryParameters['path']!);
+            return http.Response.bytes(
+              png,
+              200,
+              headers: {'content-type': 'image/png'},
+            );
+          }
+          return http.Response(
+            jsonEncode([
+              {
+                'id': 7,
+                'etag': 'etag1',
+                'title': 'With image',
+                'content': '![photo](.attachments.7/photo%201.png)',
+                'category': '',
+                'favorite': false,
+                'readonly': false,
+                'modified': 10,
+              },
+            ]),
+            200,
+            headers: {'content-type': 'application/json'},
+          );
+        }),
+      ),
+    ))!;
+    addTearDown(runtime.close);
+    await tester.runAsync(
+      () => runtime.accounts.add(
+        LoginCredentials(
+          server: ServerBase.parse('https://cloud.test'),
+          loginName: 'test',
+          appPassword: 'secret',
+        ),
+      ),
+    );
+    Future<void> settle() => tester.runAsync(() async {
+      for (var i = 0; i < 20; i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+    });
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [runtimeProvider.overrideWithValue(runtime)],
+        child: const OwnNotesApp(),
+      ),
+    );
+    await settle();
+    await tester.tap(find.text('With image'));
+    await settle();
+    await tester.tap(find.byTooltip('Preview'));
+    await settle();
+
+    expect(attachmentPaths, ['.attachments.7/photo 1.png']);
+    expect(find.bySemanticsLabel('photo'), findsOneWidget);
+    expect(find.byIcon(Icons.image_not_supported_outlined), findsNothing);
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
+  });
   testWidgets('deleting from the editor removes the note on the server', (
     tester,
   ) async {
