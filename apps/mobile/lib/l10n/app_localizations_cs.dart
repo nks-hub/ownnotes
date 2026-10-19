@@ -159,4 +159,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get deleteConfirm => 'Smazat poznámku? Smaže se i na serveru.';
+
+  @override
+  String get allCategories => 'Vše';
 }

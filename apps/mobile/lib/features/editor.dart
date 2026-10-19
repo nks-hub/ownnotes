@@ -177,96 +177,113 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
           ],
         ),
         body: SafeArea(
-          child: Column(
-            children: [
-              if (widget.note.syncState == 'needsDecision')
-                Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Text(l.decisionRequired),
-                ),
-              if (widget.note.readonly) Text(l.readonly),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _title,
-                        readOnly: widget.note.readonly,
-                        decoration: InputDecoration(labelText: l.title),
-                        onChanged: (_) => _changed(),
-                      ),
-                    ),
-                    IconButton(
-                      tooltip: l.favorite,
-                      onPressed: widget.note.readonly
-                          ? null
-                          : () {
-                              _favorite = !_favorite;
-                              _changed();
-                            },
-                      icon: Icon(_favorite ? Icons.star : Icons.star_border),
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: TextField(
-                  controller: _category,
-                  readOnly: widget.note.readonly,
-                  decoration: InputDecoration(labelText: l.category),
-                  onChanged: (_) => _changed(),
-                ),
-              ),
-              Expanded(
-                child: _preview
-                    ? Markdown(
-                        data: _text.text,
-                        selectable: true,
-                        sizedImageBuilder: (_) => Semantics(
-                          label: l.imageUnavailable,
-                          child: const Icon(Icons.image_not_supported_outlined),
-                        ),
-                      )
-                    : Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: TextField(
-                          controller: _text,
-                          readOnly: widget.note.readonly,
-                          expands: true,
-                          minLines: null,
-                          maxLines: null,
-                          textAlignVertical: TextAlignVertical.top,
-                          keyboardType: TextInputType.multiline,
-                          decoration: InputDecoration(
-                            hintText: l.content,
-                            border: InputBorder.none,
-                          ),
-                          onChanged: (_) => _changed(),
-                        ),
-                      ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(8),
-                child: Semantics(
-                  liveRegion: true,
-                  child: Text(
-                    _failed
-                        ? l.saveFailed
-                        : _dirty
-                        ? l.saving
-                        : l.saved,
-                    style: _failed
-                        ? TextStyle(color: Theme.of(context).colorScheme.error)
-                        : null,
-                  ),
-                ),
-              ),
-            ],
+          // A phone on its side with the keyboard up leaves too little height
+          // for a fixed layout; the editor then scrolls as a whole.
+          child: LayoutBuilder(
+            builder: (context, constraints) =>
+                _body(l, compact: constraints.maxHeight < 400),
           ),
         ),
       ),
     );
+  }
+
+  Widget _body(AppLocalizations l, {required bool compact}) {
+    final image = Semantics(
+      label: l.imageUnavailable,
+      child: const Icon(Icons.image_not_supported_outlined),
+    );
+    final Widget text = _preview
+        ? (compact
+              ? Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: MarkdownBody(
+                    data: _text.text,
+                    selectable: true,
+                    sizedImageBuilder: (_) => image,
+                  ),
+                )
+              : Markdown(
+                  data: _text.text,
+                  selectable: true,
+                  sizedImageBuilder: (_) => image,
+                ))
+        : Padding(
+            padding: const EdgeInsets.all(16),
+            child: TextField(
+              controller: _text,
+              readOnly: widget.note.readonly,
+              expands: !compact,
+              minLines: compact ? 6 : null,
+              maxLines: null,
+              textAlignVertical: TextAlignVertical.top,
+              keyboardType: TextInputType.multiline,
+              decoration: InputDecoration(
+                hintText: l.content,
+                border: InputBorder.none,
+              ),
+              onChanged: (_) => _changed(),
+            ),
+          );
+    final children = [
+      if (widget.note.syncState == 'needsDecision')
+        Padding(
+          padding: const EdgeInsets.all(12),
+          child: Text(l.decisionRequired),
+        ),
+      if (widget.note.readonly) Text(l.readonly),
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _title,
+                readOnly: widget.note.readonly,
+                decoration: InputDecoration(labelText: l.title),
+                onChanged: (_) => _changed(),
+              ),
+            ),
+            IconButton(
+              tooltip: l.favorite,
+              onPressed: widget.note.readonly
+                  ? null
+                  : () {
+                      _favorite = !_favorite;
+                      _changed();
+                    },
+              icon: Icon(_favorite ? Icons.star : Icons.star_border),
+            ),
+          ],
+        ),
+      ),
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: TextField(
+          controller: _category,
+          readOnly: widget.note.readonly,
+          decoration: InputDecoration(labelText: l.category),
+          onChanged: (_) => _changed(),
+        ),
+      ),
+      compact ? text : Expanded(child: text),
+      Padding(
+        padding: const EdgeInsets.all(8),
+        child: Semantics(
+          liveRegion: true,
+          child: Text(
+            _failed
+                ? l.saveFailed
+                : _dirty
+                ? l.saving
+                : l.saved,
+            style: _failed
+                ? TextStyle(color: Theme.of(context).colorScheme.error)
+                : null,
+          ),
+        ),
+      ),
+    ];
+    return compact ? ListView(children: children) : Column(children: children);
   }
 }

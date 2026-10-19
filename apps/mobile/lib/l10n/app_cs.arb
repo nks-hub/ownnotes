@@ -46,5 +46,6 @@
   "importDone": "Importováno poznámek: {count}",
   "importFailed": "Import se nepovedl. Soubor není zip z Google Takeoutu s poznámkami Keep.",
   "delete": "Smazat",
-  "deleteConfirm": "Smazat poznámku? Smaže se i na serveru."
+  "deleteConfirm": "Smazat poznámku? Smaže se i na serveru.",
+  "allCategories": "Vše"
 }

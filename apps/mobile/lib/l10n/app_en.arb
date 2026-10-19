@@ -51,5 +51,6 @@
   },
   "importFailed": "Import failed. The file is not a Google Takeout zip with Keep notes.",
   "delete": "Delete",
-  "deleteConfirm": "Delete this note? It is also deleted on the server."
+  "deleteConfirm": "Delete this note? It is also deleted on the server.",
+  "allCategories": "All"
 }

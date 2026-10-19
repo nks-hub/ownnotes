@@ -379,6 +379,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Delete this note? It is also deleted on the server.'**
   String get deleteConfirm;
+
+  /// No description provided for @allCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get allCategories;
 }
 
 class _AppLocalizationsDelegate

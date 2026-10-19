@@ -20,6 +20,7 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   String? _selected;
   String? _shown;
+  String? _category;
   String _search = '';
   bool _busy = false;
   String? _again;
@@ -287,51 +288,77 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 error: (_, _) =>
                                     Center(child: Text(l.loadFailed)),
                                 data: (notes) {
+                                  final categories =
+                                      notes
+                                          .map((n) => n.category)
+                                          .where((c) => c.isNotEmpty)
+                                          .toSet()
+                                          .toList()
+                                        ..sort();
+                                  final category =
+                                      categories.contains(_category)
+                                      ? _category
+                                      : null;
                                   final filtered = notes
                                       .where(
                                         (n) =>
+                                            (category == null ||
+                                                n.category == category ||
+                                                n.category.startsWith(
+                                                  '$category/',
+                                                )) &&
                                             '${n.title}\n${n.content}\n${n.category}'
                                                 .toLowerCase()
                                                 .contains(_search),
                                       )
                                       .toList();
-                                  if (filtered.isEmpty) {
-                                    return _EmptyText(l.noNotes);
-                                  }
-                                  return ListView.builder(
-                                    itemCount: filtered.length,
-                                    itemBuilder: (context, index) {
-                                      final n = filtered[index];
-                                      return ListTile(
-                                        key: ValueKey(n.id),
-                                        minVerticalPadding: 16,
-                                        title: Text(
-                                          n.title.isEmpty
-                                              ? l.untitled
-                                              : n.title,
-                                          maxLines: 2,
-                                          overflow: TextOverflow.ellipsis,
+                                  final list = filtered.isEmpty
+                                      ? ListView(
+                                          physics:
+                                              const AlwaysScrollableScrollPhysics(),
+                                          children: [_EmptyText(l.noNotes)],
+                                        )
+                                      : _list(filtered, l);
+                                  return Column(
+                                    children: [
+                                      if (categories.isNotEmpty)
+                                        SizedBox(
+                                          height: 56,
+                                          child: ListView(
+                                            scrollDirection: Axis.horizontal,
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 16,
+                                            ),
+                                            children: [
+                                              for (final c in [
+                                                null,
+                                                ...categories,
+                                              ])
+                                                Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                        right: 8,
+                                                      ),
+                                                  child: ChoiceChip(
+                                                    label: Text(
+                                                      c ?? l.allCategories,
+                                                    ),
+                                                    selected: c == category,
+                                                    onSelected: (_) => setState(
+                                                      () => _category = c,
+                                                    ),
+                                                  ),
+                                                ),
+                                            ],
+                                          ),
                                         ),
-                                        subtitle: Text(
-                                          n.content,
-                                          maxLines: 2,
-                                          overflow: TextOverflow.ellipsis,
+                                      Expanded(
+                                        child: RefreshIndicator(
+                                          onRefresh: () => _sync(account.id),
+                                          child: list,
                                         ),
-                                        leading: Icon(
-                                          n.syncState == 'needsDecision'
-                                              ? Icons.warning_amber
-                                              : n.favorite
-                                              ? Icons.star
-                                              : Icons.description_outlined,
-                                        ),
-                                        trailing: n.syncState == 'clean'
-                                            ? null
-                                            : const Icon(
-                                                Icons.cloud_upload_outlined,
-                                              ),
-                                        onTap: () => _edit(n),
-                                      );
-                                    },
+                                      ),
+                                    ],
                                   );
                                 },
                               ),
@@ -344,6 +371,40 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       },
     );
   }
+
+  Widget _list(List<LocalNote> filtered, AppLocalizations l) =>
+      ListView.builder(
+        physics: const AlwaysScrollableScrollPhysics(),
+        itemCount: filtered.length,
+        itemBuilder: (context, index) {
+          final n = filtered[index];
+          return ListTile(
+            key: ValueKey(n.id),
+            minVerticalPadding: 16,
+            title: Text(
+              n.title.isEmpty ? l.untitled : n.title,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            subtitle: Text(
+              n.content,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            leading: Icon(
+              n.syncState == 'needsDecision'
+                  ? Icons.warning_amber
+                  : n.favorite
+                  ? Icons.star
+                  : Icons.description_outlined,
+            ),
+            trailing: n.syncState == 'clean'
+                ? null
+                : const Icon(Icons.cloud_upload_outlined),
+            onTap: () => _edit(n),
+          );
+        },
+      );
 }
 
 class _EmptyText extends StatelessWidget {

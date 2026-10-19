@@ -132,6 +132,14 @@ void main() {
       const Duration(seconds: 5),
     );
 
+    // Phone on its side with the keyboard up: no overflow, text still editable.
+    await tester.binding.setSurfaceSize(const Size(800, 200));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(find.text('# original'), findsOneWidget);
+    await tester.binding.setSurfaceSize(null);
+    await tester.pumpAndSettle();
+
     final field = find.byWidgetPredicate((w) => w is TextField && w.expands);
     await tester.enterText(field, '# modified\n\n🙂 **raw**');
     await tester.pump(const Duration(milliseconds: 400));

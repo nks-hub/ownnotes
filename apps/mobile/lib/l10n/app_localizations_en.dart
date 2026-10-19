@@ -158,4 +158,7 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get deleteConfirm =>
       'Delete this note? It is also deleted on the server.';
+
+  @override
+  String get allCategories => 'All';
 }
