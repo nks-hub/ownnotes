@@ -85,20 +85,57 @@ final class SyncCoordinator {
       await _delete(client, note);
     }
     if (await database.account(accountId) == null) return;
+    if (!await _pull(client, accountId, _watermarks[accountId])) {
+      _watermarks.remove(accountId);
+      await _pull(client, accountId, null);
+    }
+  }
+
+  // shortcut: kept in memory, so the first sync after start is a full pull;
+  // persist it per account if full pulls of large accounts become slow.
+  final Map<String, int> _watermarks = {};
+
+  /// With [pruneBefore] the server sends notes unchanged since then as id
+  /// only. Returns false when such an id has no local row, so the caller
+  /// repeats the pull in full instead of missing that note.
+  Future<bool> _pull(
+    NotesClient client,
+    String accountId,
+    int? pruneBefore,
+  ) async {
     final epoch = await database.readEpoch(accountId);
     String? cursor;
+    DateTime? watermark;
     final seenCursors = <String>{};
     final listed = <int>{};
+    final sent = <int>{};
     do {
-      final page = await client.list(cursor: cursor);
-      if (!await database.applyPull(accountId, epoch, page.notes)) return;
+      final page = await client.list(cursor: cursor, pruneBefore: pruneBefore);
+      // The first chunk's Last-Modified is when the whole listing started.
+      if (cursor == null) watermark = page.lastModified;
+      if (!await database.applyPull(accountId, epoch, page.notes)) return true;
       listed.addAll(page.notes.map((n) => n.id));
+      sent.addAll(page.notes.where((n) => n is! NoteIdOnly).map((n) => n.id));
       cursor = page.cursor;
       if (cursor != null && !seenCursors.add(cursor)) {
         throw const NotesProtocolException('repeated_chunk_cursor');
       }
     } while (cursor != null);
+    // The last chunk repeats notes of earlier chunks as id only, too.
+    final pruned = listed.difference(sent);
+    if (pruneBefore != null && pruned.isNotEmpty) {
+      final known =
+          await (database.select(database.localNotes)..where(
+                (n) => n.accountId.equals(accountId) & n.remoteId.isIn(pruned),
+              ))
+              .get();
+      if (known.length != pruned.length) return false;
+    }
     await database.census(accountId, epoch, listed);
+    if (watermark != null) {
+      _watermarks[accountId] = watermark.millisecondsSinceEpoch ~/ 1000;
+    }
+    return true;
   }
 
   /// DELETE has no If-Match on the server, so the note is read first: a

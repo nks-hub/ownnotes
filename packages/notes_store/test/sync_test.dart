@@ -281,6 +281,39 @@ void main() {
     });
   });
 
+  test('later pulls send pruneBefore and keep id-only notes', () async {
+    await db.markDeleted('a', id);
+    final queries = <Map<String, String>>[];
+    var serverIds = [70, 71];
+    final sync = coordinator((r) async {
+      queries.add(r.url.queryParameters);
+      final pruned = r.url.queryParameters.containsKey('pruneBefore');
+      return http.Response(
+        jsonEncode([
+          for (final id in serverIds) pruned ? {'id': id} : remote(id),
+        ]),
+        200,
+        headers: {
+          'content-type': 'application/json',
+          'last-modified': 'Mon, 19 Oct 2026 10:00:00 GMT',
+        },
+      );
+    });
+    await sync.sync('a');
+    expect(queries.single.containsKey('pruneBefore'), isFalse);
+    await sync.sync('a');
+    expect(queries.last['pruneBefore'], '1792404000');
+    final notes = await db.select(db.localNotes).get();
+    expect(notes.map((n) => n.remoteId), unorderedEquals([70, 71]));
+    expect(notes.every((n) => n.content == 'local'), isTrue);
+
+    // An id-only note that is not stored locally forces a full listing.
+    serverIds = [70, 71, 72];
+    queries.clear();
+    await sync.sync('a');
+    expect(queries.map((q) => q.containsKey('pruneBefore')), [true, false]);
+    expect((await db.select(db.localNotes).get()).length, 3);
+  });
   group('rejected update', () {
     Future<LocalNote> edited() async {
       await db.markDeleted('a', id);
