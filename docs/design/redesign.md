@@ -1159,7 +1159,11 @@ These override the matching parts above.
    `app_cs.arb` (CRLF line endings, appended at the end) and list them in
    their report; the integration owner resolves merges, regenerates the
    localization output and adds German in one pass.
-3. **Schema.** In wave 1 only package R may change
+3. **Icons in lists and menus.** Every row in settings, accounts, menus and
+   sheets has a leading 24 px outlined icon from the one icon family,
+   aligned in one column, switches included; section headers have none.
+   A list never mixes rows with and without icons.
+4. **Schema.** In wave 1 only package R may change
    `packages/notes_store/lib/src/database.dart`, additively, with a
    migration and a migration test.
 
