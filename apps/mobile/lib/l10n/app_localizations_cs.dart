@@ -274,4 +274,90 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get mergeBoth => 'Spojit obě verze';
+
+  @override
+  String get allNotes => 'Všechny poznámky';
+
+  @override
+  String get favorites => 'Oblíbené';
+
+  @override
+  String get uncategorised => 'Bez kategorie';
+
+  @override
+  String get categories => 'Kategorie';
+
+  @override
+  String get switchAccount => 'Přepnout účet';
+
+  @override
+  String get clearSearch => 'Zrušit hledání';
+
+  @override
+  String get noMatches => 'Hledání nic nenašlo.';
+
+  @override
+  String get noNotesHere => 'V této kategorii zatím nejsou poznámky.';
+
+  @override
+  String get newNoteHere => 'Nová poznámka sem';
+
+  @override
+  String get stateWaiting => 'Čeká';
+
+  @override
+  String get stateSending => 'Odesílá se';
+
+  @override
+  String get stateNeedsDecision => 'Čeká na rozhodnutí';
+
+  @override
+  String get relNow => 'Právě teď';
+
+  @override
+  String relMinutes(int count) {
+    return 'před $count min';
+  }
+
+  @override
+  String relHours(int count) {
+    return 'před $count h';
+  }
+
+  @override
+  String get relYesterday => 'Včera';
+
+  @override
+  String relDays(int count) {
+    return 'před $count dny';
+  }
+
+  @override
+  String conflictsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count poznámek čeká na rozhodnutí',
+      few: '$count poznámky čekají na rozhodnutí',
+      one: '1 poznámka čeká na rozhodnutí',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get signInAgain => 'Přihlásit znovu';
+
+  @override
+  String get resolveNow => 'Vyřešit';
+
+  @override
+  String get syncStatus => 'Stav synchronizace';
+
+  @override
+  String tasksDone(int done, int total) {
+    return 'Splněno $done z $total úkolů';
+  }
+
+  @override
+  String get hasAttachments => 'Obsahuje přílohy';
 }

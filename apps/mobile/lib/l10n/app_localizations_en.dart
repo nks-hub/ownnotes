@@ -273,4 +273,89 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get mergeBoth => 'Combine both versions';
+
+  @override
+  String get allNotes => 'All notes';
+
+  @override
+  String get favorites => 'Favorites';
+
+  @override
+  String get uncategorised => 'Uncategorised';
+
+  @override
+  String get categories => 'Categories';
+
+  @override
+  String get switchAccount => 'Switch account';
+
+  @override
+  String get clearSearch => 'Clear search';
+
+  @override
+  String get noMatches => 'No note matches your search.';
+
+  @override
+  String get noNotesHere => 'No notes in this category yet.';
+
+  @override
+  String get newNoteHere => 'New note here';
+
+  @override
+  String get stateWaiting => 'Waiting';
+
+  @override
+  String get stateSending => 'Sending';
+
+  @override
+  String get stateNeedsDecision => 'Needs decision';
+
+  @override
+  String get relNow => 'Just now';
+
+  @override
+  String relMinutes(int count) {
+    return '$count min ago';
+  }
+
+  @override
+  String relHours(int count) {
+    return '$count h ago';
+  }
+
+  @override
+  String get relYesterday => 'Yesterday';
+
+  @override
+  String relDays(int count) {
+    return '$count d ago';
+  }
+
+  @override
+  String conflictsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count notes need a decision',
+      one: '1 note needs a decision',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get signInAgain => 'Sign in again';
+
+  @override
+  String get resolveNow => 'Resolve';
+
+  @override
+  String get syncStatus => 'Synchronization status';
+
+  @override
+  String tasksDone(int done, int total) {
+    return '$done of $total tasks done';
+  }
+
+  @override
+  String get hasAttachments => 'Has attachments';
 }
