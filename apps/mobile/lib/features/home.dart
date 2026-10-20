@@ -15,6 +15,7 @@ import '../data/runtime.dart';
 import '../data/settings.dart';
 import '../l10n/app_localizations.dart';
 import 'category_panel.dart';
+import 'accounts.dart';
 import 'editor.dart';
 import 'login.dart';
 import 'note_rows.dart';
@@ -29,7 +30,6 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-  String? _selected;
   String? _shown;
   NoteScope _scope = NoteScope.all;
   String _category = '';
@@ -103,10 +103,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
     if (note == null || !mounted) return;
     if (note.accountId != accountId) {
-      setState(() {
-        _selected = note!.accountId;
-        _scope = NoteScope.all;
-      });
+      ref.read(selectedAccountIdProvider.notifier).state = note.accountId;
+      setState(() => _scope = NoteScope.all);
     }
     await _edit(note);
   }
@@ -341,7 +339,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       error: (_, _) => Scaffold(body: Center(child: Text(l.loadFailed))),
       data: (accounts) {
         final account =
-            accounts.where((a) => a.id == _selected).firstOrNull ??
+            accounts
+                .where((a) => a.id == ref.watch(selectedAccountIdProvider))
+                .firstOrNull ??
             accounts.firstOrNull;
         _shown = account?.id;
         if (account == null) {
@@ -636,8 +636,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       onSelected: (id) {
         if (id == _addKey) {
           _addAccount();
+        } else if (id == _manageKey) {
+          openAccounts(context, currentId: account.id);
         } else {
-          setState(() => _selected = id);
+          ref.read(selectedAccountIdProvider.notifier).state = id;
         }
       },
       itemBuilder: (_) => [
@@ -675,11 +677,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ],
           ),
         ),
+        PopupMenuItem(
+          value: _manageKey,
+          child: Row(
+            children: [
+              const SizedBox(
+                width: 28,
+                child: Icon(Icons.manage_accounts_outlined, size: 18),
+              ),
+              Text(l.accounts),
+            ],
+          ),
+        ),
       ],
     );
   }
 
   static const _addKey = '__add_account__';
+  static const _manageKey = '__manage_accounts__';
 
   void _addAccount() => Navigator.of(context).push<void>(
     MaterialPageRoute(

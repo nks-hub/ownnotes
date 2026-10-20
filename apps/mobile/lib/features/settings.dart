@@ -8,6 +8,7 @@ import '../data/export.dart';
 import '../data/runtime.dart';
 import '../data/settings.dart';
 import '../l10n/app_localizations.dart';
+import 'accounts.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({required this.account, super.key});
@@ -68,12 +69,12 @@ class SettingsScreen extends ConsumerWidget {
             onTap: () => _export(context, ref),
           ),
           ListTile(
-            leading: const Icon(Icons.logout),
-            title: Text(l.removeAccount),
+            leading: const Icon(Icons.manage_accounts_outlined),
+            title: Text(l.accounts),
             subtitle: Text(
               '${account.loginName} · ${Uri.parse(account.server).host}',
             ),
-            onTap: () => _remove(context, ref),
+            onTap: () => _accounts(context, ref),
           ),
         ],
       ),
@@ -108,34 +109,16 @@ class SettingsScreen extends ConsumerWidget {
     }
   }
 
-  /// Notes that were never uploaded exist only on this device; the dialog
-  /// says how many would be lost.
-  Future<void> _remove(BuildContext context, WidgetRef ref) async {
-    final l = AppLocalizations.of(context)!;
+  /// Settings belong to one account, so leave them when the user switched to
+  /// another one or removed this one.
+  Future<void> _accounts(BuildContext context, WidgetRef ref) async {
     final navigator = Navigator.of(context);
-    final notes = await ref.read(notesProvider(account.id).future);
-    final unsent = notes.where((n) => n.syncState != 'clean').length;
-    if (!context.mounted) return;
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        content: Text(
-          unsent == 0 ? l.removeAccountConfirm : l.removeAccountUnsent(unsent),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(l.cancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(l.removeAccount),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true) return;
-    await ref.read(runtimeProvider).accounts.remove(account.id);
-    navigator.pop();
+    final picked = await openAccounts(context, currentId: account.id);
+    final stillThere =
+        await ref.read(runtimeProvider).database.account(account.id) != null;
+    if (navigator.mounted &&
+        (!stillThere || (picked ?? account.id) != account.id)) {
+      navigator.pop();
+    }
   }
 }

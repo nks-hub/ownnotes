@@ -8,6 +8,8 @@
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
 	<string>OwnNotes</string>
+	<key>NSCameraUsageDescription</key>
+	<string>OwnNotes uses the camera only to scan the QR code that logs you in to your Nextcloud server.</string>
 	<key>NSFaceIDUsageDescription</key>
 	<string>Face ID unlocks OwnNotes when the app lock is on.</string>
 	<key>CFBundleExecutable</key>

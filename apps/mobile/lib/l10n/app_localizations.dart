@@ -401,7 +401,7 @@ abstract class AppLocalizations {
   /// No description provided for @reasonAuth.
   ///
   /// In en, this message translates to:
-  /// **'The server refused the login. Add the account again.'**
+  /// **'The server refused the login. Sign in again from Accounts.'**
   String get reasonAuth;
 
   /// No description provided for @reasonLocked.
@@ -503,7 +503,7 @@ abstract class AppLocalizations {
   /// No description provided for @removeAccountConfirm.
   ///
   /// In en, this message translates to:
-  /// **'Remove the account from this phone? Notes on the server stay.'**
+  /// **'Remove the account from this phone and revoke its app password on the server? Notes on the server stay.'**
   String get removeAccountConfirm;
 
   /// No description provided for @removeAccountUnsent.
@@ -775,6 +775,204 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Has attachments'**
   String get hasAttachments;
+
+  /// No description provided for @serverEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the address of your Nextcloud server.'**
+  String get serverEmpty;
+
+  /// No description provided for @serverInsecure.
+  ///
+  /// In en, this message translates to:
+  /// **'Only https:// servers are supported. Your login would travel unencrypted otherwise.'**
+  String get serverInsecure;
+
+  /// No description provided for @serverInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'That is not a valid server address. Example: cloud.example.com'**
+  String get serverInvalid;
+
+  /// No description provided for @serverNoLogin.
+  ///
+  /// In en, this message translates to:
+  /// **'This server did not offer the Nextcloud login. Check the address.'**
+  String get serverNoLogin;
+
+  /// No description provided for @serverUnreachable.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not reach the server. Check the address and your connection.'**
+  String get serverUnreachable;
+
+  /// No description provided for @browserUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open the browser for the login.'**
+  String get browserUnavailable;
+
+  /// No description provided for @loginExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'The login took too long. Start again.'**
+  String get loginExpired;
+
+  /// No description provided for @scannedLoginRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'The server refused the scanned code. It may be old or revoked. Create a new one.'**
+  String get scannedLoginRejected;
+
+  /// No description provided for @onboardingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your notes on your own Nextcloud'**
+  String get onboardingTitle;
+
+  /// No description provided for @onboardingBody.
+  ///
+  /// In en, this message translates to:
+  /// **'OwnNotes syncs Markdown notes with the Nextcloud Notes app. They go to your server and nowhere else.'**
+  String get onboardingBody;
+
+  /// No description provided for @multiAccountTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Several accounts'**
+  String get multiAccountTitle;
+
+  /// No description provided for @multiAccountBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Add more servers or users and switch between them any time.'**
+  String get multiAccountBody;
+
+  /// No description provided for @secureLoginTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No password in the app'**
+  String get secureLoginTitle;
+
+  /// No description provided for @secureLoginBody.
+  ///
+  /// In en, this message translates to:
+  /// **'You sign in in your browser. The phone keeps only an app password that you can revoke.'**
+  String get secureLoginBody;
+
+  /// No description provided for @checkingServer.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking server…'**
+  String get checkingServer;
+
+  /// No description provided for @waitingForLogin.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for the login'**
+  String get waitingForLogin;
+
+  /// No description provided for @waitingForLoginBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Approve the access in your browser, then come back to the app.'**
+  String get waitingForLoginBody;
+
+  /// No description provided for @savingAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Signing in…'**
+  String get savingAccount;
+
+  /// No description provided for @scanLoginCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan QR code'**
+  String get scanLoginCode;
+
+  /// No description provided for @scanLoginCodeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Point the camera at the login QR code from Nextcloud (Settings, Security, app passwords).'**
+  String get scanLoginCodeHint;
+
+  /// No description provided for @scanLoginCodeUnreadable.
+  ///
+  /// In en, this message translates to:
+  /// **'That is not a Nextcloud login code.'**
+  String get scanLoginCodeUnreadable;
+
+  /// No description provided for @scanCameraDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera access is off. Allow it in the app settings to scan the code.'**
+  String get scanCameraDenied;
+
+  /// No description provided for @scanCameraUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'The camera could not be started.'**
+  String get scanCameraUnavailable;
+
+  /// No description provided for @openAppSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Open app settings'**
+  String get openAppSettings;
+
+  /// No description provided for @accounts.
+  ///
+  /// In en, this message translates to:
+  /// **'Accounts'**
+  String get accounts;
+
+  /// No description provided for @currentAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Current account'**
+  String get currentAccount;
+
+  /// No description provided for @accountRemovedRevoked.
+  ///
+  /// In en, this message translates to:
+  /// **'Account removed. Its app password is revoked on the server.'**
+  String get accountRemovedRevoked;
+
+  /// No description provided for @accountRemovedNotRevoked.
+  ///
+  /// In en, this message translates to:
+  /// **'Account removed from this phone. The server did not confirm it, so revoke the app password in Nextcloud under Settings, Security.'**
+  String get accountRemovedNotRevoked;
+
+  /// No description provided for @accountRemoveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The account could not be removed.'**
+  String get accountRemoveFailed;
+
+  /// No description provided for @serverCertificate.
+  ///
+  /// In en, this message translates to:
+  /// **'The server certificate could not be verified. Check the address, or fix the certificate on the server.'**
+  String get serverCertificate;
+
+  /// No description provided for @serverTimeout.
+  ///
+  /// In en, this message translates to:
+  /// **'The server took too long to answer. Try again.'**
+  String get serverTimeout;
+
+  /// No description provided for @notesAppMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'The Notes app is not available on this server. Install or enable Nextcloud Notes first.'**
+  String get notesAppMissing;
+
+  /// No description provided for @reauthMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'That login belongs to another server or user. Sign in as the same account to keep its notes.'**
+  String get reauthMismatch;
 }
 
 class _AppLocalizationsDelegate

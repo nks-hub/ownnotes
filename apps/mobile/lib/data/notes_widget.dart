@@ -5,6 +5,23 @@ import 'package:notes_store/notes_store.dart';
 
 String? _published;
 
+/// Empties the widget when it still shows [accountId], so titles of a removed
+/// account do not stay on the home screen.
+Future<void> clearNotesWidget(String accountId) async {
+  if (!Platform.isAndroid) return;
+  try {
+    if (await HomeWidget.getWidgetData<String>('account') != accountId) return;
+    _published = null;
+    await HomeWidget.saveWidgetData<String>('account', '');
+    await HomeWidget.saveWidgetData<String>('notes', '[]');
+    await HomeWidget.updateWidget(
+      qualifiedAndroidName: 'com.nkshub.nextcloudnotes.NotesWidget',
+    );
+  } catch (_) {
+    // No widget support here; nothing is shown either.
+  }
+}
+
 /// Writes the five latest notes of [accountId] for the Android home-screen
 /// widget (`NotesWidget.kt`). With the app lock on no titles are written.
 /// Runs from the app and from the background worker.

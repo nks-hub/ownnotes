@@ -173,7 +173,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reasonAuth =>
-      'The server refused the login. Add the account again.';
+      'The server refused the login. Sign in again from Accounts.';
 
   @override
   String get reasonLocked =>
@@ -230,7 +230,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get removeAccountConfirm =>
-      'Remove the account from this phone? Notes on the server stay.';
+      'Remove the account from this phone and revoke its app password on the server? Notes on the server stay.';
 
   @override
   String removeAccountUnsent(int count) {
@@ -394,4 +394,119 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get hasAttachments => 'Has attachments';
+
+  @override
+  String get serverEmpty => 'Enter the address of your Nextcloud server.';
+
+  @override
+  String get serverInsecure =>
+      'Only https:// servers are supported. Your login would travel unencrypted otherwise.';
+
+  @override
+  String get serverInvalid =>
+      'That is not a valid server address. Example: cloud.example.com';
+
+  @override
+  String get serverNoLogin =>
+      'This server did not offer the Nextcloud login. Check the address.';
+
+  @override
+  String get serverUnreachable =>
+      'Could not reach the server. Check the address and your connection.';
+
+  @override
+  String get browserUnavailable => 'Could not open the browser for the login.';
+
+  @override
+  String get loginExpired => 'The login took too long. Start again.';
+
+  @override
+  String get scannedLoginRejected =>
+      'The server refused the scanned code. It may be old or revoked. Create a new one.';
+
+  @override
+  String get onboardingTitle => 'Your notes on your own Nextcloud';
+
+  @override
+  String get onboardingBody =>
+      'OwnNotes syncs Markdown notes with the Nextcloud Notes app. They go to your server and nowhere else.';
+
+  @override
+  String get multiAccountTitle => 'Several accounts';
+
+  @override
+  String get multiAccountBody =>
+      'Add more servers or users and switch between them any time.';
+
+  @override
+  String get secureLoginTitle => 'No password in the app';
+
+  @override
+  String get secureLoginBody =>
+      'You sign in in your browser. The phone keeps only an app password that you can revoke.';
+
+  @override
+  String get checkingServer => 'Checking server…';
+
+  @override
+  String get waitingForLogin => 'Waiting for the login';
+
+  @override
+  String get waitingForLoginBody =>
+      'Approve the access in your browser, then come back to the app.';
+
+  @override
+  String get savingAccount => 'Signing in…';
+
+  @override
+  String get scanLoginCode => 'Scan QR code';
+
+  @override
+  String get scanLoginCodeHint =>
+      'Point the camera at the login QR code from Nextcloud (Settings, Security, app passwords).';
+
+  @override
+  String get scanLoginCodeUnreadable => 'That is not a Nextcloud login code.';
+
+  @override
+  String get scanCameraDenied =>
+      'Camera access is off. Allow it in the app settings to scan the code.';
+
+  @override
+  String get scanCameraUnavailable => 'The camera could not be started.';
+
+  @override
+  String get openAppSettings => 'Open app settings';
+
+  @override
+  String get accounts => 'Accounts';
+
+  @override
+  String get currentAccount => 'Current account';
+
+  @override
+  String get accountRemovedRevoked =>
+      'Account removed. Its app password is revoked on the server.';
+
+  @override
+  String get accountRemovedNotRevoked =>
+      'Account removed from this phone. The server did not confirm it, so revoke the app password in Nextcloud under Settings, Security.';
+
+  @override
+  String get accountRemoveFailed => 'The account could not be removed.';
+
+  @override
+  String get serverCertificate =>
+      'The server certificate could not be verified. Check the address, or fix the certificate on the server.';
+
+  @override
+  String get serverTimeout => 'The server took too long to answer. Try again.';
+
+  @override
+  String get notesAppMissing =>
+      'The Notes app is not available on this server. Install or enable Nextcloud Notes first.';
+
+  @override
+  String get reauthMismatch =>
+      'That login belongs to another server or user. Sign in as the same account to keep its notes.';
 }

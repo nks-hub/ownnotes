@@ -34,6 +34,10 @@ dependencies:
   local_auth: 3.0.2
   workmanager: ^0.10.10
   home_widget: ^0.10.0
+  # Camera frames for the QR login scanner; zxing2 decodes the luminance plane
+  # in pure Dart, so no ML Kit is pulled in.
+  camera: ^0.12.1
+  zxing2: ^0.2.4
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -41,4 +45,6 @@ dev_dependencies:
   shared_preferences_platform_interface: ^2.4.2
 flutter:
   uses-material-design: true
+  assets:
+    - assets/brand/play-store-icon.png
   generate: true

@@ -46,6 +46,25 @@ final class AccountRepository {
     }
     return id;
   });
+
+  /// Signs an existing account in again without touching its notes: same id,
+  /// same credential reference, only the secret is replaced. Refuses a login
+  /// for another server or user.
+  Future<void> reauthenticate(String id, LoginCredentials credentials) =>
+      _serialize(() async {
+        final account = await database.account(id);
+        if (account == null) throw StateError('account_missing');
+        if (account.server != credentials.server.uri.toString() ||
+            account.loginName != credentials.loginName) {
+          throw StateError('identity_mismatch');
+        }
+        await vault.write(account.credentialRef, credentials.appPassword);
+        await (database.update(
+          database.accounts,
+        )..where((a) => a.id.equals(id))).write(
+          const AccountsCompanion(state: Value('capabilitiesPending')),
+        );
+      });
   Future<void> remove(String id) => _serialize(() async {
     final account = await database.account(id);
     if (account == null) return;

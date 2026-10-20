@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io' show HandshakeException;
 
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -128,6 +129,19 @@ void main() {
       throwsA(errorCode('server_identity_changed')),
     );
     expect(session.isClosed, isTrue);
+  });
+  test('start reports timeout and TLS failures as their own codes', () async {
+    final slow = LoginClient(
+      base: base,
+      timeout: const Duration(milliseconds: 20),
+      transport: MockClient((r) => Completer<http.Response>().future),
+    );
+    await expectLater(slow.start(), throwsA(errorCode('timeout')));
+    final tls = LoginClient(
+      base: base,
+      transport: MockClient((r) async => throw const HandshakeException('x')),
+    );
+    await expectLater(tls.start(), throwsA(errorCode('tls_failed')));
   });
   test('transport failure keeps flow open and masks secrets', () async {
     // Android restricts network access of a backgrounded app while the user is

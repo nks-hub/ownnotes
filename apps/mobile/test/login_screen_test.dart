@@ -24,6 +24,10 @@ void main() {
   late int polls;
 
   Future<void> open(WidgetTester tester, http.Client transport) async {
+    // The branded entry is taller than the default 800x600 test surface.
+    tester.view.physicalSize = const Size(800, 1600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
     runtime = (await tester.runAsync(
       () async => AppRuntime(NotesDatabase(NativeDatabase.memory()), Vault()),
     ))!;
@@ -77,6 +81,13 @@ void main() {
             'endpoint': 'https://cloud.test/index.php/login/v2/poll',
           },
         });
+      }
+      if (r.url.path == '/index.php/apps/notes/api/v1/notes') {
+        return http.Response(
+          '[]',
+          200,
+          headers: {'content-type': 'application/json'},
+        );
       }
       polls++;
       // The first poll fails like a backgrounded Android app's request.
