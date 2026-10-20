@@ -451,6 +451,10 @@ void main() {
       final file = File('${dir.path}/notes.sqlite');
       final first = NotesDatabase(NativeDatabase(file));
       await first.customStatement('DROP TABLE sync_leases');
+      await first.customStatement('ALTER TABLE local_notes DROP COLUMN kind');
+      await first.customStatement(
+        'ALTER TABLE local_notes DROP COLUMN dav_path',
+      );
       await first.customStatement('PRAGMA user_version = 1');
       await first.close();
       final upgraded = NotesDatabase(NativeDatabase(file));

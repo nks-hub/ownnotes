@@ -34,6 +34,13 @@ class LocalNotes extends Table {
   BoolColumn get baseFavorite => boolean().nullable()();
   TextColumn get syncState => text().withDefault(const Constant('draft'))();
   IntColumn get updatedAt => integer()();
+
+  /// `note` is listed by the Notes API; `shared` is a file somebody shared
+  /// with the account, outside its Notes folder, synced over WebDAV at
+  /// [davPath]. [remoteId] of a shared note is its file id, [etag] the WebDAV
+  /// entity tag.
+  TextColumn get kind => text().withDefault(const Constant('note'))();
+  TextColumn get davPath => text().nullable()();
   @override
   Set<Column<Object>> get primaryKey => {id};
   @override
@@ -71,12 +78,16 @@ class SyncLeases extends Table {
 class NotesDatabase extends _$NotesDatabase {
   NotesDatabase(super.executor);
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) => m.createAll(),
     onUpgrade: (m, from, to) async {
       if (from < 2) await m.createTable(syncLeases);
+      if (from < 3) {
+        await m.addColumn(localNotes, localNotes.kind);
+        await m.addColumn(localNotes, localNotes.davPath);
+      }
     },
     beforeOpen: (_) async {
       await customStatement('PRAGMA foreign_keys = ON');
@@ -228,6 +239,8 @@ class NotesDatabase extends _$NotesDatabase {
         final current = await note(accountId, id);
         if (current == null) return;
         if (current.readonly) throw StateError('note_readonly');
+        // A shared note leaves the list only by ending the share.
+        if (current.kind == 'shared') throw StateError('note_shared');
         if (current.syncState == 'sending') throw StateError('note_sending');
         if (current.remoteId == null) {
           await (delete(localNotes)..where((n) => n.id.equals(id))).go();
@@ -257,6 +270,7 @@ class NotesDatabase extends _$NotesDatabase {
               (n) =>
                   n.accountId.equals(accountId) &
                   n.syncState.equals('clean') &
+                  n.kind.equals('note') &
                   n.remoteId.isNotNull() &
                   n.remoteId.isNotIn(remoteIds),
             ))
@@ -300,6 +314,9 @@ class NotesDatabase extends _$NotesDatabase {
         baseCategory: Value(record.category),
         baseFavorite: Value(record.favorite),
         syncState: const Value('clean'),
+        // A shared file moved into the Notes folder is an ordinary note now.
+        kind: const Value('note'),
+        davPath: const Value(null),
         updatedAt: Value(record.modified * 1000),
         revision: Value((existing?.revision ?? 0) + 1),
       );

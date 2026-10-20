@@ -662,6 +662,27 @@ class $LocalNotesTable extends LocalNotes
     type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _kindMeta = const VerificationMeta('kind');
+  @override
+  late final GeneratedColumn<String> kind = GeneratedColumn<String>(
+    'kind',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('note'),
+  );
+  static const VerificationMeta _davPathMeta = const VerificationMeta(
+    'davPath',
+  );
+  @override
+  late final GeneratedColumn<String> davPath = GeneratedColumn<String>(
+    'dav_path',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -680,6 +701,8 @@ class $LocalNotesTable extends LocalNotes
     baseFavorite,
     syncState,
     updatedAt,
+    kind,
+    davPath,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -805,6 +828,18 @@ class $LocalNotesTable extends LocalNotes
     } else if (isInserting) {
       context.missing(_updatedAtMeta);
     }
+    if (data.containsKey('kind')) {
+      context.handle(
+        _kindMeta,
+        kind.isAcceptableOrUnknown(data['kind']!, _kindMeta),
+      );
+    }
+    if (data.containsKey('dav_path')) {
+      context.handle(
+        _davPathMeta,
+        davPath.isAcceptableOrUnknown(data['dav_path']!, _davPathMeta),
+      );
+    }
     return context;
   }
 
@@ -882,6 +917,14 @@ class $LocalNotesTable extends LocalNotes
         DriftSqlType.int,
         data['${effectivePrefix}updated_at'],
       )!,
+      kind: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}kind'],
+      )!,
+      davPath: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}dav_path'],
+      ),
     );
   }
 
@@ -908,6 +951,13 @@ class LocalNote extends DataClass implements Insertable<LocalNote> {
   final bool? baseFavorite;
   final String syncState;
   final int updatedAt;
+
+  /// `note` is listed by the Notes API; `shared` is a file somebody shared
+  /// with the account, outside its Notes folder, synced over WebDAV at
+  /// [davPath]. [remoteId] of a shared note is its file id, [etag] the WebDAV
+  /// entity tag.
+  final String kind;
+  final String? davPath;
   const LocalNote({
     required this.id,
     required this.accountId,
@@ -925,6 +975,8 @@ class LocalNote extends DataClass implements Insertable<LocalNote> {
     this.baseFavorite,
     required this.syncState,
     required this.updatedAt,
+    required this.kind,
+    this.davPath,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -957,6 +1009,10 @@ class LocalNote extends DataClass implements Insertable<LocalNote> {
     }
     map['sync_state'] = Variable<String>(syncState);
     map['updated_at'] = Variable<int>(updatedAt);
+    map['kind'] = Variable<String>(kind);
+    if (!nullToAbsent || davPath != null) {
+      map['dav_path'] = Variable<String>(davPath);
+    }
     return map;
   }
 
@@ -988,6 +1044,10 @@ class LocalNote extends DataClass implements Insertable<LocalNote> {
           : Value(baseFavorite),
       syncState: Value(syncState),
       updatedAt: Value(updatedAt),
+      kind: Value(kind),
+      davPath: davPath == null && nullToAbsent
+          ? const Value.absent()
+          : Value(davPath),
     );
   }
 
@@ -1013,6 +1073,8 @@ class LocalNote extends DataClass implements Insertable<LocalNote> {
       baseFavorite: serializer.fromJson<bool?>(json['baseFavorite']),
       syncState: serializer.fromJson<String>(json['syncState']),
       updatedAt: serializer.fromJson<int>(json['updatedAt']),
+      kind: serializer.fromJson<String>(json['kind']),
+      davPath: serializer.fromJson<String?>(json['davPath']),
     );
   }
   @override
@@ -1035,6 +1097,8 @@ class LocalNote extends DataClass implements Insertable<LocalNote> {
       'baseFavorite': serializer.toJson<bool?>(baseFavorite),
       'syncState': serializer.toJson<String>(syncState),
       'updatedAt': serializer.toJson<int>(updatedAt),
+      'kind': serializer.toJson<String>(kind),
+      'davPath': serializer.toJson<String?>(davPath),
     };
   }
 
@@ -1055,6 +1119,8 @@ class LocalNote extends DataClass implements Insertable<LocalNote> {
     Value<bool?> baseFavorite = const Value.absent(),
     String? syncState,
     int? updatedAt,
+    String? kind,
+    Value<String?> davPath = const Value.absent(),
   }) => LocalNote(
     id: id ?? this.id,
     accountId: accountId ?? this.accountId,
@@ -1072,6 +1138,8 @@ class LocalNote extends DataClass implements Insertable<LocalNote> {
     baseFavorite: baseFavorite.present ? baseFavorite.value : this.baseFavorite,
     syncState: syncState ?? this.syncState,
     updatedAt: updatedAt ?? this.updatedAt,
+    kind: kind ?? this.kind,
+    davPath: davPath.present ? davPath.value : this.davPath,
   );
   LocalNote copyWithCompanion(LocalNotesCompanion data) {
     return LocalNote(
@@ -1097,6 +1165,8 @@ class LocalNote extends DataClass implements Insertable<LocalNote> {
           : this.baseFavorite,
       syncState: data.syncState.present ? data.syncState.value : this.syncState,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      kind: data.kind.present ? data.kind.value : this.kind,
+      davPath: data.davPath.present ? data.davPath.value : this.davPath,
     );
   }
 
@@ -1118,7 +1188,9 @@ class LocalNote extends DataClass implements Insertable<LocalNote> {
           ..write('baseCategory: $baseCategory, ')
           ..write('baseFavorite: $baseFavorite, ')
           ..write('syncState: $syncState, ')
-          ..write('updatedAt: $updatedAt')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('kind: $kind, ')
+          ..write('davPath: $davPath')
           ..write(')'))
         .toString();
   }
@@ -1141,6 +1213,8 @@ class LocalNote extends DataClass implements Insertable<LocalNote> {
     baseFavorite,
     syncState,
     updatedAt,
+    kind,
+    davPath,
   );
   @override
   bool operator ==(Object other) =>
@@ -1161,7 +1235,9 @@ class LocalNote extends DataClass implements Insertable<LocalNote> {
           other.baseCategory == this.baseCategory &&
           other.baseFavorite == this.baseFavorite &&
           other.syncState == this.syncState &&
-          other.updatedAt == this.updatedAt);
+          other.updatedAt == this.updatedAt &&
+          other.kind == this.kind &&
+          other.davPath == this.davPath);
 }
 
 class LocalNotesCompanion extends UpdateCompanion<LocalNote> {
@@ -1181,6 +1257,8 @@ class LocalNotesCompanion extends UpdateCompanion<LocalNote> {
   final Value<bool?> baseFavorite;
   final Value<String> syncState;
   final Value<int> updatedAt;
+  final Value<String> kind;
+  final Value<String?> davPath;
   final Value<int> rowid;
   const LocalNotesCompanion({
     this.id = const Value.absent(),
@@ -1199,6 +1277,8 @@ class LocalNotesCompanion extends UpdateCompanion<LocalNote> {
     this.baseFavorite = const Value.absent(),
     this.syncState = const Value.absent(),
     this.updatedAt = const Value.absent(),
+    this.kind = const Value.absent(),
+    this.davPath = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   LocalNotesCompanion.insert({
@@ -1218,6 +1298,8 @@ class LocalNotesCompanion extends UpdateCompanion<LocalNote> {
     this.baseFavorite = const Value.absent(),
     this.syncState = const Value.absent(),
     required int updatedAt,
+    this.kind = const Value.absent(),
+    this.davPath = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        accountId = Value(accountId),
@@ -1241,6 +1323,8 @@ class LocalNotesCompanion extends UpdateCompanion<LocalNote> {
     Expression<bool>? baseFavorite,
     Expression<String>? syncState,
     Expression<int>? updatedAt,
+    Expression<String>? kind,
+    Expression<String>? davPath,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -1260,6 +1344,8 @@ class LocalNotesCompanion extends UpdateCompanion<LocalNote> {
       if (baseFavorite != null) 'base_favorite': baseFavorite,
       if (syncState != null) 'sync_state': syncState,
       if (updatedAt != null) 'updated_at': updatedAt,
+      if (kind != null) 'kind': kind,
+      if (davPath != null) 'dav_path': davPath,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -1281,6 +1367,8 @@ class LocalNotesCompanion extends UpdateCompanion<LocalNote> {
     Value<bool?>? baseFavorite,
     Value<String>? syncState,
     Value<int>? updatedAt,
+    Value<String>? kind,
+    Value<String?>? davPath,
     Value<int>? rowid,
   }) {
     return LocalNotesCompanion(
@@ -1300,6 +1388,8 @@ class LocalNotesCompanion extends UpdateCompanion<LocalNote> {
       baseFavorite: baseFavorite ?? this.baseFavorite,
       syncState: syncState ?? this.syncState,
       updatedAt: updatedAt ?? this.updatedAt,
+      kind: kind ?? this.kind,
+      davPath: davPath ?? this.davPath,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -1355,6 +1445,12 @@ class LocalNotesCompanion extends UpdateCompanion<LocalNote> {
     if (updatedAt.present) {
       map['updated_at'] = Variable<int>(updatedAt.value);
     }
+    if (kind.present) {
+      map['kind'] = Variable<String>(kind.value);
+    }
+    if (davPath.present) {
+      map['dav_path'] = Variable<String>(davPath.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -1380,6 +1476,8 @@ class LocalNotesCompanion extends UpdateCompanion<LocalNote> {
           ..write('baseFavorite: $baseFavorite, ')
           ..write('syncState: $syncState, ')
           ..write('updatedAt: $updatedAt, ')
+          ..write('kind: $kind, ')
+          ..write('davPath: $davPath, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -2774,6 +2872,8 @@ typedef $$LocalNotesTableCreateCompanionBuilder =
       Value<bool?> baseFavorite,
       Value<String> syncState,
       required int updatedAt,
+      Value<String> kind,
+      Value<String?> davPath,
       Value<int> rowid,
     });
 typedef $$LocalNotesTableUpdateCompanionBuilder =
@@ -2794,6 +2894,8 @@ typedef $$LocalNotesTableUpdateCompanionBuilder =
       Value<bool?> baseFavorite,
       Value<String> syncState,
       Value<int> updatedAt,
+      Value<String> kind,
+      Value<String?> davPath,
       Value<int> rowid,
     });
 
@@ -2918,6 +3020,16 @@ class $$LocalNotesTableFilterComposer
 
   ColumnFilters<int> get updatedAt => $composableBuilder(
     column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get davPath => $composableBuilder(
+    column: $table.davPath,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3054,6 +3166,16 @@ class $$LocalNotesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get davPath => $composableBuilder(
+    column: $table.davPath,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$AccountsTableOrderingComposer get accountId {
     final $$AccountsTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -3137,6 +3259,12 @@ class $$LocalNotesTableAnnotationComposer
 
   GeneratedColumn<int> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get kind =>
+      $composableBuilder(column: $table.kind, builder: (column) => column);
+
+  GeneratedColumn<String> get davPath =>
+      $composableBuilder(column: $table.davPath, builder: (column) => column);
 
   $$AccountsTableAnnotationComposer get accountId {
     final $$AccountsTableAnnotationComposer composer = $composerBuilder(
@@ -3231,6 +3359,8 @@ class $$LocalNotesTableTableManager
                 Value<bool?> baseFavorite = const Value.absent(),
                 Value<String> syncState = const Value.absent(),
                 Value<int> updatedAt = const Value.absent(),
+                Value<String> kind = const Value.absent(),
+                Value<String?> davPath = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => LocalNotesCompanion(
                 id: id,
@@ -3249,6 +3379,8 @@ class $$LocalNotesTableTableManager
                 baseFavorite: baseFavorite,
                 syncState: syncState,
                 updatedAt: updatedAt,
+                kind: kind,
+                davPath: davPath,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -3269,6 +3401,8 @@ class $$LocalNotesTableTableManager
                 Value<bool?> baseFavorite = const Value.absent(),
                 Value<String> syncState = const Value.absent(),
                 required int updatedAt,
+                Value<String> kind = const Value.absent(),
+                Value<String?> davPath = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => LocalNotesCompanion.insert(
                 id: id,
@@ -3287,6 +3421,8 @@ class $$LocalNotesTableTableManager
                 baseFavorite: baseFavorite,
                 syncState: syncState,
                 updatedAt: updatedAt,
+                kind: kind,
+                davPath: davPath,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
