@@ -637,6 +637,144 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Link'**
   String get fmtLink;
+
+  /// No description provided for @allNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'All notes'**
+  String get allNotes;
+
+  /// No description provided for @favorites.
+  ///
+  /// In en, this message translates to:
+  /// **'Favorites'**
+  String get favorites;
+
+  /// No description provided for @uncategorised.
+  ///
+  /// In en, this message translates to:
+  /// **'Uncategorised'**
+  String get uncategorised;
+
+  /// No description provided for @categories.
+  ///
+  /// In en, this message translates to:
+  /// **'Categories'**
+  String get categories;
+
+  /// No description provided for @switchAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch account'**
+  String get switchAccount;
+
+  /// No description provided for @clearSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear search'**
+  String get clearSearch;
+
+  /// No description provided for @noMatches.
+  ///
+  /// In en, this message translates to:
+  /// **'No note matches your search.'**
+  String get noMatches;
+
+  /// No description provided for @noNotesHere.
+  ///
+  /// In en, this message translates to:
+  /// **'No notes in this category yet.'**
+  String get noNotesHere;
+
+  /// No description provided for @newNoteHere.
+  ///
+  /// In en, this message translates to:
+  /// **'New note here'**
+  String get newNoteHere;
+
+  /// No description provided for @stateWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting'**
+  String get stateWaiting;
+
+  /// No description provided for @stateSending.
+  ///
+  /// In en, this message translates to:
+  /// **'Sending'**
+  String get stateSending;
+
+  /// No description provided for @stateNeedsDecision.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs decision'**
+  String get stateNeedsDecision;
+
+  /// No description provided for @relNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Just now'**
+  String get relNow;
+
+  /// No description provided for @relMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} min ago'**
+  String relMinutes(int count);
+
+  /// No description provided for @relHours.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} h ago'**
+  String relHours(int count);
+
+  /// No description provided for @relYesterday.
+  ///
+  /// In en, this message translates to:
+  /// **'Yesterday'**
+  String get relYesterday;
+
+  /// No description provided for @relDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} d ago'**
+  String relDays(int count);
+
+  /// No description provided for @conflictsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 note needs a decision} other{{count} notes need a decision}}'**
+  String conflictsCount(int count);
+
+  /// No description provided for @signInAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in again'**
+  String get signInAgain;
+
+  /// No description provided for @resolveNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Resolve'**
+  String get resolveNow;
+
+  /// No description provided for @syncStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Synchronization status'**
+  String get syncStatus;
+
+  /// No description provided for @tasksDone.
+  ///
+  /// In en, this message translates to:
+  /// **'{done} of {total} tasks done'**
+  String tasksDone(int done, int total);
+
+  /// No description provided for @hasAttachments.
+  ///
+  /// In en, this message translates to:
+  /// **'Has attachments'**
+  String get hasAttachments;
 }
 
 class _AppLocalizationsDelegate

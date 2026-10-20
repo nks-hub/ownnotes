@@ -117,5 +117,66 @@
   "fmtHeading": "Heading",
   "fmtList": "List",
   "fmtChecklist": "Checklist",
-  "fmtLink": "Link"
+  "fmtLink": "Link",
+  "allNotes": "All notes",
+  "favorites": "Favorites",
+  "uncategorised": "Uncategorised",
+  "categories": "Categories",
+  "switchAccount": "Switch account",
+  "clearSearch": "Clear search",
+  "noMatches": "No note matches your search.",
+  "noNotesHere": "No notes in this category yet.",
+  "newNoteHere": "New note here",
+  "stateWaiting": "Waiting",
+  "stateSending": "Sending",
+  "stateNeedsDecision": "Needs decision",
+  "relNow": "Just now",
+  "relMinutes": "{count} min ago",
+  "@relMinutes": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "relHours": "{count} h ago",
+  "@relHours": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "relYesterday": "Yesterday",
+  "relDays": "{count} d ago",
+  "@relDays": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "conflictsCount": "{count, plural, one{1 note needs a decision} other{{count} notes need a decision}}",
+  "@conflictsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "signInAgain": "Sign in again",
+  "resolveNow": "Resolve",
+  "syncStatus": "Synchronization status",
+  "tasksDone": "{done} of {total} tasks done",
+  "@tasksDone": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "hasAttachments": "Has attachments"
 }
