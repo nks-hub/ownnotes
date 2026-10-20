@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:io';
-import 'package:archive/archive_io.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -28,6 +27,9 @@ import 'collection/saved_views.dart';
 import 'collection/shared_text.dart';
 import 'collection/sheets.dart';
 import 'collection/status_area.dart';
+import 'attachments/add_attachment.dart';
+import 'capture/handle_captures.dart';
+import '../data/attachments/providers.dart';
 import 'editor.dart';
 import 'templates/templates.dart';
 import 'templates/templates_screen.dart';
@@ -183,23 +185,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     await _edit(note);
   }
 
+  /// Content shared from other apps waits on disk until it is stored as a
+  /// note; the capture screen asks for the account and destination.
   Future<void> _takeShared() async {
-    final accountId = _shown;
-    if (accountId == null || !mounted) return;
-    final shared = await fetchSharedText();
-    if (shared == null || !mounted) return;
-    // An open editor saved its text when the app went to the background.
-    Navigator.of(context).popUntil((route) => route.isFirst);
-    await takeSharedText(
-      context: context,
-      db: ref.read(runtimeProvider).database,
-      accountId: accountId,
-      shared: shared,
-      recent: () => ref.read(notesProvider(accountId).future),
-      create: ({required title, required content}) =>
-          _create(accountId, title: title, content: content),
-      edit: _edit,
-    );
+    if (_shown == null || !mounted) return;
+    try {
+      await handleIncomingCaptures(context, ref);
+    } catch (_) {
+      // The capture stays on disk and is offered again next time.
+    }
   }
 
   Future<void> _loadSort() async {
@@ -285,6 +279,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       do {
         _again = null;
         await ref.read(runtimeProvider).sync.sync(accountId);
+        // Staged attachments upload once their notes exist on the server;
+        // a failure keeps them staged for the next run.
+        try {
+          await (await ref.read(attachmentServiceProvider.future)).flush(
+            accountId,
+          );
+        } catch (_) {}
         accountId = _again ?? accountId;
       } while (_again != null && mounted);
     } catch (_) {
@@ -312,7 +313,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final decision = note.syncState == 'needsDecision';
     final name = decision ? '/recovery' : '/note';
     Widget page() =>
-        decision ? RecoveryScreen(note: note) : EditorScreen(note: note);
+        decision
+        ? RecoveryScreen(note: note)
+        : EditorScreen(
+            note: note,
+            onAttach: (kind) => addAttachment(context, ref, note, kind),
+          );
     if (_layout != NotebookLayout.phone || _pane.isOpen) {
       await _pane.open(note.id, name, (_) => page());
       return;
@@ -335,25 +341,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final path = picked?.path;
     if (path == null || !mounted) return;
     try {
-      final input = InputFileStream(path);
-      final List<KeepNote> notes;
-      try {
-        notes = readKeepTakeout(ZipDecoder().decodeStream(input));
-      } finally {
-        await input.close();
-      }
-      if (notes.isEmpty) throw const FormatException('no_keep_notes');
-      final db = ref.read(runtimeProvider).database;
-      for (final note in notes) {
-        await db.createDraft(
-          accountId,
-          title: titleOr(note.title, note.content),
-          content: note.content,
-          category: note.category,
-        );
-      }
+      final result = await importKeepTakeout(
+        zipPath: path,
+        database: ref.read(runtimeProvider).database,
+        attachments: await ref.read(attachmentServiceProvider.future),
+        accountId: accountId,
+      );
+      if (result.notes == 0) throw const FormatException('no_keep_notes');
       if (!mounted) return;
-      showOwnSnackBar(context, l.importDone(notes.length));
+      showOwnSnackBar(
+        context,
+        l.importKeepAttachments(
+          result.notes,
+          result.attachments,
+          result.skippedAttachments,
+        ),
+      );
       await _sync(accountId, quiet: true);
     } catch (_) {
       if (mounted) showOwnSnackBar(context, l.importFailed);

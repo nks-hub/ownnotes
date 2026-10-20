@@ -9,7 +9,8 @@ enum AttachKind { photo, camera, file, voice }
 
 /// Called when an Attach menu row is chosen; the editor does not move any
 /// file itself. Null disables the rows.
-typedef AttachHandler = FutureOr<void> Function(AttachKind kind);
+/// Returns the Markdown to insert at the caret, or null when nothing was added.
+typedef AttachHandler = FutureOr<String?> Function(AttachKind kind);
 
 /// Commands of the Format and Insert menus and of the Task button.
 enum EditorCommand {

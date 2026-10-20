@@ -306,6 +306,14 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
     _textFocus.requestFocus();
   }
 
+  Future<String?> _attach(AttachKind kind) async {
+    final markdown = await widget.onAttach!(kind);
+    if (markdown != null && mounted) {
+      _apply((v) => insertAtSelection(v, markdown));
+    }
+    return markdown;
+  }
+
   void _runCommand(EditorCommand command) {
     switch (command) {
       case EditorCommand.heading1:
@@ -1361,7 +1369,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
                         child: FormattingDock(
                           history: _history,
                           onCommand: _runCommand,
-                          onAttach: widget.onAttach,
+                          onAttach: widget.onAttach == null ? null : _attach,
                         ),
                       )
                     else

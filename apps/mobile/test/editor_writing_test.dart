@@ -279,7 +279,15 @@ void main() {
     testWidgets('the Task button and the Attach menu', (tester) async {
       final (runtime, note) = await _setup(tester, content: 'buy milk');
       final picked = <AttachKind>[];
-      await _open(tester, runtime, note, onAttach: picked.add);
+      await _open(
+        tester,
+        runtime,
+        note,
+        onAttach: (kind) {
+          picked.add(kind);
+          return null;
+        },
+      );
       await tester.tap(_source);
       await tester.pump();
       _controller(tester).selection = const TextSelection.collapsed(offset: 3);

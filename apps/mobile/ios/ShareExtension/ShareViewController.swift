@@ -1,8 +1,8 @@
 import UIKit
 import UniformTypeIdentifiers
 
-/// Stores the shared text for OwnNotes and closes; the app turns it into a
-/// note the next time it comes to the front.
+/// Stores the shared text, links, pictures and files for OwnNotes and closes.
+/// The app asks where the content goes the next time it comes to the front.
 final class ShareViewController: UIViewController {
   private var started = false
 
@@ -23,8 +23,16 @@ final class ShareViewController: UIViewController {
       {
         text = [text, url].compactMap { $0 }.joined(separator: "\n")
       }
-      if let text, !text.isEmpty {
-        ShareInbox.add(title: title, text: text)
+      let files = await loadFiles(from: providers)
+      defer { files.forEach { try? FileManager.default.removeItem(at: $0.url.deletingLastPathComponent()) } }
+      guard (text ?? "").isEmpty && files.isEmpty
+        || ShareInbox.add(title: title, text: text ?? "", files: files)
+      else {
+        // Nothing was stored: say so, the sender's app would otherwise think
+        // the content arrived.
+        extensionContext?.cancelRequest(
+          withError: NSError(domain: "OwnNotesShare", code: 1))
+        return
       }
       extensionContext?.completeRequest(returningItems: nil)
     }
@@ -39,6 +47,45 @@ final class ShareViewController: UIViewController {
     case let value as URL: return value.absoluteString
     case let value as Data: return String(data: value, encoding: .utf8)
     default: return nil
+    }
+  }
+
+  /// Pictures, recordings, PDFs and other files, copied into the extension's
+  /// temporary folder (the system deletes its own copy when the loader
+  /// returns). Web addresses and text are not files.
+  private func loadFiles(from providers: [NSItemProvider]) async -> [ShareInbox.SharedFile] {
+    var result: [ShareInbox.SharedFile] = []
+    for provider in providers {
+      guard !provider.hasItemConformingToTypeIdentifier(UTType.plainText.identifier),
+            let type = [UTType.image, UTType.audio, UTType.pdf, UTType.data].first(where: {
+              provider.hasItemConformingToTypeIdentifier($0.identifier)
+            }),
+            !(type == .data && provider.hasItemConformingToTypeIdentifier(UTType.url.identifier)
+              && !provider.hasItemConformingToTypeIdentifier(UTType.fileURL.identifier))
+      else { continue }
+      if let file = await copyFile(of: provider, type: type) { result.append(file) }
+    }
+    return result
+  }
+
+  private func copyFile(of provider: NSItemProvider, type: UTType) async -> ShareInbox.SharedFile? {
+    await withCheckedContinuation { continuation in
+      provider.loadFileRepresentation(forTypeIdentifier: type.identifier) { url, _ in
+        guard let url else { return continuation.resume(returning: nil) }
+        let folder = FileManager.default.temporaryDirectory
+          .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let target = folder.appendingPathComponent(url.lastPathComponent)
+        do {
+          try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+          try FileManager.default.copyItem(at: url, to: target)
+          let mime = UTType(filenameExtension: target.pathExtension)?.preferredMIMEType
+            ?? type.preferredMIMEType ?? "application/octet-stream"
+          continuation.resume(
+            returning: ShareInbox.SharedFile(name: target.lastPathComponent, mime: mime, url: target))
+        } catch {
+          continuation.resume(returning: nil)
+        }
+      }
     }
   }
 }

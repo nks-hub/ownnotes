@@ -9,7 +9,9 @@
 	<key>CFBundleDisplayName</key>
 	<string>OwnNotes</string>
 	<key>NSCameraUsageDescription</key>
-	<string>OwnNotes uses the camera only to scan the QR code that logs you in to your Nextcloud server.</string>
+	<string>OwnNotes uses the camera to scan the QR code that logs you in to your Nextcloud server and to take photos you attach to a note.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>OwnNotes uses the microphone only while you record a voice note to attach to a note.</string>
 	<key>NSFaceIDUsageDescription</key>
 	<string>Face ID unlocks OwnNotes when the app lock is on.</string>
 	<key>CFBundleExecutable</key>
