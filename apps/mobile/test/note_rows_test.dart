@@ -24,6 +24,7 @@ LocalNote note({
   revision: 1,
   syncState: syncState,
   updatedAt: DateTime.now().millisecondsSinceEpoch,
+  kind: 'note',
 );
 
 Widget app(Widget child, {Locale locale = const Locale('en')}) => MaterialApp(
