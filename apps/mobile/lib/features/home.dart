@@ -188,12 +188,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   /// Content shared from other apps waits on disk until it is stored as a
   /// note; the capture screen asks for the account and destination.
   Future<void> _takeShared() async {
-    if (_shown == null || !mounted) return;
+    final accountId = _shown;
+    if (accountId == null || !mounted) return;
+    final bool stored;
     try {
-      await handleIncomingCaptures(context, ref);
+      stored = await handleIncomingCaptures(context, ref);
     } catch (_) {
       // The capture stays on disk and is offered again next time.
+      return;
     }
+    // A saved capture is a new local note; send it like any other edit.
+    if (stored && mounted) await _sync(_shown ?? accountId, quiet: true);
   }
 
   Future<void> _loadSort() async {

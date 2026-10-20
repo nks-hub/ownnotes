@@ -18,14 +18,16 @@ final _dismissed = <String>{};
 /// Without a signed-in account nothing is shown and the captures wait.
 /// Closing the screen keeps the capture; it is not shown again by later
 /// automatic calls in this session. Pass [includeDismissed] from an explicit
-/// "waiting shared content" entry to open it again.
-Future<void> handleIncomingCaptures(
+/// "waiting shared content" entry to open it again. Returns whether at least
+/// one capture was stored as a note.
+Future<bool> handleIncomingCaptures(
   BuildContext context,
   WidgetRef ref, {
   bool includeDismissed = false,
 }) async {
-  if (_running) return;
+  if (_running) return false;
   _running = true;
+  var stored = false;
   try {
     final store = await ref.read(captureStoreProvider.future);
     try {
@@ -34,12 +36,12 @@ Future<void> handleIncomingCaptures(
       // Only Android and iOS have a share target.
     }
     final accounts = await ref.read(accountsProvider.future);
-    if (accounts.isEmpty) return;
+    if (accounts.isEmpty) return false;
     while (context.mounted) {
       final next = (await store.pending())
           .where((c) => includeDismissed || !_dismissed.contains(c.id))
           .firstOrNull;
-      if (next == null || !context.mounted) return;
+      if (next == null || !context.mounted) return stored;
       // An open editor saved its text when the app went to the background.
       Navigator.of(context).popUntil((route) => route.isFirst);
       final done = await Navigator.of(context).push<bool>(
@@ -50,9 +52,11 @@ Future<void> handleIncomingCaptures(
       );
       if (done != true) {
         _dismissed.add(next.id);
-        return;
+        return stored;
       }
+      stored = true;
     }
+    return stored;
   } finally {
     _running = false;
   }
