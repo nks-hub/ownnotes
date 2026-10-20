@@ -309,5 +309,105 @@
     }
   },
   "scanEnterAddress": "Enter server address",
-  "appLocked": "OwnNotes is locked"
+  "appLocked": "OwnNotes is locked",
+  "attachPhoto": "Photo",
+  "attachCamera": "Camera",
+  "attachFile": "File",
+  "attachVoice": "Voice",
+  "attachmentsTitle": "Attachments",
+  "attachmentsEmpty": "No attachments in this note.",
+  "attachStored": "Stored on device",
+  "attachWaiting": "Waiting to upload",
+  "attachWaitingNote": "Waiting for the note to be uploaded",
+  "attachUploading": "Uploading",
+  "attachOffline": "Available offline",
+  "attachOnServer": "On the server",
+  "attachUnavailable": "Unavailable",
+  "attachFailedState": "Failed: {reason}",
+  "@attachFailedState": {
+    "placeholders": {
+    "reason": {"type": "String"}
+    }
+  },
+  "attachErrOffline": "The server could not be reached.",
+  "attachErrAuth": "Sign in again to upload.",
+  "attachErrTooLarge": "The server refused the file as too large.",
+  "attachErrDenied": "The server did not allow the upload.",
+  "attachErrNoteGone": "The note no longer exists on the server.",
+  "attachErrServer": "The server returned an error.",
+  "attachRemoveQueue": "Remove from queue",
+  "attachRemoveLink": "Remove link from note",
+  "attachRemoveLinkHelp": "Removing the link only edits this note. The file stays on the server.",
+  "attachDeleteFile": "Delete file on server",
+  "attachDeleteTitle": "Delete the file on the server?",
+  "attachDeleteBody": "The file is removed from the server for good. Other notes and devices that link to it will show a missing file.",
+  "attachDeleteFileOnly": "Delete file",
+  "attachDeleteFileAndLink": "Delete file and link",
+  "attachDeleteUnsupported": "This server version cannot delete attachments. Remove the link instead; the file stays on the server.",
+  "attachDeleteFailed": "Could not delete the file.",
+  "attachKeepOffline": "Keep offline",
+  "attachUploadFailedTitle": "Upload failed",
+  "attachKeepForLater": "Keep for later",
+  "attachSavedWaiting": "Saved on device. It uploads once the note is on the server, and the link is added to the note.",
+  "attachSavedQueued": "Saved on device. The link is added to the note after the upload.",
+  "attachTooLarge": "This file is larger than 64 MB and was not attached.",
+  "attachReadFailed": "Could not read the file.",
+  "attachWorking": "Adding attachment…",
+  "voiceTitle": "Voice recording",
+  "voiceReady": "Ready to record",
+  "voiceRecording": "Recording",
+  "voicePaused": "Paused",
+  "voiceStopped": "Recording stopped",
+  "voiceStart": "Start recording",
+  "voicePause": "Pause",
+  "voiceResume": "Resume",
+  "voiceStop": "Stop",
+  "voiceListen": "Listen",
+  "voiceStopListening": "Stop playback",
+  "voiceAttach": "Attach",
+  "voiceDiscard": "Discard",
+  "voiceDiscardTitle": "Discard this recording?",
+  "voiceDiscardBody": "The recording is deleted from this device.",
+  "voiceMicDenied": "Microphone access is off. Allow it in the system settings to record.",
+  "voiceInterrupted": "The recording was paused because the app was interrupted. It is kept.",
+  "voiceRecovered": "Recovered an earlier recording.",
+  "voiceFailed": "Could not record.",
+  "voiceElapsed": "Recording time {time}",
+  "@voiceElapsed": {
+    "placeholders": {
+    "time": {"type": "String"}
+    }
+  },
+  "captureTitle": "Shared content",
+  "captureAccount": "Account",
+  "captureChooseAccount": "Choose the account for this content.",
+  "captureUnknownAccount": "The sender named an account that is not signed in here. Choose one.",
+  "captureNewNote": "New note",
+  "captureAppend": "Append to a note",
+  "captureCategory": "Category (optional)",
+  "captureSearchTarget": "Search notes to append to",
+  "captureNoTarget": "Choose the note to append to.",
+  "captureNoMatches": "No matching notes.",
+  "captureSave": "Save on device",
+  "captureDiscard": "Discard",
+  "captureDiscardTitle": "Discard shared content?",
+  "captureDiscardBody": "It is deleted from this device and no note is created.",
+  "captureKept": "Closing this screen keeps the content until you decide.",
+  "captureNoText": "No text, only files.",
+  "captureSaveFailed": "Could not save on this device. The content is kept.",
+  "captureFiles": "{count, plural, =1{1 file} other{{count} files}}",
+  "@captureFiles": {
+    "placeholders": {
+    "count": {"type": "int"}
+    }
+  },
+  "importKeepAttachments": "{notes} notes and {files} attachments imported, {skipped} files skipped.",
+  "@importKeepAttachments": {
+    "placeholders": {
+    "notes": {"type": "int"},
+    "files": {"type": "int"},
+    "skipped": {"type": "int"}
+    }
+  },
+  "attachMoreOptions": "More options"
 }

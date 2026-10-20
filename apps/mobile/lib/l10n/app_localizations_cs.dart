@@ -742,4 +742,265 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get appLocked => 'OwnNotes je zamčené';
+
+  @override
+  String get attachPhoto => 'Fotka';
+
+  @override
+  String get attachCamera => 'Fotoaparát';
+
+  @override
+  String get attachFile => 'Soubor';
+
+  @override
+  String get attachVoice => 'Hlas';
+
+  @override
+  String get attachmentsTitle => 'Přílohy';
+
+  @override
+  String get attachmentsEmpty => 'Tato poznámka nemá žádné přílohy.';
+
+  @override
+  String get attachStored => 'Uloženo v zařízení';
+
+  @override
+  String get attachWaiting => 'Čeká na nahrání';
+
+  @override
+  String get attachWaitingNote => 'Čeká na nahrání poznámky';
+
+  @override
+  String get attachUploading => 'Nahrává se';
+
+  @override
+  String get attachOffline => 'K dispozici offline';
+
+  @override
+  String get attachOnServer => 'Na serveru';
+
+  @override
+  String get attachUnavailable => 'Nedostupné';
+
+  @override
+  String attachFailedState(String reason) {
+    return 'Selhalo: $reason';
+  }
+
+  @override
+  String get attachErrOffline => 'Server není dostupný.';
+
+  @override
+  String get attachErrAuth => 'Pro nahrání se přihlaste znovu.';
+
+  @override
+  String get attachErrTooLarge =>
+      'Server soubor odmítl, protože je příliš velký.';
+
+  @override
+  String get attachErrDenied => 'Server nahrání nepovolil.';
+
+  @override
+  String get attachErrNoteGone => 'Poznámka už na serveru neexistuje.';
+
+  @override
+  String get attachErrServer => 'Server vrátil chybu.';
+
+  @override
+  String get attachRemoveQueue => 'Odebrat z fronty';
+
+  @override
+  String get attachRemoveLink => 'Odebrat odkaz z poznámky';
+
+  @override
+  String get attachRemoveLinkHelp =>
+      'Odebráním odkazu se upraví jen tato poznámka. Soubor zůstane na serveru.';
+
+  @override
+  String get attachDeleteFile => 'Smazat soubor na serveru';
+
+  @override
+  String get attachDeleteTitle => 'Smazat soubor na serveru?';
+
+  @override
+  String get attachDeleteBody =>
+      'Soubor se ze serveru nenávratně odstraní. Jiné poznámky a zařízení, které na něj odkazují, ukážou chybějící soubor.';
+
+  @override
+  String get attachDeleteFileOnly => 'Smazat soubor';
+
+  @override
+  String get attachDeleteFileAndLink => 'Smazat soubor i odkaz';
+
+  @override
+  String get attachDeleteUnsupported =>
+      'Tato verze serveru nepodporuje mazání příloh. Odeberte jen odkaz; soubor na serveru zůstane.';
+
+  @override
+  String get attachDeleteFailed => 'Soubor se nepodařilo smazat.';
+
+  @override
+  String get attachKeepOffline => 'Uložit offline';
+
+  @override
+  String get attachUploadFailedTitle => 'Nahrání selhalo';
+
+  @override
+  String get attachKeepForLater => 'Nechat na později';
+
+  @override
+  String get attachSavedWaiting =>
+      'Uloženo v zařízení. Nahraje se, až bude poznámka na serveru, a odkaz se do ní doplní.';
+
+  @override
+  String get attachSavedQueued =>
+      'Uloženo v zařízení. Odkaz se do poznámky doplní po nahrání.';
+
+  @override
+  String get attachTooLarge => 'Soubor je větší než 64 MB a nebyl připojen.';
+
+  @override
+  String get attachReadFailed => 'Soubor se nepodařilo přečíst.';
+
+  @override
+  String get attachWorking => 'Přidávám přílohu…';
+
+  @override
+  String get voiceTitle => 'Hlasový záznam';
+
+  @override
+  String get voiceReady => 'Připraveno k nahrávání';
+
+  @override
+  String get voiceRecording => 'Nahrává se';
+
+  @override
+  String get voicePaused => 'Pozastaveno';
+
+  @override
+  String get voiceStopped => 'Nahrávání zastaveno';
+
+  @override
+  String get voiceStart => 'Spustit nahrávání';
+
+  @override
+  String get voicePause => 'Pozastavit';
+
+  @override
+  String get voiceResume => 'Pokračovat';
+
+  @override
+  String get voiceStop => 'Zastavit';
+
+  @override
+  String get voiceListen => 'Poslechnout';
+
+  @override
+  String get voiceStopListening => 'Zastavit přehrávání';
+
+  @override
+  String get voiceAttach => 'Připojit';
+
+  @override
+  String get voiceDiscard => 'Zahodit';
+
+  @override
+  String get voiceDiscardTitle => 'Zahodit tento záznam?';
+
+  @override
+  String get voiceDiscardBody => 'Záznam se smaže z tohoto zařízení.';
+
+  @override
+  String get voiceMicDenied =>
+      'Přístup k mikrofonu je vypnutý. Povolte ho v nastavení systému.';
+
+  @override
+  String get voiceInterrupted =>
+      'Nahrávání se pozastavilo, protože byla aplikace přerušena. Záznam zůstává zachován.';
+
+  @override
+  String get voiceRecovered => 'Obnoven dřívější záznam.';
+
+  @override
+  String get voiceFailed => 'Nahrávání se nezdařilo.';
+
+  @override
+  String voiceElapsed(String time) {
+    return 'Délka záznamu $time';
+  }
+
+  @override
+  String get captureTitle => 'Sdílený obsah';
+
+  @override
+  String get captureAccount => 'Účet';
+
+  @override
+  String get captureChooseAccount => 'Vyberte účet pro tento obsah.';
+
+  @override
+  String get captureUnknownAccount =>
+      'Odesílatel uvedl účet, který tu není přihlášen. Vyberte jiný.';
+
+  @override
+  String get captureNewNote => 'Nová poznámka';
+
+  @override
+  String get captureAppend => 'Připojit k poznámce';
+
+  @override
+  String get captureCategory => 'Kategorie (volitelné)';
+
+  @override
+  String get captureSearchTarget => 'Hledat poznámku, ke které připojit';
+
+  @override
+  String get captureNoTarget => 'Vyberte poznámku, ke které se připojí.';
+
+  @override
+  String get captureNoMatches => 'Žádná shodná poznámka.';
+
+  @override
+  String get captureSave => 'Uložit do zařízení';
+
+  @override
+  String get captureDiscard => 'Zahodit';
+
+  @override
+  String get captureDiscardTitle => 'Zahodit sdílený obsah?';
+
+  @override
+  String get captureDiscardBody =>
+      'Smaže se z tohoto zařízení a poznámka se nevytvoří.';
+
+  @override
+  String get captureKept =>
+      'Zavřením obrazovky se obsah ponechá, dokud se nerozhodnete.';
+
+  @override
+  String get captureNoText => 'Bez textu, jen soubory.';
+
+  @override
+  String get captureSaveFailed =>
+      'Do zařízení se nepodařilo uložit. Obsah zůstává zachován.';
+
+  @override
+  String captureFiles(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count souborů',
+      few: '$count soubory',
+      one: '1 soubor',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String importKeepAttachments(int notes, int files, int skipped) {
+    return 'Importováno poznámek: $notes, příloh: $files, přeskočených souborů: $skipped.';
+  }
+
+  @override
+  String get attachMoreOptions => 'Další možnosti';
 }

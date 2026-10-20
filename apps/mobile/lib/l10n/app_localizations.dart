@@ -1357,6 +1357,474 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'OwnNotes is locked'**
   String get appLocked;
+
+  /// No description provided for @attachPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo'**
+  String get attachPhoto;
+
+  /// No description provided for @attachCamera.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera'**
+  String get attachCamera;
+
+  /// No description provided for @attachFile.
+  ///
+  /// In en, this message translates to:
+  /// **'File'**
+  String get attachFile;
+
+  /// No description provided for @attachVoice.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice'**
+  String get attachVoice;
+
+  /// No description provided for @attachmentsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Attachments'**
+  String get attachmentsTitle;
+
+  /// No description provided for @attachmentsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No attachments in this note.'**
+  String get attachmentsEmpty;
+
+  /// No description provided for @attachStored.
+  ///
+  /// In en, this message translates to:
+  /// **'Stored on device'**
+  String get attachStored;
+
+  /// No description provided for @attachWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting to upload'**
+  String get attachWaiting;
+
+  /// No description provided for @attachWaitingNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for the note to be uploaded'**
+  String get attachWaitingNote;
+
+  /// No description provided for @attachUploading.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploading'**
+  String get attachUploading;
+
+  /// No description provided for @attachOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Available offline'**
+  String get attachOffline;
+
+  /// No description provided for @attachOnServer.
+  ///
+  /// In en, this message translates to:
+  /// **'On the server'**
+  String get attachOnServer;
+
+  /// No description provided for @attachUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Unavailable'**
+  String get attachUnavailable;
+
+  /// No description provided for @attachFailedState.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed: {reason}'**
+  String attachFailedState(String reason);
+
+  /// No description provided for @attachErrOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'The server could not be reached.'**
+  String get attachErrOffline;
+
+  /// No description provided for @attachErrAuth.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in again to upload.'**
+  String get attachErrAuth;
+
+  /// No description provided for @attachErrTooLarge.
+  ///
+  /// In en, this message translates to:
+  /// **'The server refused the file as too large.'**
+  String get attachErrTooLarge;
+
+  /// No description provided for @attachErrDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'The server did not allow the upload.'**
+  String get attachErrDenied;
+
+  /// No description provided for @attachErrNoteGone.
+  ///
+  /// In en, this message translates to:
+  /// **'The note no longer exists on the server.'**
+  String get attachErrNoteGone;
+
+  /// No description provided for @attachErrServer.
+  ///
+  /// In en, this message translates to:
+  /// **'The server returned an error.'**
+  String get attachErrServer;
+
+  /// No description provided for @attachRemoveQueue.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from queue'**
+  String get attachRemoveQueue;
+
+  /// No description provided for @attachRemoveLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove link from note'**
+  String get attachRemoveLink;
+
+  /// No description provided for @attachRemoveLinkHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Removing the link only edits this note. The file stays on the server.'**
+  String get attachRemoveLinkHelp;
+
+  /// No description provided for @attachDeleteFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete file on server'**
+  String get attachDeleteFile;
+
+  /// No description provided for @attachDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete the file on the server?'**
+  String get attachDeleteTitle;
+
+  /// No description provided for @attachDeleteBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The file is removed from the server for good. Other notes and devices that link to it will show a missing file.'**
+  String get attachDeleteBody;
+
+  /// No description provided for @attachDeleteFileOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete file'**
+  String get attachDeleteFileOnly;
+
+  /// No description provided for @attachDeleteFileAndLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete file and link'**
+  String get attachDeleteFileAndLink;
+
+  /// No description provided for @attachDeleteUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'This server version cannot delete attachments. Remove the link instead; the file stays on the server.'**
+  String get attachDeleteUnsupported;
+
+  /// No description provided for @attachDeleteFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not delete the file.'**
+  String get attachDeleteFailed;
+
+  /// No description provided for @attachKeepOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep offline'**
+  String get attachKeepOffline;
+
+  /// No description provided for @attachUploadFailedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload failed'**
+  String get attachUploadFailedTitle;
+
+  /// No description provided for @attachKeepForLater.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep for later'**
+  String get attachKeepForLater;
+
+  /// No description provided for @attachSavedWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved on device. It uploads once the note is on the server, and the link is added to the note.'**
+  String get attachSavedWaiting;
+
+  /// No description provided for @attachSavedQueued.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved on device. The link is added to the note after the upload.'**
+  String get attachSavedQueued;
+
+  /// No description provided for @attachTooLarge.
+  ///
+  /// In en, this message translates to:
+  /// **'This file is larger than 64 MB and was not attached.'**
+  String get attachTooLarge;
+
+  /// No description provided for @attachReadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not read the file.'**
+  String get attachReadFailed;
+
+  /// No description provided for @attachWorking.
+  ///
+  /// In en, this message translates to:
+  /// **'Adding attachment…'**
+  String get attachWorking;
+
+  /// No description provided for @voiceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice recording'**
+  String get voiceTitle;
+
+  /// No description provided for @voiceReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready to record'**
+  String get voiceReady;
+
+  /// No description provided for @voiceRecording.
+  ///
+  /// In en, this message translates to:
+  /// **'Recording'**
+  String get voiceRecording;
+
+  /// No description provided for @voicePaused.
+  ///
+  /// In en, this message translates to:
+  /// **'Paused'**
+  String get voicePaused;
+
+  /// No description provided for @voiceStopped.
+  ///
+  /// In en, this message translates to:
+  /// **'Recording stopped'**
+  String get voiceStopped;
+
+  /// No description provided for @voiceStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Start recording'**
+  String get voiceStart;
+
+  /// No description provided for @voicePause.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause'**
+  String get voicePause;
+
+  /// No description provided for @voiceResume.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume'**
+  String get voiceResume;
+
+  /// No description provided for @voiceStop.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop'**
+  String get voiceStop;
+
+  /// No description provided for @voiceListen.
+  ///
+  /// In en, this message translates to:
+  /// **'Listen'**
+  String get voiceListen;
+
+  /// No description provided for @voiceStopListening.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop playback'**
+  String get voiceStopListening;
+
+  /// No description provided for @voiceAttach.
+  ///
+  /// In en, this message translates to:
+  /// **'Attach'**
+  String get voiceAttach;
+
+  /// No description provided for @voiceDiscard.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard'**
+  String get voiceDiscard;
+
+  /// No description provided for @voiceDiscardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard this recording?'**
+  String get voiceDiscardTitle;
+
+  /// No description provided for @voiceDiscardBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The recording is deleted from this device.'**
+  String get voiceDiscardBody;
+
+  /// No description provided for @voiceMicDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Microphone access is off. Allow it in the system settings to record.'**
+  String get voiceMicDenied;
+
+  /// No description provided for @voiceInterrupted.
+  ///
+  /// In en, this message translates to:
+  /// **'The recording was paused because the app was interrupted. It is kept.'**
+  String get voiceInterrupted;
+
+  /// No description provided for @voiceRecovered.
+  ///
+  /// In en, this message translates to:
+  /// **'Recovered an earlier recording.'**
+  String get voiceRecovered;
+
+  /// No description provided for @voiceFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not record.'**
+  String get voiceFailed;
+
+  /// No description provided for @voiceElapsed.
+  ///
+  /// In en, this message translates to:
+  /// **'Recording time {time}'**
+  String voiceElapsed(String time);
+
+  /// No description provided for @captureTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared content'**
+  String get captureTitle;
+
+  /// No description provided for @captureAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get captureAccount;
+
+  /// No description provided for @captureChooseAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the account for this content.'**
+  String get captureChooseAccount;
+
+  /// No description provided for @captureUnknownAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'The sender named an account that is not signed in here. Choose one.'**
+  String get captureUnknownAccount;
+
+  /// No description provided for @captureNewNote.
+  ///
+  /// In en, this message translates to:
+  /// **'New note'**
+  String get captureNewNote;
+
+  /// No description provided for @captureAppend.
+  ///
+  /// In en, this message translates to:
+  /// **'Append to a note'**
+  String get captureAppend;
+
+  /// No description provided for @captureCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Category (optional)'**
+  String get captureCategory;
+
+  /// No description provided for @captureSearchTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'Search notes to append to'**
+  String get captureSearchTarget;
+
+  /// No description provided for @captureNoTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the note to append to.'**
+  String get captureNoTarget;
+
+  /// No description provided for @captureNoMatches.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching notes.'**
+  String get captureNoMatches;
+
+  /// No description provided for @captureSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save on device'**
+  String get captureSave;
+
+  /// No description provided for @captureDiscard.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard'**
+  String get captureDiscard;
+
+  /// No description provided for @captureDiscardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard shared content?'**
+  String get captureDiscardTitle;
+
+  /// No description provided for @captureDiscardBody.
+  ///
+  /// In en, this message translates to:
+  /// **'It is deleted from this device and no note is created.'**
+  String get captureDiscardBody;
+
+  /// No description provided for @captureKept.
+  ///
+  /// In en, this message translates to:
+  /// **'Closing this screen keeps the content until you decide.'**
+  String get captureKept;
+
+  /// No description provided for @captureNoText.
+  ///
+  /// In en, this message translates to:
+  /// **'No text, only files.'**
+  String get captureNoText;
+
+  /// No description provided for @captureSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save on this device. The content is kept.'**
+  String get captureSaveFailed;
+
+  /// No description provided for @captureFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 file} other{{count} files}}'**
+  String captureFiles(int count);
+
+  /// No description provided for @importKeepAttachments.
+  ///
+  /// In en, this message translates to:
+  /// **'{notes} notes and {files} attachments imported, {skipped} files skipped.'**
+  String importKeepAttachments(int notes, int files, int skipped);
+
+  /// No description provided for @attachMoreOptions.
+  ///
+  /// In en, this message translates to:
+  /// **'More options'**
+  String get attachMoreOptions;
 }
 
 class _AppLocalizationsDelegate

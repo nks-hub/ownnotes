@@ -734,4 +734,264 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get appLocked => 'OwnNotes is locked';
+
+  @override
+  String get attachPhoto => 'Photo';
+
+  @override
+  String get attachCamera => 'Camera';
+
+  @override
+  String get attachFile => 'File';
+
+  @override
+  String get attachVoice => 'Voice';
+
+  @override
+  String get attachmentsTitle => 'Attachments';
+
+  @override
+  String get attachmentsEmpty => 'No attachments in this note.';
+
+  @override
+  String get attachStored => 'Stored on device';
+
+  @override
+  String get attachWaiting => 'Waiting to upload';
+
+  @override
+  String get attachWaitingNote => 'Waiting for the note to be uploaded';
+
+  @override
+  String get attachUploading => 'Uploading';
+
+  @override
+  String get attachOffline => 'Available offline';
+
+  @override
+  String get attachOnServer => 'On the server';
+
+  @override
+  String get attachUnavailable => 'Unavailable';
+
+  @override
+  String attachFailedState(String reason) {
+    return 'Failed: $reason';
+  }
+
+  @override
+  String get attachErrOffline => 'The server could not be reached.';
+
+  @override
+  String get attachErrAuth => 'Sign in again to upload.';
+
+  @override
+  String get attachErrTooLarge => 'The server refused the file as too large.';
+
+  @override
+  String get attachErrDenied => 'The server did not allow the upload.';
+
+  @override
+  String get attachErrNoteGone => 'The note no longer exists on the server.';
+
+  @override
+  String get attachErrServer => 'The server returned an error.';
+
+  @override
+  String get attachRemoveQueue => 'Remove from queue';
+
+  @override
+  String get attachRemoveLink => 'Remove link from note';
+
+  @override
+  String get attachRemoveLinkHelp =>
+      'Removing the link only edits this note. The file stays on the server.';
+
+  @override
+  String get attachDeleteFile => 'Delete file on server';
+
+  @override
+  String get attachDeleteTitle => 'Delete the file on the server?';
+
+  @override
+  String get attachDeleteBody =>
+      'The file is removed from the server for good. Other notes and devices that link to it will show a missing file.';
+
+  @override
+  String get attachDeleteFileOnly => 'Delete file';
+
+  @override
+  String get attachDeleteFileAndLink => 'Delete file and link';
+
+  @override
+  String get attachDeleteUnsupported =>
+      'This server version cannot delete attachments. Remove the link instead; the file stays on the server.';
+
+  @override
+  String get attachDeleteFailed => 'Could not delete the file.';
+
+  @override
+  String get attachKeepOffline => 'Keep offline';
+
+  @override
+  String get attachUploadFailedTitle => 'Upload failed';
+
+  @override
+  String get attachKeepForLater => 'Keep for later';
+
+  @override
+  String get attachSavedWaiting =>
+      'Saved on device. It uploads once the note is on the server, and the link is added to the note.';
+
+  @override
+  String get attachSavedQueued =>
+      'Saved on device. The link is added to the note after the upload.';
+
+  @override
+  String get attachTooLarge =>
+      'This file is larger than 64 MB and was not attached.';
+
+  @override
+  String get attachReadFailed => 'Could not read the file.';
+
+  @override
+  String get attachWorking => 'Adding attachment…';
+
+  @override
+  String get voiceTitle => 'Voice recording';
+
+  @override
+  String get voiceReady => 'Ready to record';
+
+  @override
+  String get voiceRecording => 'Recording';
+
+  @override
+  String get voicePaused => 'Paused';
+
+  @override
+  String get voiceStopped => 'Recording stopped';
+
+  @override
+  String get voiceStart => 'Start recording';
+
+  @override
+  String get voicePause => 'Pause';
+
+  @override
+  String get voiceResume => 'Resume';
+
+  @override
+  String get voiceStop => 'Stop';
+
+  @override
+  String get voiceListen => 'Listen';
+
+  @override
+  String get voiceStopListening => 'Stop playback';
+
+  @override
+  String get voiceAttach => 'Attach';
+
+  @override
+  String get voiceDiscard => 'Discard';
+
+  @override
+  String get voiceDiscardTitle => 'Discard this recording?';
+
+  @override
+  String get voiceDiscardBody => 'The recording is deleted from this device.';
+
+  @override
+  String get voiceMicDenied =>
+      'Microphone access is off. Allow it in the system settings to record.';
+
+  @override
+  String get voiceInterrupted =>
+      'The recording was paused because the app was interrupted. It is kept.';
+
+  @override
+  String get voiceRecovered => 'Recovered an earlier recording.';
+
+  @override
+  String get voiceFailed => 'Could not record.';
+
+  @override
+  String voiceElapsed(String time) {
+    return 'Recording time $time';
+  }
+
+  @override
+  String get captureTitle => 'Shared content';
+
+  @override
+  String get captureAccount => 'Account';
+
+  @override
+  String get captureChooseAccount => 'Choose the account for this content.';
+
+  @override
+  String get captureUnknownAccount =>
+      'The sender named an account that is not signed in here. Choose one.';
+
+  @override
+  String get captureNewNote => 'New note';
+
+  @override
+  String get captureAppend => 'Append to a note';
+
+  @override
+  String get captureCategory => 'Category (optional)';
+
+  @override
+  String get captureSearchTarget => 'Search notes to append to';
+
+  @override
+  String get captureNoTarget => 'Choose the note to append to.';
+
+  @override
+  String get captureNoMatches => 'No matching notes.';
+
+  @override
+  String get captureSave => 'Save on device';
+
+  @override
+  String get captureDiscard => 'Discard';
+
+  @override
+  String get captureDiscardTitle => 'Discard shared content?';
+
+  @override
+  String get captureDiscardBody =>
+      'It is deleted from this device and no note is created.';
+
+  @override
+  String get captureKept =>
+      'Closing this screen keeps the content until you decide.';
+
+  @override
+  String get captureNoText => 'No text, only files.';
+
+  @override
+  String get captureSaveFailed =>
+      'Could not save on this device. The content is kept.';
+
+  @override
+  String captureFiles(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count files',
+      one: '1 file',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String importKeepAttachments(int notes, int files, int skipped) {
+    return '$notes notes and $files attachments imported, $skipped files skipped.';
+  }
+
+  @override
+  String get attachMoreOptions => 'More options';
 }
