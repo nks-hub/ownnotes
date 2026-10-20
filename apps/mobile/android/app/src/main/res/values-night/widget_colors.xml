@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- OwnNotes palette, dark (redesign spec 3.3). -->
+<resources>
+    <color name="widget_surface">#20201C</color>
+    <color name="widget_raised">#2A2A24</color>
+    <color name="widget_on_surface">#EEEDE5</color>
+    <color name="widget_secondary">#C1C1B4</color>
+    <color name="widget_accent">#E9BE74</color>
+    <color name="widget_on_accent">#322100</color>
+    <color name="widget_container">#493715</color>
+    <color name="widget_on_container">#FFDEA6</color>
+    <color name="widget_outline">#8F9082</color>
+</resources>

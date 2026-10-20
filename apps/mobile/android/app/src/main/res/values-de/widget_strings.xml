@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="wd_description">Notizliste, einzelne Notiz, Checkliste oder Schnellnotiz.</string>
+    <string name="wd_new_note">Neue Notiz</string>
+    <string name="wd_all_notes">Alle Notizen</string>
+    <string name="wd_favorites">Favoriten</string>
+    <string name="wd_uncategorised">Ohne Kategorie</string>
+    <string name="wd_hidden">Notizen durch App-Sperre verborgen</string>
+    <string name="wd_unlock">Entsperren und öffnen</string>
+    <string name="wd_configure">Widget einrichten</string>
+    <string name="wd_configure_hint">Dieses Widget hat noch kein Konto und keine Notiz.</string>
+    <string name="wd_updating">Wird aktualisiert…</string>
+    <string name="wd_empty_notes">Noch keine Notizen.</string>
+    <string name="wd_empty_tasks">Diese Notiz hat keine Aufgaben.</string>
+    <string name="wd_note_missing">Diese Notiz ist nicht mehr verfügbar.</string>
+    <string name="wd_no_excerpt">Leere Notiz</string>
+    <string name="wd_updated">Aktualisiert %1$s</string>
+    <string name="wd_progress">%1$d von %2$d erledigt</string>
+    <string name="wd_stale">Geändert. Zum Öffnen tippen.</string>
+    <string name="wd_task_done">%1$s, erledigt</string>
+    <string name="wd_task_open">%1$s, offen</string>
+    <string name="wd_new_checklist">Checkliste</string>
+    <string name="wd_daily">Tagesnotiz</string>
+    <string name="wd_template">Vorlage</string>
+</resources>

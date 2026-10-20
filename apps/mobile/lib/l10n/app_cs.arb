@@ -676,5 +676,19 @@
   "captureSaveFailed": "Do zařízení se nepodařilo uložit. Obsah zůstává zachován.",
   "captureFiles": "{count, plural, =1{1 soubor} few{{count} soubory} other{{count} souborů}}",
   "importKeepAttachments": "Importováno poznámek: {notes}, příloh: {files}, přeskočených souborů: {skipped}.",
-  "attachMoreOptions": "Další možnosti"
+  "attachMoreOptions": "Další možnosti",
+  "widgetConfigTitle": "Nastavení widgetu",
+  "widgetTypeLabel": "Typ widgetu",
+  "widgetTypeList": "Seznam poznámek",
+  "widgetTypeNote": "Jedna poznámka",
+  "widgetTypeChecklist": "Úkoly",
+  "widgetTypeQuick": "Rychlá poznámka",
+  "widgetAccountLabel": "Účet",
+  "widgetCollectionLabel": "Zobrazené poznámky",
+  "widgetNoteLabel": "Poznámka",
+  "widgetNoChecklistNotes": "Tento účet nemá poznámku s úkoly.",
+  "widgetAppearanceLabel": "Vzhled",
+  "widgetAdd": "Přidat widget",
+  "widgetNoAccount": "Před přidáním widgetu se přihlaste v OwnNotes.",
+  "widgetSaveFailed": "Widget se nepodařilo nastavit."
 }

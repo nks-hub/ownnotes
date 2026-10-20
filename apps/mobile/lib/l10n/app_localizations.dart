@@ -3013,6 +3013,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'More options'**
   String get attachMoreOptions;
+
+  /// No description provided for @widgetConfigTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Configure widget'**
+  String get widgetConfigTitle;
+
+  /// No description provided for @widgetTypeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Widget type'**
+  String get widgetTypeLabel;
+
+  /// No description provided for @widgetTypeList.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes list'**
+  String get widgetTypeList;
+
+  /// No description provided for @widgetTypeNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Single note'**
+  String get widgetTypeNote;
+
+  /// No description provided for @widgetTypeChecklist.
+  ///
+  /// In en, this message translates to:
+  /// **'Checklist'**
+  String get widgetTypeChecklist;
+
+  /// No description provided for @widgetTypeQuick.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick note'**
+  String get widgetTypeQuick;
+
+  /// No description provided for @widgetAccountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get widgetAccountLabel;
+
+  /// No description provided for @widgetCollectionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes shown'**
+  String get widgetCollectionLabel;
+
+  /// No description provided for @widgetNoteLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Note'**
+  String get widgetNoteLabel;
+
+  /// No description provided for @widgetNoChecklistNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'This account has no note with tasks.'**
+  String get widgetNoChecklistNotes;
+
+  /// No description provided for @widgetAppearanceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Appearance'**
+  String get widgetAppearanceLabel;
+
+  /// No description provided for @widgetAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add widget'**
+  String get widgetAdd;
+
+  /// No description provided for @widgetNoAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to OwnNotes before adding a widget.'**
+  String get widgetNoAccount;
+
+  /// No description provided for @widgetSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The widget could not be configured.'**
+  String get widgetSaveFailed;
 }
 
 class _AppLocalizationsDelegate

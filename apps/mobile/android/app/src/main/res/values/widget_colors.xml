@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- OwnNotes palette, light (redesign spec 3.3). Android 10 and 11 use it as is;
+     Android 12+ replaces it in values-v31. Every role has the role it is drawn on. -->
+<resources>
+    <color name="widget_surface">#FFFEFA</color>
+    <color name="widget_raised">#F0EDE6</color>
+    <color name="widget_on_surface">#25251F</color>
+    <color name="widget_secondary">#5C5C52</color>
+    <color name="widget_accent">#805400</color>
+    <color name="widget_on_accent">#FFFFFF</color>
+    <color name="widget_container">#FFDEA6</color>
+    <color name="widget_on_container">#392800</color>
+    <color name="widget_outline">#78786C</color>
+</resources>
