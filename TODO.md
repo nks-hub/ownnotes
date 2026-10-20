@@ -22,8 +22,9 @@ references: [docs/research/review-2026-10-20.md](docs/research/review-2026-10-20
       portal, build and run on the simulator, signed archive, then a
       TestFlight build. The Swift share extension changes and the
       WidgetKit sources are not compiled yet.
-- [ ] New store screenshots of the redesigned app (cs, en, de; light and
-      dark) and upload the German Play listing.
+- [ ] Android widget texts follow the phone language, not the language
+      chosen in the app's settings. Pass the app language to the widget
+      (per-app locale on Android 13+, or localised strings in the snapshot).
 - [ ] On real phones: camera, microphone and file attachments; sharing a
       note with a second account and editing it from both; QR login and
       "sign in again"; widgets on Android 10 (S9) with the fallback colours;
