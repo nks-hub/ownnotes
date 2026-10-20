@@ -1,290 +1,61 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:markdown/markdown.dart' as md;
 import 'package:notes_store/notes_store.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../core/markdown/live_controller.dart';
+import '../core/markdown/live_styling.dart';
+import '../core/markdown/markdown_document.dart';
 import '../data/runtime.dart';
 import '../data/settings.dart';
 import '../l10n/app_localizations.dart';
 import 'recovery.dart';
 
-final _quoteMark = RegExp(r'^ {0,3}>[ ]?');
-final _fenceMark = RegExp(r'^(`{3,}|~{3,})');
-final _taskLine = RegExp(r'^\s*(?:[-+*]|\d+[.)])\s+\[[ xX]\]\s*(.*)$');
-final _listLine = RegExp(r'^\s*(?:[-+*]|\d+[.)])\s');
-
-String _alnum(String t) =>
-    t.toLowerCase().replaceAll(RegExp(r'[^\p{L}\p{N}]', unicode: true), '');
+export '../core/markdown/live_controller.dart' show MarkdownTextController;
 
 /// Offsets of the mark between the brackets of each task item (`- [ ]`,
-/// `1. [x]`) in the order the preview shows its checkboxes. The preview's own
-/// parser says which items are tasks (so code, however fenced or indented,
-/// is never one); a line scan only supplies where each sits in the text. An
-/// empty list means the two disagree, and then nothing is ticked.
-List<int> taskMarks(String text) {
-  final expected = <String>[];
-  void walk(List<md.Node> nodes) {
-    for (var i = 0; i < nodes.length; i++) {
-      final node = nodes[i];
-      if (node is! md.Element) continue;
-      if (node.tag == 'input' && node.attributes['type'] == 'checkbox') {
-        final label = StringBuffer();
-        for (final next in nodes.skip(i + 1)) {
-          if (next is md.Element && (next.tag == 'ul' || next.tag == 'ol')) {
-            break;
-          }
-          label.write(next.textContent);
-        }
-        expected.add(_alnum(label.toString()));
-      } else {
-        walk(node.children ?? const []);
-      }
-    }
-  }
-
-  walk(
-    md.Document(
-      extensionSet: md.ExtensionSet.gitHubFlavored,
-      encodeHtml: false,
-    ).parseLines(const LineSplitter().convert(text)),
-  );
-  if (expected.isEmpty) return const [];
-
-  final found = <(int, String)>[];
-  var offset = 0, listOpen = false, previousBlank = true;
-  String? fence;
-  for (final raw in text.split('\n')) {
-    var line = raw;
-    var shift = 0;
-    for (var q = _quoteMark.firstMatch(line); q != null;) {
-      shift += q.end;
-      line = line.substring(q.end);
-      q = _quoteMark.firstMatch(line);
-    }
-    final start = line.trimLeft();
-    final marks = _fenceMark.firstMatch(start);
-    if (fence != null) {
-      if (marks != null &&
-          marks[1]![0] == fence[0] &&
-          marks[1]!.length >= fence.length &&
-          start.substring(marks.end).trim().isEmpty) {
-        fence = null;
-      }
-    } else if (marks != null) {
-      fence = marks[1];
-    } else {
-      final indent = line.length - start.length;
-      final item = _taskLine.firstMatch(line);
-      // Four spaces after a blank line outside a list is indented code.
-      if (item != null && !(indent >= 4 && previousBlank && !listOpen)) {
-        found.add((offset + shift + line.indexOf('[') + 1, _alnum(item[1]!)));
-      }
-      if (_listLine.hasMatch(line)) {
-        listOpen = true;
-      } else if (start.isNotEmpty && indent == 0) {
-        listOpen = false;
-      }
-    }
-    previousBlank = start.isEmpty;
-    offset += raw.length + 1;
-  }
-
-  final marks = <int>[];
-  var at = 0;
-  for (final label in expected) {
-    while (at < found.length && found[at].$2 != label) {
-      at++;
-    }
-    if (at == found.length) return const [];
-    marks.add(found[at++].$1);
-  }
-  return marks;
-}
+/// `1. [x]`) in the order the preview shows its checkboxes. The document
+/// model decides which items are tasks; an empty list means the model and the
+/// preview parser disagree, and then nothing is ticked.
+List<int> taskMarks(String text) => [
+  for (final t in MarkdownDocument.parse(text).renderedTasks()) t.markOffset,
+];
 
 /// Offset in [source] of the text a preview tap landed on: [word] is the
-/// tapped word and [around] the plain text following it. Matching ignores
-/// Markdown markers; it picks the first line that holds the text, so a phrase
-/// repeated in the note lands on its first occurrence.
-// shortcut: no source map from the renderer; upgrade by building the
-// preview from parsed blocks that carry their source offsets.
-int sourceOffsetFor(String source, String word, String around) {
-  String norm(String t) =>
-      t.toLowerCase().replaceAll(RegExp(r'[^\p{L}\p{N}]', unicode: true), '');
-  final lines = source.split('\n');
-  final starts = <int>[];
-  var offset = 0;
-  for (final line in lines) {
-    starts.add(offset);
-    offset += line.length + 1;
-  }
-  for (final needle in {norm(around).take(14), norm(word)}) {
-    if (needle.isEmpty) continue;
-    for (var i = 0; i < lines.length; i++) {
-      if (!norm(lines[i]).contains(needle)) continue;
-      final at = lines[i].toLowerCase().indexOf(word.toLowerCase());
-      return starts[i] + (at < 0 ? 0 : at);
-    }
-  }
-  return source.length;
-}
+/// tapped word and [around] the plain text following it. [occurrence] counts
+/// equal texts before the tapped one in the preview.
+int sourceOffsetFor(
+  String source,
+  String word,
+  String around, {
+  int occurrence = 0,
+}) => MarkdownDocument.parse(
+  source,
+).offsetOfText(word, around, occurrence: occurrence);
 
-final _inlineMarks = RegExp(
-  r'(\*\*|__)(.+?)\1|`([^`]+)`|\[([^\]]*)\]\(([^)]*)\)|\*(?!\s)(.+?)(?<!\s)\*',
-);
-final _lineStart = RegExp(
-  r'^(\s*)(?:(#{1,6})(\s+)|(>)|([-+*]|\d+[.)])(\s+)(?:(\[[ xX]\])(\s+))?)?',
-);
-
-/// Styles raw Markdown line by line; the markers stay in the text, dimmed.
-/// The spans always concatenate to exactly [text].
+/// Styles raw Markdown line by line; the markers stay in the text. The spans
+/// always concatenate to exactly [text].
 List<TextSpan> markdownSpans(
   String text,
   TextStyle base, {
   required Color dim,
   required Color accent,
-}) {
-  final spans = <TextSpan>[];
-  void add(String t, [TextStyle? style]) {
-    if (t.isNotEmpty) spans.add(TextSpan(text: t, style: style));
-  }
-
-  final marker = TextStyle(color: dim);
-  final code = TextStyle(
-    fontFamily: 'monospace',
-    fontFamilyFallback: const ['Menlo', 'Courier'],
-    backgroundColor: dim.withValues(alpha: 0.15),
-  );
-  void inline(String line, [TextStyle? around]) {
-    var at = 0;
-    for (final m in _inlineMarks.allMatches(line)) {
-      add(line.substring(at, m.start), around);
-      at = m.end;
-      TextStyle merge(TextStyle? s) => (around ?? const TextStyle()).merge(s);
-      if (m[2] != null) {
-        add(m[1]!, marker);
-        add(m[2]!, merge(const TextStyle(fontWeight: FontWeight.bold)));
-        add(m[1]!, marker);
-      } else if (m[3] != null) {
-        add('`', marker);
-        add(m[3]!, merge(code));
-        add('`', marker);
-      } else if (m[4] != null) {
-        add('[', marker);
-        add(
-          m[4]!,
-          merge(
-            TextStyle(color: accent, decoration: TextDecoration.underline),
-          ),
-        );
-        add('](${m[5]})', marker);
-      } else {
-        add('*', marker);
-        add(m[6]!, merge(const TextStyle(fontStyle: FontStyle.italic)));
-        add('*', marker);
-      }
-    }
-    add(line.substring(at), around);
-  }
-
-  final lines = text.split('\n');
-  var fenced = false;
-  for (var i = 0; i < lines.length; i++) {
-    final line = lines[i];
-    if (i > 0) add('\n');
-    if (line.trimLeft().startsWith('```') || line.trimLeft().startsWith('~~~')) {
-      fenced = !fenced;
-      add(line, marker);
-    } else if (fenced) {
-      add(line, code);
-    } else {
-      final m = _lineStart.firstMatch(line)!;
-      add(m[1]!);
-      final rest = line.substring(m.end);
-      if (m[2] != null) {
-        final size = (base.fontSize ?? 16) * (1.7 - 0.15 * m[2]!.length);
-        add(m[2]!, marker.copyWith(fontSize: size));
-        add(m[3]!, marker.copyWith(fontSize: size));
-        inline(
-          rest,
-          TextStyle(fontSize: size, fontWeight: FontWeight.bold),
-        );
-      } else if (m[4] != null) {
-        add('>', marker);
-        inline(rest, marker);
-      } else {
-        if (m[5] != null) {
-          add(m[5]!, TextStyle(color: accent, fontWeight: FontWeight.bold));
-          add(m[6]!);
-        }
-        TextStyle? around;
-        if (m[7] != null) {
-          add(m[7]!, TextStyle(color: accent, fontWeight: FontWeight.bold));
-          add(m[8]!);
-          if (m[7]!.toLowerCase() == '[x]') {
-            around = TextStyle(
-              color: dim,
-              decoration: TextDecoration.lineThrough,
-            );
-          }
-        }
-        inline(rest, around);
-      }
-    }
-  }
-  return spans;
-}
-
-/// Edit-mode controller that shows the Markdown styled while it is typed.
-class MarkdownTextController extends TextEditingController {
-  MarkdownTextController({super.text});
-  String? _cachedText;
-  TextStyle? _cachedStyle;
-  Brightness? _cachedBrightness;
-  List<TextSpan>? _cached;
-
-  @override
-  TextSpan buildTextSpan({
-    required BuildContext context,
-    TextStyle? style,
-    required bool withComposing,
-  }) {
-    // Styling a composing region could split it and confuse the keyboard.
-    if (withComposing && value.isComposingRangeValid) {
-      return super.buildTextSpan(
-        context: context,
-        style: style,
-        withComposing: withComposing,
-      );
-    }
-    final scheme = Theme.of(context).colorScheme;
-    final base = style ?? DefaultTextStyle.of(context).style;
-    if (_cached == null ||
-        _cachedText != text ||
-        _cachedStyle != base ||
-        _cachedBrightness != scheme.brightness) {
-      _cachedText = text;
-      _cachedStyle = base;
-      _cachedBrightness = scheme.brightness;
-      _cached = markdownSpans(
-        text,
-        base,
-        dim: (base.color ?? scheme.onSurface).withValues(alpha: 0.5),
-        accent: scheme.primary,
-      );
-    }
-    return TextSpan(style: style, children: _cached);
-  }
-}
-
-extension on String {
-  String take(int n) => length <= n ? this : substring(0, n);
-}
+  Color? codeBackground,
+  bool monospace = false,
+}) => buildLiveMarkdownSpans(
+  text,
+  base,
+  LiveMarkdownStyle(
+    marker: dim,
+    link: accent,
+    codeBackground: codeBackground ?? dim.withValues(alpha: 0.15),
+    monospaceBody: monospace,
+  ),
+);
 
 class EditorScreen extends ConsumerStatefulWidget {
   const EditorScreen({required this.note, super.key});
@@ -478,14 +249,11 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
           ? null
           : (_) {
               _tapConsumed = true;
-              final mark = taskMarks(_text.text).elementAtOrNull(index);
-              if (mark == null) return;
-              final text = _text.text;
-              _text.text = text.replaceRange(
-                mark,
-                mark + 1,
-                text[mark] == ' ' ? 'x' : ' ',
-              );
+              final doc = MarkdownDocument.parse(_text.text);
+              final task = doc.renderedTasks().elementAtOrNull(index);
+              final next = task == null ? null : doc.toggled(_text.text, task);
+              if (next == null) return;
+              _text.text = next;
               _changed();
             },
     );
@@ -921,6 +689,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
       child: const Icon(Icons.image_not_supported_outlined),
     );
     _boxes = 0;
+    _text.monospace = settings.monospace;
     final Widget text = _preview
         ? Listener(
             onPointerDown: (e) {
@@ -961,13 +730,12 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
               maxLines: null,
               textAlignVertical: TextAlignVertical.top,
               keyboardType: TextInputType.multiline,
-              style: TextStyle(
-                fontSize: settings.fontSize,
-                fontFamily: settings.monospace ? 'monospace' : null,
-                fontFamilyFallback: settings.monospace
-                    ? const ['Menlo', 'Courier']
-                    : null,
+              style: LiveMarkdownMetrics.onGrid(
+                settings.monospace
+                    ? monoTextStyle().copyWith(fontSize: settings.fontSize)
+                    : TextStyle(fontSize: settings.fontSize),
               ),
+              strutStyle: LiveMarkdownMetrics.strut(settings.fontSize),
               decoration: InputDecoration(
                 hintText: l.content,
                 border: InputBorder.none,

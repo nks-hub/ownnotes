@@ -47,4 +47,10 @@ flutter:
   uses-material-design: true
   assets:
     - assets/brand/play-store-icon.png
+    - assets/fonts/OFL-NotoSansMono.txt
+  fonts:
+    # Variable subset (wght 400-700) for code and the monospace editor.
+    - family: NotoSansMono
+      fonts:
+        - asset: assets/fonts/NotoSansMono-Subset.ttf
   generate: true

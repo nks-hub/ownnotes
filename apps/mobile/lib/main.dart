@@ -4,14 +4,18 @@ import 'core/telemetry.dart';
 import 'core/telemetry_bootstrap.dart';
 import 'data/background.dart';
 import 'data/runtime.dart';
+import 'design/design.dart';
 import 'features/home.dart';
 import 'features/lock.dart';
 import 'l10n/app_localizations.dart';
 
-Future<void> main() => runWithTelemetry(
-  config: TelemetryConfig.fromEnvironment(),
-  appBuilder: (observers) => Startup(observers: observers),
-);
+Future<void> main() {
+  registerFontLicenses();
+  return runWithTelemetry(
+    config: TelemetryConfig.fromEnvironment(),
+    appBuilder: (observers) => Startup(observers: observers),
+  );
+}
 
 class Startup extends StatefulWidget {
   const Startup({super.key, this.observers = const []});
@@ -59,6 +63,8 @@ class _StartupState extends State<Startup> {
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       localeListResolutionCallback: resolveLocale,
+      theme: OwnTheme.light(),
+      darkTheme: OwnTheme.dark(),
       home: Builder(
         builder: (context) {
           final l = AppLocalizations.of(context)!;
@@ -105,15 +111,8 @@ class OwnNotesApp extends StatelessWidget {
     localizationsDelegates: AppLocalizations.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
     localeListResolutionCallback: resolveLocale,
-    theme: ThemeData(
-      colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xff315b77)),
-    ),
-    darkTheme: ThemeData(
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: const Color(0xff7caccb),
-        brightness: Brightness.dark,
-      ),
-    ),
+    theme: OwnTheme.light(),
+    darkTheme: OwnTheme.dark(),
     builder: (context, child) => AppLock(child: child!),
     home: const HomeScreen(),
   );
