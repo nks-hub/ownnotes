@@ -65,6 +65,42 @@ What it does:
 
 Requires a Nextcloud server with the Notes app.
 
+## de-DE
+
+**Titel** (max. 30 Zeichen)
+
+OwnNotes
+
+**Kurzbeschreibung** (max. 80 Zeichen)
+
+Markdown-Notizen für Nextcloud Notes, auch offline.
+
+**Vollständige Beschreibung**
+
+OwnNotes ist ein Client für die App Notes auf deinem Nextcloud-Server.
+Die Notizen bleiben einfache Markdown-Dateien auf deinem Server; die App
+liest und schreibt sie nur.
+
+Was die App kann:
+- Anmeldung über den Browser (Nextcloud Login Flow), das App-Passwort liegt
+  im sicheren Speicher des Geräts
+- Schreiben ohne Verbindung; Änderungen werden automatisch hochgeladen,
+  sobald die Verbindung zurück ist, auch wenn die App geschlossen ist
+- der Editor bleibt reines Markdown, die Vorschau nur per Schaltfläche
+- Aufgaben `- [ ]` lassen sich direkt in der Vorschau abhaken
+- wenn dieselbe Notiz inzwischen woanders geändert wurde, zeigt die App
+  beide Versionen und du entscheidest; nichts wird still überschrieben
+- Suche in der Liste und in einer Notiz, Kategorien, Favoriten, Sortierung,
+  Löschen
+- Bilder aus den Anhängen einer Notiz in der Vorschau
+- „Teilen → OwnNotes“ aus anderen Apps in eine neue oder bestehende Notiz
+- Import aus Google Keep (Zip aus Google Takeout), Export als Zip
+- Widget auf dem Startbildschirm mit den neuesten Notizen
+- App-Sperre per Fingerabdruck oder Geräte-PIN, Bildschirmfotos blockieren
+- mehrere Konten gleichzeitig
+
+Du brauchst einen Nextcloud-Server mit installierter App Notes.
+
 ## Data safety answers
 
 Release builds made with `telemetry.env` send:
