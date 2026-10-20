@@ -2,6 +2,29 @@
 
 Finished work with how it was verified. Newest first is not guaranteed; dates are exact.
 
+- 2026-10-21 Redesign from the specification worked out with Codex
+  ([docs/design/redesign.md](design/redesign.md)), built by parallel agents
+  and merged in waves; 323 widget/unit tests, store 73, protocol 93:
+  - design system (warm paper, ink, ochre; system fonts plus a subset mono
+    font), one Markdown document model with source ranges;
+  - login, accounts, settings (every row with an icon, theme and language
+    choice), opaque app lock; Czech informal form throughout, German added;
+  - persisted sync status, kept failed deletions with retry/undo,
+    unreadable notes kept, census protected by the Notes `/settings` scope,
+    conflict comparison with device/server/result and retained originals;
+  - notebook: status in the app bar, Needs attention, Shared with me,
+    search filters, saved views, bulk actions, swipes, tablet panes;
+  - editor: compact top bar, header collapses with the keyboard (about 10
+    body lines on the S21), formatting dock with undo/redo, `@` `:` `/`
+    suggestions checked live, Text-compatible preview, checklist mode,
+    templates and daily note, share sheet;
+  - attachments and voice notes through the Notes attachment API (route by
+    server version, checked live), durable incoming captures with account
+    choice (checked on the S9), Keep import with attachments;
+  - configurable Android widgets (list, note, checklist, quick note),
+    redacted with the app lock, ticks through the durable command path
+    (checked on the S21).
+
 - 2026-10-20 Login and accounts like OwnTalk: onboarding screen, server
   address check (path trimmed to the host), separate error reasons, Cancel
   that also stops a browser about to open, QR login (camera + zxing2),
