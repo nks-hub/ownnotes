@@ -1,32 +1,289 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:typed_data';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:markdown/markdown.dart' as md;
 import 'package:notes_store/notes_store.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../data/runtime.dart';
 import '../data/settings.dart';
 import '../l10n/app_localizations.dart';
+import 'recovery.dart';
+
+final _quoteMark = RegExp(r'^ {0,3}>[ ]?');
+final _fenceMark = RegExp(r'^(`{3,}|~{3,})');
+final _taskLine = RegExp(r'^\s*(?:[-+*]|\d+[.)])\s+\[[ xX]\]\s*(.*)$');
+final _listLine = RegExp(r'^\s*(?:[-+*]|\d+[.)])\s');
+
+String _alnum(String t) =>
+    t.toLowerCase().replaceAll(RegExp(r'[^\p{L}\p{N}]', unicode: true), '');
 
 /// Offsets of the mark between the brackets of each task item (`- [ ]`,
-/// `1. [x]`) in the order the preview shows its checkboxes. Fenced code is
-/// skipped because it renders no checkboxes.
+/// `1. [x]`) in the order the preview shows its checkboxes. The preview's own
+/// parser says which items are tasks (so code, however fenced or indented,
+/// is never one); a line scan only supplies where each sits in the text. An
+/// empty list means the two disagree, and then nothing is ticked.
 List<int> taskMarks(String text) {
-  final item = RegExp(r'^\s*(?:[-+*]|\d+[.)])\s+\[[ xX]\]');
-  final marks = <int>[];
-  var offset = 0;
-  var fenced = false;
-  for (final line in text.split('\n')) {
-    final start = line.trimLeft();
-    if (start.startsWith('```') || start.startsWith('~~~')) {
-      fenced = !fenced;
-    } else if (!fenced) {
-      final match = item.firstMatch(line);
-      if (match != null) marks.add(offset + match.end - 2);
+  final expected = <String>[];
+  void walk(List<md.Node> nodes) {
+    for (var i = 0; i < nodes.length; i++) {
+      final node = nodes[i];
+      if (node is! md.Element) continue;
+      if (node.tag == 'input' && node.attributes['type'] == 'checkbox') {
+        final label = StringBuffer();
+        for (final next in nodes.skip(i + 1)) {
+          if (next is md.Element && (next.tag == 'ul' || next.tag == 'ol')) {
+            break;
+          }
+          label.write(next.textContent);
+        }
+        expected.add(_alnum(label.toString()));
+      } else {
+        walk(node.children ?? const []);
+      }
     }
-    offset += line.length + 1;
+  }
+
+  walk(
+    md.Document(
+      extensionSet: md.ExtensionSet.gitHubFlavored,
+      encodeHtml: false,
+    ).parseLines(const LineSplitter().convert(text)),
+  );
+  if (expected.isEmpty) return const [];
+
+  final found = <(int, String)>[];
+  var offset = 0, listOpen = false, previousBlank = true;
+  String? fence;
+  for (final raw in text.split('\n')) {
+    var line = raw;
+    var shift = 0;
+    for (var q = _quoteMark.firstMatch(line); q != null;) {
+      shift += q.end;
+      line = line.substring(q.end);
+      q = _quoteMark.firstMatch(line);
+    }
+    final start = line.trimLeft();
+    final marks = _fenceMark.firstMatch(start);
+    if (fence != null) {
+      if (marks != null &&
+          marks[1]![0] == fence[0] &&
+          marks[1]!.length >= fence.length &&
+          start.substring(marks.end).trim().isEmpty) {
+        fence = null;
+      }
+    } else if (marks != null) {
+      fence = marks[1];
+    } else {
+      final indent = line.length - start.length;
+      final item = _taskLine.firstMatch(line);
+      // Four spaces after a blank line outside a list is indented code.
+      if (item != null && !(indent >= 4 && previousBlank && !listOpen)) {
+        found.add((offset + shift + line.indexOf('[') + 1, _alnum(item[1]!)));
+      }
+      if (_listLine.hasMatch(line)) {
+        listOpen = true;
+      } else if (start.isNotEmpty && indent == 0) {
+        listOpen = false;
+      }
+    }
+    previousBlank = start.isEmpty;
+    offset += raw.length + 1;
+  }
+
+  final marks = <int>[];
+  var at = 0;
+  for (final label in expected) {
+    while (at < found.length && found[at].$2 != label) {
+      at++;
+    }
+    if (at == found.length) return const [];
+    marks.add(found[at++].$1);
   }
   return marks;
+}
+
+/// Offset in [source] of the text a preview tap landed on: [word] is the
+/// tapped word and [around] the plain text following it. Matching ignores
+/// Markdown markers; it picks the first line that holds the text, so a phrase
+/// repeated in the note lands on its first occurrence.
+// shortcut: no source map from the renderer; upgrade by building the
+// preview from parsed blocks that carry their source offsets.
+int sourceOffsetFor(String source, String word, String around) {
+  String norm(String t) =>
+      t.toLowerCase().replaceAll(RegExp(r'[^\p{L}\p{N}]', unicode: true), '');
+  final lines = source.split('\n');
+  final starts = <int>[];
+  var offset = 0;
+  for (final line in lines) {
+    starts.add(offset);
+    offset += line.length + 1;
+  }
+  for (final needle in {norm(around).take(14), norm(word)}) {
+    if (needle.isEmpty) continue;
+    for (var i = 0; i < lines.length; i++) {
+      if (!norm(lines[i]).contains(needle)) continue;
+      final at = lines[i].toLowerCase().indexOf(word.toLowerCase());
+      return starts[i] + (at < 0 ? 0 : at);
+    }
+  }
+  return source.length;
+}
+
+final _inlineMarks = RegExp(
+  r'(\*\*|__)(.+?)\1|`([^`]+)`|\[([^\]]*)\]\(([^)]*)\)|\*(?!\s)(.+?)(?<!\s)\*',
+);
+final _lineStart = RegExp(
+  r'^(\s*)(?:(#{1,6})(\s+)|(>)|([-+*]|\d+[.)])(\s+)(?:(\[[ xX]\])(\s+))?)?',
+);
+
+/// Styles raw Markdown line by line; the markers stay in the text, dimmed.
+/// The spans always concatenate to exactly [text].
+List<TextSpan> markdownSpans(
+  String text,
+  TextStyle base, {
+  required Color dim,
+  required Color accent,
+}) {
+  final spans = <TextSpan>[];
+  void add(String t, [TextStyle? style]) {
+    if (t.isNotEmpty) spans.add(TextSpan(text: t, style: style));
+  }
+
+  final marker = TextStyle(color: dim);
+  final code = TextStyle(
+    fontFamily: 'monospace',
+    fontFamilyFallback: const ['Menlo', 'Courier'],
+    backgroundColor: dim.withValues(alpha: 0.15),
+  );
+  void inline(String line, [TextStyle? around]) {
+    var at = 0;
+    for (final m in _inlineMarks.allMatches(line)) {
+      add(line.substring(at, m.start), around);
+      at = m.end;
+      TextStyle merge(TextStyle? s) => (around ?? const TextStyle()).merge(s);
+      if (m[2] != null) {
+        add(m[1]!, marker);
+        add(m[2]!, merge(const TextStyle(fontWeight: FontWeight.bold)));
+        add(m[1]!, marker);
+      } else if (m[3] != null) {
+        add('`', marker);
+        add(m[3]!, merge(code));
+        add('`', marker);
+      } else if (m[4] != null) {
+        add('[', marker);
+        add(
+          m[4]!,
+          merge(
+            TextStyle(color: accent, decoration: TextDecoration.underline),
+          ),
+        );
+        add('](${m[5]})', marker);
+      } else {
+        add('*', marker);
+        add(m[6]!, merge(const TextStyle(fontStyle: FontStyle.italic)));
+        add('*', marker);
+      }
+    }
+    add(line.substring(at), around);
+  }
+
+  final lines = text.split('\n');
+  var fenced = false;
+  for (var i = 0; i < lines.length; i++) {
+    final line = lines[i];
+    if (i > 0) add('\n');
+    if (line.trimLeft().startsWith('```') || line.trimLeft().startsWith('~~~')) {
+      fenced = !fenced;
+      add(line, marker);
+    } else if (fenced) {
+      add(line, code);
+    } else {
+      final m = _lineStart.firstMatch(line)!;
+      add(m[1]!);
+      final rest = line.substring(m.end);
+      if (m[2] != null) {
+        final size = (base.fontSize ?? 16) * (1.7 - 0.15 * m[2]!.length);
+        add(m[2]!, marker.copyWith(fontSize: size));
+        add(m[3]!, marker.copyWith(fontSize: size));
+        inline(
+          rest,
+          TextStyle(fontSize: size, fontWeight: FontWeight.bold),
+        );
+      } else if (m[4] != null) {
+        add('>', marker);
+        inline(rest, marker);
+      } else {
+        if (m[5] != null) {
+          add(m[5]!, TextStyle(color: accent, fontWeight: FontWeight.bold));
+          add(m[6]!);
+        }
+        TextStyle? around;
+        if (m[7] != null) {
+          add(m[7]!, TextStyle(color: accent, fontWeight: FontWeight.bold));
+          add(m[8]!);
+          if (m[7]!.toLowerCase() == '[x]') {
+            around = TextStyle(
+              color: dim,
+              decoration: TextDecoration.lineThrough,
+            );
+          }
+        }
+        inline(rest, around);
+      }
+    }
+  }
+  return spans;
+}
+
+/// Edit-mode controller that shows the Markdown styled while it is typed.
+class MarkdownTextController extends TextEditingController {
+  MarkdownTextController({super.text});
+  String? _cachedText;
+  TextStyle? _cachedStyle;
+  Brightness? _cachedBrightness;
+  List<TextSpan>? _cached;
+
+  @override
+  TextSpan buildTextSpan({
+    required BuildContext context,
+    TextStyle? style,
+    required bool withComposing,
+  }) {
+    // Styling a composing region could split it and confuse the keyboard.
+    if (withComposing && value.isComposingRangeValid) {
+      return super.buildTextSpan(
+        context: context,
+        style: style,
+        withComposing: withComposing,
+      );
+    }
+    final scheme = Theme.of(context).colorScheme;
+    final base = style ?? DefaultTextStyle.of(context).style;
+    if (_cached == null ||
+        _cachedText != text ||
+        _cachedStyle != base ||
+        _cachedBrightness != scheme.brightness) {
+      _cachedText = text;
+      _cachedStyle = base;
+      _cachedBrightness = scheme.brightness;
+      _cached = markdownSpans(
+        text,
+        base,
+        dim: (base.color ?? scheme.onSurface).withValues(alpha: 0.5),
+        accent: scheme.primary,
+      );
+    }
+    return TextSpan(style: style, children: _cached);
+  }
+}
+
+extension on String {
+  String take(int n) => length <= n ? this : substring(0, n);
 }
 
 class EditorScreen extends ConsumerStatefulWidget {
@@ -39,7 +296,11 @@ class EditorScreen extends ConsumerStatefulWidget {
 class _EditorScreenState extends ConsumerState<EditorScreen>
     with WidgetsBindingObserver {
   late final TextEditingController _title;
-  late final TextEditingController _text;
+  late final MarkdownTextController _text;
+
+  /// The note's current database row; the widget's copy is the one opened.
+  late LocalNote _row;
+  bool get _readonly => _row.readonly;
   late final TextEditingController _category;
   late int _revision;
   late bool _favorite;
@@ -48,6 +309,9 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
   bool _dirty = false;
   bool _failed = false;
   bool _preview = false;
+  bool _tapConsumed = false;
+  Offset? _down;
+  Duration? _downAt;
   bool _finding = false;
   final _find = TextEditingController();
   final _textFocus = FocusNode();
@@ -76,6 +340,131 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
   final _images = <String, Future<List<int>>>{};
   int _boxes = 0;
 
+  /// Switches between the raw text and the preview.
+  void _setPreview(bool value) {
+    setState(() {
+      _preview = value;
+      _finding = false;
+    });
+  }
+
+  /// Edit mode with the caret at [offset] (the end when null).
+  void _startEditing([int? offset]) {
+    if (_readonly) return;
+    _text.selection = TextSelection.collapsed(
+      offset: (offset ?? _text.text.length).clamp(0, _text.text.length),
+    );
+    _setPreview(false);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _textFocus.requestFocus();
+    });
+  }
+
+  void _pointerUp(PointerUpEvent e) {
+    final down = _down, at = _downAt;
+    _down = null;
+    // A drag scrolls and a long press selects; only a short tap edits.
+    if (down == null ||
+        at == null ||
+        !_preview ||
+        _readonly ||
+        (e.position - down).distance > kTouchSlop ||
+        e.timeStamp - at > kLongPressTimeout) {
+      return;
+    }
+    // Links and checkboxes claim the tap after this event is dispatched.
+    scheduleMicrotask(() {
+      if (!_tapConsumed && mounted && _preview) _editAt(e.position, e.viewId);
+    });
+  }
+
+  void _editAt(Offset global, int viewId) {
+    final hit = HitTestResult();
+    WidgetsBinding.instance.hitTestInView(hit, global, viewId);
+    for (final entry in hit.path) {
+      final target = entry.target;
+      final (String, int)? found = switch (target) {
+        RenderParagraph() => (
+          target.text.toPlainText(),
+          target.getPositionForOffset(target.globalToLocal(global)).offset,
+        ),
+        RenderEditable(:final text?) => (
+          text.toPlainText(),
+          target.getPositionForPoint(global).offset,
+        ),
+        _ => null,
+      };
+      if (found == null) continue;
+      final (plain, at) = found;
+      final word = RegExp(r'[\p{L}\p{N}]+', unicode: true)
+          .allMatches(plain)
+          .where((m) => m.end >= at && m.start <= at)
+          .firstOrNull;
+      _startEditing(
+        sourceOffsetFor(
+          _text.text,
+          word?.group(0) ?? '',
+          plain.substring(word?.start ?? at.clamp(0, plain.length)),
+        ),
+      );
+      return;
+    }
+  }
+
+  /// Replaces the selection with [left] + selection + [right].
+  void _wrap(String left, String right) {
+    final text = _text.text;
+    final sel = _text.selection;
+    final a = sel.isValid ? sel.start : text.length;
+    final b = sel.isValid ? sel.end : text.length;
+    _text.value = TextEditingValue(
+      text: text.replaceRange(a, b, '$left${text.substring(a, b)}$right'),
+      selection: TextSelection(
+        baseOffset: a + left.length,
+        extentOffset: b + left.length,
+      ),
+    );
+    _changed();
+    _textFocus.requestFocus();
+  }
+
+  /// Puts [marker] at the start of the line holding the caret.
+  void _prefix(String marker) {
+    final text = _text.text;
+    final caret = _text.selection.isValid ? _text.selection.start : text.length;
+    final start = caret == 0 ? 0 : text.lastIndexOf('\n', caret - 1) + 1;
+    // A second tap on the heading button makes it one level deeper.
+    final deeper = marker == '# ' && text.startsWith('#', start);
+    final added = deeper ? '#' : marker;
+    _text.value = TextEditingValue(
+      text: text.replaceRange(start, start, added),
+      selection: TextSelection.collapsed(offset: caret + added.length),
+    );
+    _changed();
+    _textFocus.requestFocus();
+  }
+
+  Widget _toolbar(AppLocalizations l) {
+    Widget button(String tip, IconData icon, VoidCallback onTap) =>
+        IconButton(tooltip: tip, onPressed: onTap, icon: Icon(icon));
+    return Material(
+      color: Theme.of(context).colorScheme.surfaceContainer,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            button(l.fmtBold, Icons.format_bold, () => _wrap('**', '**')),
+            button(l.fmtItalic, Icons.format_italic, () => _wrap('*', '*')),
+            button(l.fmtHeading, Icons.title, () => _prefix('# ')),
+            button(l.fmtList, Icons.format_list_bulleted, () => _prefix('- ')),
+            button(l.fmtChecklist, Icons.checklist, () => _prefix('- [ ] ')),
+            button(l.fmtLink, Icons.link, () => _wrap('[', '](https://)')),
+          ],
+        ),
+      ),
+    );
+  }
+
   /// The preview builds checkboxes in document order, so the n-th one is the
   /// n-th task item in the raw text. A tick edits that one character.
   Widget _checkbox(bool value) {
@@ -85,9 +474,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
       value: value,
       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
       visualDensity: VisualDensity.compact,
-      onChanged: widget.note.readonly
+      onChanged: _readonly
           ? null
           : (_) {
+              _tapConsumed = true;
               final mark = taskMarks(_text.text).elementAtOrNull(index);
               if (mark == null) return;
               final text = _text.text;
@@ -139,11 +529,12 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _title = TextEditingController(text: widget.note.title);
-    _text = TextEditingController(text: widget.note.content);
+    _text = MarkdownTextController(text: widget.note.content);
     _category = TextEditingController(text: widget.note.category);
     _revision = widget.note.revision;
     _favorite = widget.note.favorite;
     _saved = widget.note;
+    _row = widget.note;
     _pulled = ref
         .read(runtimeProvider)
         .database
@@ -170,8 +561,15 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
 
   void _takePulled(List<LocalNote> notes) {
     final note = notes.where((n) => n.id == widget.note.id).firstOrNull;
-    if (note == null || note.revision <= _revision || !mounted) return;
-    _adopt(note);
+    if (note == null || !mounted) return;
+    // A conflict or a permission change does not raise the revision.
+    final shown = note.syncState != _row.syncState || note.readonly != _readonly;
+    _row = note;
+    if (note.revision > _revision) {
+      _adopt(note);
+    } else if (shown) {
+      setState(() {});
+    }
   }
 
   /// A sync changed the note while it is open: a version from another
@@ -183,9 +581,12 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
     final title = keep(_saved.title, _title.text, note.title);
     final category = keep(_saved.category, _category.text, note.category);
     final old = _text.text;
-    final content =
-        mergeThreeWay(_saved.content, old, note.content) ??
-        mergeVersions(old, note.content);
+    final content = mergeThreeWay(_saved.content, old, note.content);
+    if (content == null) {
+      // Both sides changed the same lines: nothing is combined silently.
+      _conflict(note, title, category);
+      return;
+    }
     setState(() {
       _revision = note.revision;
       _saved = note;
@@ -223,6 +624,57 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
       _debounce?.cancel();
       _debounce = Timer(const Duration(milliseconds: 350), _save);
     }
+  }
+
+  /// Keeps the typed text as the local version and hands the overlap to the
+  /// user's decision; nothing is uploaded over the server's change.
+  void _conflict(LocalNote note, String title, String category) {
+    _debounce?.cancel();
+    final content = _text.text, favorite = _favorite;
+    final db = ref.read(runtimeProvider).database;
+    setState(() {
+      _revision = note.revision;
+      _saved = note;
+      _title.text = title;
+      _category.text = category;
+    });
+    _tail = _tail.then((_) async {
+      try {
+        _revision = await db.saveConflict(
+          accountId: widget.note.accountId,
+          id: widget.note.id,
+          revision: note.revision,
+          title: title,
+          content: content,
+          category: category,
+          favorite: favorite,
+        );
+        if (mounted) {
+          setState(() {
+            _failed = false;
+            _dirty = _text.text != content;
+            _row = _row.copyWith(syncState: 'needsDecision');
+          });
+        }
+      } catch (_) {
+        if (mounted) setState(() => _failed = true);
+      }
+    });
+  }
+
+  Future<void> _openRecovery() async {
+    await _save();
+    final fresh = await ref
+        .read(runtimeProvider)
+        .database
+        .note(widget.note.accountId, widget.note.id);
+    if (!mounted || fresh == null) return;
+    await Navigator.of(context).pushReplacement<void, void>(
+      MaterialPageRoute(
+        settings: const RouteSettings(name: '/recovery'),
+        builder: (_) => RecoveryScreen(note: fresh),
+      ),
+    );
   }
 
   @override
@@ -411,10 +863,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
               ),
             IconButton(
               tooltip: _preview ? l.edit : l.preview,
-              onPressed: () => setState(() {
-                _preview = !_preview;
-                _finding = false;
-              }),
+              onPressed: () => _setPreview(!_preview),
               icon: Icon(
                 _preview ? Icons.edit_outlined : Icons.visibility_outlined,
               ),
@@ -424,7 +873,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
               onPressed: _save,
               icon: const Icon(Icons.save_outlined),
             ),
-            if (!widget.note.readonly)
+            if (!_readonly)
               IconButton(
                 tooltip: l.delete,
                 onPressed: _delete,
@@ -432,6 +881,16 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
               ),
           ],
         ),
+        floatingActionButton:
+            _preview &&
+                !_readonly &&
+                MediaQuery.sizeOf(context).width < 600
+            ? FloatingActionButton(
+                tooltip: l.editNote,
+                onPressed: _startEditing,
+                child: const Icon(Icons.edit),
+              )
+            : null,
         body: SafeArea(
           // A phone on its side leaves too little height for a fixed layout;
           // the editor then scrolls as a whole. The keyboard does not count:
@@ -446,6 +905,15 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
     );
   }
 
+  void _openLink(String text, String? href, String title) {
+    _tapConsumed = true;
+    final uri = href == null ? null : Uri.tryParse(href);
+    if (uri == null || !{'http', 'https', 'mailto'}.contains(uri.scheme)) {
+      return;
+    }
+    launchUrl(uri, mode: LaunchMode.externalApplication).ignore();
+  }
+
   Widget _body(AppLocalizations l, {required bool compact}) {
     final settings = ref.watch(settingsProvider);
     final image = Semantics(
@@ -454,7 +922,15 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
     );
     _boxes = 0;
     final Widget text = _preview
-        ? (compact
+        ? Listener(
+            onPointerDown: (e) {
+              _down = e.position;
+              _downAt = e.timeStamp;
+              _tapConsumed = false;
+            },
+            onPointerUp: _pointerUp,
+            onPointerCancel: (_) => _down = null,
+            child: compact
               ? Padding(
                   padding: const EdgeInsets.all(16),
                   child: MarkdownBody(
@@ -462,20 +938,24 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
                     selectable: true,
                     sizedImageBuilder: (c) => _image(c, image),
                     checkboxBuilder: _checkbox,
+                    onTapLink: _openLink,
                   ),
                 )
               : Markdown(
                   data: _text.text,
                   selectable: true,
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 88),
                   sizedImageBuilder: (c) => _image(c, image),
                   checkboxBuilder: _checkbox,
-                ))
+                  onTapLink: _openLink,
+                ),
+          )
         : Padding(
             padding: const EdgeInsets.all(16),
             child: TextField(
               controller: _text,
               focusNode: _textFocus,
-              readOnly: widget.note.readonly,
+              readOnly: _readonly,
               expands: !compact,
               minLines: compact ? 6 : null,
               maxLines: null,
@@ -496,12 +976,17 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
             ),
           );
     final children = [
-      if (widget.note.syncState == 'needsDecision')
+      if (_row.syncState == 'needsDecision')
         Padding(
           padding: const EdgeInsets.all(12),
-          child: Text(l.decisionRequired),
+          child: Column(
+            children: [
+              Text(l.decisionRequired),
+              TextButton(onPressed: _openRecovery, child: Text(l.resolve)),
+            ],
+          ),
         ),
-      if (widget.note.readonly) Text(l.readonly),
+      if (_readonly) Text(l.readonly),
       Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Row(
@@ -509,7 +994,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
             Expanded(
               child: TextField(
                 controller: _title,
-                readOnly: widget.note.readonly,
+                readOnly: _readonly,
                 decoration: InputDecoration(labelText: l.title),
                 onChanged: (_) => _changed(),
               ),
@@ -529,12 +1014,14 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: TextField(
           controller: _category,
-          readOnly: widget.note.readonly,
+          readOnly: _readonly,
           decoration: InputDecoration(labelText: l.category),
           onChanged: (_) => _changed(),
         ),
       ),
       compact ? text : Expanded(child: text),
+      // A phone on its side has no height to spare for it.
+      if (!compact && !_preview && !_readonly) _toolbar(l),
       Padding(
         padding: const EdgeInsets.all(8),
         child: Semantics(

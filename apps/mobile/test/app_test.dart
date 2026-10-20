@@ -144,6 +144,7 @@ void main() {
     await tester.binding.setSurfaceSize(const Size(800, 200));
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
+    debugDumpApp();
     expect(find.text('# original'), findsOneWidget);
     await tester.binding.setSurfaceSize(null);
     await tester.pumpAndSettle();

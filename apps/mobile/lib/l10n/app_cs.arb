@@ -44,8 +44,7 @@
   "decisionFailed": "Rozhodnutí se nepodařilo použít. Načti poznámku a porovnej ji znovu.",
   "importKeep": "Importovat z Google Keep (zip z Takeoutu)",
   "importDone": "Importováno poznámek: {count}",
-  "importFailed": "Import se nepovedl. Soubor není zip z Google Takeoutu s poznámkami Keep."
-,
+  "importFailed": "Import se nepovedl. Soubor není zip z Google Takeoutu s poznámkami Keep.",
   "delete": "Smazat",
   "deleteConfirm": "Smazat poznámku? Smaže se i na serveru.",
   "allCategories": "Vše",
@@ -83,5 +82,12 @@
   "settingSaveFailed": "Nastavení se nepodařilo uložit. Zůstává původní.",
   "lockUnavailable": "Zámek se teď nepodařilo ověřit. Zkus to znovu.",
   "lockDeviceRemoved": "Zámek obrazovky telefonu byl odstraněn, zámek aplikace proto nemůže fungovat.",
-  "lockTurnOff": "Vypnout zámek aplikace a pokračovat"
+  "lockTurnOff": "Vypnout zámek aplikace a pokračovat",
+  "editNote": "Upravit",
+  "fmtBold": "Tučně",
+  "fmtItalic": "Kurzíva",
+  "fmtHeading": "Nadpis",
+  "fmtList": "Seznam",
+  "fmtChecklist": "Úkoly",
+  "fmtLink": "Odkaz"
 }

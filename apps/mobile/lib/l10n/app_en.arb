@@ -46,18 +46,21 @@
   "importDone": "Imported {count} notes",
   "@importDone": {
     "placeholders": {
-      "count": {"type": "int"}
+      "count": {
+        "type": "int"
+      }
     }
   },
-  "importFailed": "Import failed. The file is not a Google Takeout zip with Keep notes."
-,
+  "importFailed": "Import failed. The file is not a Google Takeout zip with Keep notes.",
   "delete": "Delete",
   "deleteConfirm": "Delete this note? It is also deleted on the server.",
   "allCategories": "All",
   "unsent": "Not sent yet: {count}",
   "@unsent": {
     "placeholders": {
-      "count": {"type": "int"}
+      "count": {
+        "type": "int"
+      }
     }
   },
   "reasonOffline": "No connection. Notes upload on their own when it is back.",
@@ -78,7 +81,9 @@
   "exportDone": "Exported {count} notes",
   "@exportDone": {
     "placeholders": {
-      "count": {"type": "int"}
+      "count": {
+        "type": "int"
+      }
     }
   },
   "exportFailed": "Export failed.",
@@ -87,7 +92,9 @@
   "removeAccountUnsent": "Remove the account? {count, plural, one{1 note is not on the server yet and will be lost.} other{{count} notes are not on the server yet and will be lost.}} You can export them first.",
   "@removeAccountUnsent": {
     "placeholders": {
-      "count": {"type": "int"}
+      "count": {
+        "type": "int"
+      }
     }
   },
   "unlockReason": "Unlock OwnNotes",
@@ -103,5 +110,12 @@
   "settingSaveFailed": "Could not save the setting. It stays as it was.",
   "lockUnavailable": "The lock could not be checked right now. Try again.",
   "lockDeviceRemoved": "The screen lock of this phone was removed, so the app lock cannot work.",
-  "lockTurnOff": "Turn off app lock and continue"
+  "lockTurnOff": "Turn off app lock and continue",
+  "editNote": "Edit",
+  "fmtBold": "Bold",
+  "fmtItalic": "Italic",
+  "fmtHeading": "Heading",
+  "fmtList": "List",
+  "fmtChecklist": "Checklist",
+  "fmtLink": "Link"
 }

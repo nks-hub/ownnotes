@@ -194,6 +194,33 @@ class NotesDatabase extends _$NotesDatabase {
     return revision + 1;
   });
 
+  /// Like [saveDraft] for text that overlaps a change pulled meanwhile: the
+  /// local text is kept and the note waits for the user's decision instead of
+  /// being sent over the server's version.
+  Future<int> saveConflict({
+    required String accountId,
+    required String id,
+    required int revision,
+    required String title,
+    required String content,
+    required String category,
+    required bool favorite,
+  }) => transaction(() async {
+    final saved = await saveDraft(
+      accountId: accountId,
+      id: id,
+      revision: revision,
+      title: title,
+      content: content,
+      category: category,
+      favorite: favorite,
+    );
+    await (update(localNotes)
+          ..where((n) => n.id.equals(id) & n.accountId.equals(accountId)))
+        .write(const LocalNotesCompanion(syncState: Value('needsDecision')));
+    return saved;
+  });
+
   /// A note never uploaded goes away at once; an uploaded one is hidden and
   /// waits for the next sync to delete it on the server.
   Future<void> markDeleted(String accountId, String id) =>
