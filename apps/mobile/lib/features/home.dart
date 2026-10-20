@@ -13,7 +13,7 @@ import '../data/export.dart';
 import '../data/keep_import.dart';
 import '../data/notes_widget.dart';
 import '../data/runtime.dart';
-import '../data/settings.dart';
+import '../data/settings.dart';
 import '../data/widgets/widget_links.dart';
 import '../design/design.dart';
 import '../l10n/app_localizations.dart';
@@ -123,8 +123,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       onResume: () {
         final id = _shown;
         if (id != null) _sync(id, quiet: true);
-        // Ticks queued by the widgets while the app was closed.
-        publishAllWidgets(ref.read(runtimeProvider).database).ignore();
+        // Ticks queued by the widgets while the app was closed; send them.
+        publishAllWidgets(ref.read(runtimeProvider).database).then((changed) {
+          for (final account in changed) {
+            if (mounted) _sync(account, quiet: true);
+          }
+        }).ignore();
         // iOS: the share extension leaves text in the App Group meanwhile.
         _takeShared();
       },
@@ -166,7 +170,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     if (link is OpenAppLink) return;
     final accounts = await ref.read(accountsProvider.future);
     final wanted = switch (link) {
-      NewNoteLink(:final accountId) || OpenNoteLink(:final accountId) => accountId,
+      NewNoteLink(:final accountId) ||
+      OpenNoteLink(:final accountId) => accountId,
       _ => null,
     };
     var accountId = accounts.any((a) => a.id == wanted) ? wanted : _shown;
@@ -197,6 +202,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         break;
     }
   }
+
   /// Content shared from other apps waits on disk until it is stored as a
   /// note; the capture screen asks for the account and destination.
   Future<void> _takeShared() async {
@@ -299,9 +305,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         // Staged attachments upload once their notes exist on the server;
         // a failure keeps them staged for the next run.
         try {
-          await (await ref.read(attachmentServiceProvider.future)).flush(
-            accountId,
-          );
+          await (await ref.read(
+            attachmentServiceProvider.future,
+          )).flush(accountId);
         } catch (_) {}
         accountId = _again ?? accountId;
       } while (_again != null && mounted);
@@ -329,8 +335,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Future<void> _edit(LocalNote note) async {
     final decision = note.syncState == 'needsDecision';
     final name = decision ? '/recovery' : '/note';
-    Widget page() =>
-        decision
+    Widget page() => decision
         ? RecoveryScreen(note: note)
         : EditorScreen(
             note: note,

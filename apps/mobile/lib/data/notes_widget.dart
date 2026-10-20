@@ -4,6 +4,8 @@ import 'package:home_widget/home_widget.dart';
 import 'package:notes_store/notes_store.dart';
 import '../features/widgets/widget_config_main.dart' show widgetConfigMain;
 import 'runtime.dart';
+import 'widgets/ios_widgets.dart';
+import 'widgets/widget_snapshots.dart';
 import 'widgets/widget_publisher.dart';
 import 'widgets/widget_storage.dart';
 
@@ -41,6 +43,15 @@ Future<void> publishNotesWidget(
   required String untitled,
   NotesDatabase? database,
 }) async {
+  if (Platform.isIOS) {
+    await publishIosWidgets(
+      accountId,
+      notes,
+      locked: locked,
+      untitled: untitled,
+    );
+    return;
+  }
   if (!Platform.isAndroid) return;
   final key = Object.hash(
     accountId,
@@ -83,6 +94,7 @@ Future<void> publishNotesWidget(
 /// widget's own background callback. Returns the accounts whose notes a
 /// command changed, so the caller can upload them.
 Future<Set<String>> publishAllWidgets(NotesDatabase db) async {
+  if (Platform.isIOS) return _applyIosCommands(db);
   if (!Platform.isAndroid) return {};
   final changed = await drainWidgetCommands(_storage, db);
   await publishWidgets(
@@ -101,6 +113,40 @@ Future<Set<String>> publishAllWidgets(NotesDatabase db) async {
   return changed;
 }
 
+/// iOS: applies the checklist ticks the widget extension queued in the App
+/// Group through the same rules as Android; a tick that no longer fits the
+/// note is dropped, the widget then shows the current state.
+Future<Set<String>> _applyIosCommands(NotesDatabase db) async {
+  final changed = <String>{};
+  for (final command in await takeIosWidgetCommands()) {
+    final note = await db.note(command.accountId, command.noteId);
+    // The extension shows no tasks while the app lock is on, so a queued
+    // tick was made while it was off.
+    final result = resolveWidgetCommand(
+      command,
+      note: note,
+      applied: const {},
+      locked: false,
+    );
+    if (result is! ApplyCommand || note == null) continue;
+    try {
+      await db.saveDraft(
+        accountId: note.accountId,
+        id: note.id,
+        revision: note.revision,
+        title: note.title,
+        content: result.content,
+        category: note.category,
+        favorite: note.favorite,
+      );
+      changed.add(note.accountId);
+    } on StateError {
+      // The note changed meanwhile; the widget redraws with its new state.
+    }
+  }
+  return changed;
+}
+
 /// Tells the widget code which Dart functions to run: [widgetBackgroundCallback]
 /// when a task is ticked while the app is closed, and the configuration screen
 /// when a widget is placed. Handles may change with every build, so this runs
@@ -110,7 +156,10 @@ Future<void> _registerCallback() async {
   _callbackRegistered = true;
   await HomeWidget.registerInteractivityCallback(widgetBackgroundCallback);
   final config = PluginUtilities.getCallbackHandle(widgetConfigMain);
-  await _storage.write(WidgetKeys.configHandle, config?.toRawHandle().toString());
+  await _storage.write(
+    WidgetKeys.configHandle,
+    config?.toRawHandle().toString(),
+  );
 }
 
 /// Runs in the background engine the widget starts after a tap: takes the
