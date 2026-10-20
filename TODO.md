@@ -17,6 +17,33 @@ switches to preview without the user asking.
 
 ## Open
 
+### UI rework requested by the owner (2026-10-20)
+
+- [ ] Note list stutters while scrolling. Rows lay out the whole note
+      content for a two-line subtitle; use a short excerpt and keep heavy
+      work out of `build`. Measure frame times on the S9 before and after.
+- [ ] Compact list header like OwnTalk: account avatar and switcher in the
+      app bar, search in the app bar instead of a permanent field.
+- [ ] Categories as a collapsible tree (`/` nesting) in a drawer or side
+      panel, with note counts, All, Favorites and Uncategorised.
+- [ ] Richer note rows: excerpt, relative time, category, favorite, sync
+      state, checklist progress ("3/7"), attachment indicator.
+- [ ] Login and account management like OwnTalk: onboarding screen, server
+      address check, Login Flow v2 progress, QR login, accounts screen with
+      switch and remove (revoking the app password).
+- [ ] Editing from the Markdown preview: a tap opens the raw editor at that
+      place, plus an edit button. Notes still always open in the raw editor.
+- [ ] Live Markdown styling while typing (headings, bold, code, lists,
+      tasks) in the raw editor; markers stay visible.
+- [ ] Adding attachments: photo or file into a note through the Notes
+      attachment API, then the Keep import can bring images and audio too.
+- [ ] Better system integration (share in and out, widgets, shortcuts,
+      quick settings tile, search, iOS quick actions); scope from the
+      review below.
+- [ ] Full review with Codex: code and UX, Notes and Nextcloud API
+      coverage, gaps versus notes-android and the iOS client, ideas from
+      competing apps; results go into this file as items.
+
 ### From the server and original-app analysis (2026-10-19)
 
 Sources: Notes 6.1.0 server code (routes, `Helper.php`, `NoteUtil.php`,
