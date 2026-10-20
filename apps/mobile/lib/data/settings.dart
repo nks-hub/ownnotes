@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -35,17 +37,28 @@ final settingsProvider = NotifierProvider<SettingsController, AppSettings>(
 class SettingsController extends Notifier<AppSettings> {
   static const _window = MethodChannel('com.nkshub.nextcloudnotes/window');
 
+  final _saveFailures = StreamController<void>.broadcast();
+
   /// Resolves once stored values are applied; the lock waits for it.
   late final Future<void> loaded;
 
+  /// True while the stored values could not be read. The real lock setting is
+  /// then unknown, so the app lock must stay closed instead of assuming off.
+  bool loadFailed = false;
+
+  /// Fires when a security preference could not be saved and was reverted.
+  Stream<void> get saveFailures => _saveFailures.stream;
+
   @override
   AppSettings build() {
+    ref.onDispose(_saveFailures.close);
     // _load reads state, which exists only once build has returned.
-    loaded = Future.microtask(_load);
+    loaded = Future.microtask(reload);
     return const AppSettings();
   }
 
-  Future<void> _load() async {
+  /// Reads the stored values again; sets [loadFailed] when that fails.
+  Future<void> reload() async {
     try {
       final prefs = SharedPreferencesAsync();
       state = AppSettings(
@@ -54,17 +67,21 @@ class SettingsController extends Notifier<AppSettings> {
         lock: await prefs.getBool('lock') ?? false,
         secure: await prefs.getBool('secure') ?? false,
       );
+      loadFailed = false;
     } catch (_) {
-      // Preferences are unavailable (tests, broken storage): defaults apply.
+      loadFailed = true;
     }
     // Not awaited: the lock screen must not wait for the window flag.
     _applySecure().ignore();
   }
 
+  /// Applies and stores [value]. When storing fails, lock and secure go back
+  /// to their previous values (so a switch never shows an unsaved state) and
+  /// [saveFailures] fires. Other preferences are kept for this run only.
   Future<void> update(AppSettings value) async {
-    final secureChanged = value.secure != state.secure;
+    final previous = state;
     state = value;
-    if (secureChanged) await _applySecure();
+    if (value.secure != previous.secure) await _applySecure();
     try {
       final prefs = SharedPreferencesAsync();
       await prefs.setBool('monospace', value.monospace);
@@ -72,7 +89,11 @@ class SettingsController extends Notifier<AppSettings> {
       await prefs.setBool('lock', value.lock);
       await prefs.setBool('secure', value.secure);
     } catch (_) {
-      // Kept for this run only.
+      if (value.lock != previous.lock || value.secure != previous.secure) {
+        state = value.copyWith(lock: previous.lock, secure: previous.secure);
+        if (value.secure != previous.secure) await _applySecure();
+        _saveFailures.add(null);
+      }
     }
   }
 

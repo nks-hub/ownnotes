@@ -274,4 +274,19 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get mergeBoth => 'Spojit obě verze';
+
+  @override
+  String get settingSaveFailed =>
+      'Nastavení se nepodařilo uložit. Zůstává původní.';
+
+  @override
+  String get lockUnavailable =>
+      'Zámek se teď nepodařilo ověřit. Zkus to znovu.';
+
+  @override
+  String get lockDeviceRemoved =>
+      'Zámek obrazovky telefonu byl odstraněn, zámek aplikace proto nemůže fungovat.';
+
+  @override
+  String get lockTurnOff => 'Vypnout zámek aplikace a pokračovat';
 }

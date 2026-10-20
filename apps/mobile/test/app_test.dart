@@ -12,6 +12,8 @@ import 'package:notes_store/notes_store.dart';
 import 'package:nextcloudnotes/data/runtime.dart';
 import 'package:nextcloudnotes/features/editor.dart';
 import 'package:nextcloudnotes/main.dart';
+import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
+import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 
 class Vault implements CredentialVault {
   final entries = <String, String>{};
@@ -32,6 +34,10 @@ class Vault implements CredentialVault {
 }
 
 void main() {
+  setUpAll(() {
+    SharedPreferencesAsyncPlatform.instance =
+        InMemorySharedPreferencesAsync.empty();
+  });
   testWidgets('empty state offers account onboarding', (tester) async {
     final runtime = (await tester.runAsync(() async {
       final runtime = AppRuntime(

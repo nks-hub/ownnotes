@@ -273,4 +273,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get mergeBoth => 'Combine both versions';
+
+  @override
+  String get settingSaveFailed =>
+      'Could not save the setting. It stays as it was.';
+
+  @override
+  String get lockUnavailable =>
+      'The lock could not be checked right now. Try again.';
+
+  @override
+  String get lockDeviceRemoved =>
+      'The screen lock of this phone was removed, so the app lock cannot work.';
+
+  @override
+  String get lockTurnOff => 'Turn off app lock and continue';
 }
