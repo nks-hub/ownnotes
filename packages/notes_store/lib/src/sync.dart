@@ -14,7 +14,17 @@ final class SyncCoordinator {
     this.database,
     this.clientFor, {
     this.lease = const Duration(minutes: 2),
+    this.sharingFor,
+    this.shareListInterval = const Duration(seconds: 60),
   });
+
+  /// When set, notes shared with the account are synced over WebDAV as well.
+  final Future<SharingClient> Function(Account account)? sharingFor;
+
+  /// How often the list of incoming shares is read; the open note's ETag is
+  /// checked on every pass, so live edits do not wait for this.
+  final Duration shareListInterval;
+  final Map<String, DateTime> _sharesListed = {};
   final NotesDatabase database;
   final Duration lease;
   final String _owner = const Uuid().v4();
@@ -26,7 +36,9 @@ final class SyncCoordinator {
   /// `locked`, `storage_full` or `server`; null when nothing went wrong.
   String? problem(String accountId) => _problems[accountId];
 
-  Future<void> sync(String accountId) {
+  /// [relist] reads the incoming shares now, e.g. right after accepting one.
+  Future<void> sync(String accountId, {bool relist = false}) {
+    if (relist) _sharesListed.remove(accountId);
     final existing = _running[accountId];
     if (existing != null) return existing;
     final result = _sync(accountId);
@@ -97,13 +109,16 @@ final class SyncCoordinator {
     final drafts =
         await (database.select(database.localNotes)..where(
               (n) =>
-                  n.accountId.equals(accountId) & n.syncState.equals('draft'),
+                  n.accountId.equals(accountId) &
+                  n.kind.equals('note') &
+                  n.syncState.equals('draft'),
             ))
             .get();
     final deletions =
         await (database.select(database.localNotes)..where(
               (n) =>
                   n.accountId.equals(accountId) &
+                  n.kind.equals('note') &
                   n.syncState.equals('deleting'),
             ))
             .get();
@@ -128,6 +143,7 @@ final class SyncCoordinator {
       _watermarks.remove(accountId);
       await _pull(client, accountId, null);
     }
+    await _shared(account);
   }
 
   // shortcut: kept in memory, so the first sync after start is a full pull;
@@ -460,7 +476,12 @@ final class SyncCoordinator {
       await _decision(operation, 'remote_readonly');
       return true;
     }
-    final reason = _reason(error);
+    await _requeue(operation, _reason(error));
+    return true;
+  }
+
+  /// The write did not happen: the note goes back to the queue.
+  Future<void> _requeue(Operation operation, String reason) async {
     _problems[operation.accountId] = reason;
     await database.transaction(() async {
       await (database.update(database.operations)..where(
@@ -478,7 +499,292 @@ final class SyncCoordinator {
           ))
           .write(const LocalNotesCompanion(syncState: Value('draft')));
     });
-    return true;
+  }
+
+  // --- Notes shared with this account, synced over WebDAV ---
+
+  static final RegExp _noteFile = RegExp(r'\.(md|txt)$', caseSensitive: false);
+
+  /// The note as the file holds it now; for the conflict screen.
+  Future<RemoteNote> readShared(LocalNote note) async {
+    final account = await database.account(note.accountId);
+    final factory = sharingFor;
+    if (account == null || factory == null || note.kind != 'shared') {
+      throw StateError('not_shared');
+    }
+    return _sharedRemote(
+      note,
+      await (await factory(account)).read(note.davPath!),
+    );
+  }
+
+  RemoteNote _sharedRemote(LocalNote row, SharedFile file) => RemoteNote(
+    id: row.remoteId!,
+    etag: file.etag,
+    title: row.baseTitle ?? row.title,
+    content: file.content,
+    category: '',
+    favorite: false,
+    readonly: row.readonly,
+    modified: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+  );
+
+  Future<void> _shared(Account account) async {
+    final factory = sharingFor;
+    if (factory == null) return;
+    final sharing = await factory(account);
+    final listed = _sharesListed[account.id];
+    if (listed == null ||
+        DateTime.now().difference(listed) >= shareListInterval) {
+      await _listShares(sharing, account.id);
+      _sharesListed[account.id] = DateTime.now();
+    }
+    final rows =
+        await (database.select(database.localNotes)..where(
+              (n) =>
+                  n.accountId.equals(account.id) &
+                  n.kind.equals('shared') &
+                  n.syncState.isIn(['draft', 'clean']),
+            ))
+            .get();
+    for (final row in rows) {
+      if (await database.account(account.id) == null) return;
+      await _keepLease(account.id);
+      try {
+        var current = row;
+        if (row.syncState == 'draft') {
+          await _pushShared(sharing, row);
+          final again = await database.note(account.id, row.id);
+          if (again == null) continue;
+          current = again;
+        }
+        if (current.syncState == 'clean') await _pullShared(sharing, current);
+      } on NotesHttpException catch (e) {
+        // Unshared or deleted by the owner; the share listing decides.
+        if (e.statusCode != 404) rethrow;
+      }
+    }
+  }
+
+  /// New incoming shares become rows; rows whose share ended (or whose file
+  /// the Notes API lists now) go when they hold no local edits.
+  Future<void> _listShares(SharingClient sharing, String accountId) async {
+    final incoming = [
+      for (final s in await sharing.sharedWithMe())
+        if (_noteFile.hasMatch(s.path)) s,
+    ];
+    final rows =
+        await (database.select(database.localNotes)..where(
+              (n) => n.accountId.equals(accountId) & n.remoteId.isNotNull(),
+            ))
+            .get();
+    final viaNotes = {
+      for (final n in rows)
+        if (n.kind == 'note') n.remoteId!,
+    };
+    final byFile = {
+      for (final n in rows)
+        if (n.kind == 'shared') n.remoteId!: n,
+    };
+    final wanted = <int>{};
+    for (final share in incoming) {
+      if (viaNotes.contains(share.fileId)) continue;
+      wanted.add(share.fileId);
+      final row = byFile[share.fileId];
+      if (row != null) {
+        await (database.update(
+          database.localNotes,
+        )..where((n) => n.id.equals(row.id))).write(
+          LocalNotesCompanion(
+            davPath: Value(share.path),
+            readonly: Value(!share.canEdit),
+          ),
+        );
+        continue;
+      }
+      final file = await sharing.read(share.path);
+      final name = share.path.split('/').last.replaceAll(_noteFile, '');
+      await database
+          .into(database.localNotes)
+          .insert(
+            LocalNotesCompanion.insert(
+              id: const Uuid().v4(),
+              accountId: accountId,
+              remoteId: Value(share.fileId),
+              title: name,
+              content: file.content,
+              readonly: Value(!share.canEdit),
+              etag: Value(file.etag),
+              baseContent: Value(file.content),
+              baseTitle: Value(name),
+              baseCategory: const Value(''),
+              baseFavorite: const Value(false),
+              syncState: const Value('clean'),
+              kind: const Value('shared'),
+              davPath: Value(share.path),
+              updatedAt: DateTime.now().millisecondsSinceEpoch,
+            ),
+          );
+    }
+    for (final row in byFile.values) {
+      if (wanted.contains(row.remoteId)) continue;
+      await (database.delete(
+        database.localNotes,
+      )..where((n) => n.id.equals(row.id) & n.syncState.equals('clean'))).go();
+    }
+  }
+
+  // shortcut: one PROPFIND per shared note per pass; batch them on a parent
+  // folder if an account holds many shared notes.
+  Future<void> _pullShared(SharingClient sharing, LocalNote row) async {
+    final SharedStat stat;
+    try {
+      stat = await sharing.stat(row.davPath!);
+    } on NotesHttpException catch (e) {
+      if (e.statusCode != 404) rethrow;
+      // Unshared or deleted by the owner; the next share listing decides.
+      return;
+    }
+    if (stat.etag == row.etag && stat.writable == !row.readonly) return;
+    final file = await sharing.read(row.davPath!);
+    await (database.update(
+      database.localNotes,
+    )..where((n) => n.id.equals(row.id) & n.syncState.equals('clean'))).write(
+      LocalNotesCompanion(
+        content: Value(file.content),
+        baseContent: Value(file.content),
+        etag: Value(file.etag),
+        readonly: Value(!stat.writable),
+        revision: Value(row.revision + 1),
+        updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
+      ),
+    );
+  }
+
+  /// Same states as [_push]: sending, needsDecision, or clean after the
+  /// receipt, and the line merge after a rejected If-Match. Only the text is
+  /// sent; a shared file cannot be renamed or moved from here.
+  Future<void> _pushShared(
+    SharingClient sharing,
+    LocalNote selected, {
+    bool retry = true,
+  }) async {
+    // Offline this throws before an operation exists: the edit stays a draft.
+    await sharing.stat(selected.davPath!);
+    final operation = await database.transaction(() async {
+      final current = await database.note(selected.accountId, selected.id);
+      if (current == null || current.syncState != 'draft') return null;
+      final open =
+          await (database.select(database.operations)..where(
+                (o) =>
+                    o.noteId.equals(current.id) &
+                    o.state.isNotIn(['done', 'dismissed']),
+              ))
+              .get();
+      if (open.isNotEmpty || current.readonly) return null;
+      if (current.content == current.baseContent) {
+        await (database.update(database.localNotes)
+              ..where((n) => n.id.equals(current.id)))
+            .write(const LocalNotesCompanion(syncState: Value('clean')));
+        return null;
+      }
+      final id = const Uuid().v4();
+      await database
+          .into(database.operations)
+          .insert(
+            OperationsCompanion.insert(
+              id: id,
+              accountId: current.accountId,
+              noteId: current.id,
+              revision: current.revision,
+              kind: 'update',
+              payload: jsonEncode({
+                'remoteId': current.remoteId,
+                'etag': current.etag,
+                'path': current.davPath,
+                'title': current.baseTitle ?? '',
+                'content': current.content,
+                'category': current.baseCategory ?? '',
+                'favorite': current.baseFavorite ?? false,
+                'fields': {'content': current.content},
+              }),
+              state: const Value('sending'),
+            ),
+          );
+      await (database.update(database.localNotes)
+            ..where((n) => n.id.equals(current.id)))
+          .write(const LocalNotesCompanion(syncState: Value('sending')));
+      return (database.select(
+        database.operations,
+      )..where((o) => o.id.equals(id))).getSingle();
+    });
+    if (operation == null) return;
+    final intent = jsonDecode(operation.payload) as Map<String, Object?>;
+    final path = intent['path']! as String;
+    final content = intent['content']! as String;
+    RemoteNote result(String etag, String text) => RemoteNote(
+      id: intent['remoteId']! as int,
+      etag: etag,
+      title: intent['title']! as String,
+      content: text,
+      category: intent['category']! as String,
+      favorite: intent['favorite']! as bool,
+      readonly: false,
+      modified: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+    );
+    try {
+      final etag = intent['etag'];
+      if (etag is! String) {
+        await _decision(operation, 'missing_etag');
+        return;
+      }
+      await _receipt(
+        operation,
+        result(await sharing.write(path, content, etag: etag), content),
+        intent,
+      );
+    } on SharedConflict {
+      // The file changed since it was read; 412 wrote nothing.
+      final SharedFile file;
+      try {
+        file = await sharing.read(path);
+      } catch (_) {
+        await _requeue(operation, 'offline');
+        return;
+      }
+      final current = await database.note(
+        operation.accountId,
+        operation.noteId,
+      );
+      if (current != null &&
+          await _rebase(operation, _sharedRemote(current, file))) {
+        if (retry) await _pushShared(sharing, selected, retry: false);
+        return;
+      }
+      await _decision(operation, 'remote_conflict');
+    } catch (e) {
+      // A failed write can still have been applied: read the file again.
+      final SharedFile file;
+      try {
+        file = await sharing.read(path);
+      } on NotesHttpException catch (read) {
+        await _decision(
+          operation,
+          read.statusCode == 404 ? 'remote_deleted' : 'write_outcome_unknown',
+        );
+        return;
+      } catch (_) {
+        await _decision(operation, 'write_outcome_unknown');
+        return;
+      }
+      if (file.etag == intent['etag']) {
+        await _requeue(operation, _reason(e));
+      } else if (file.content == content) {
+        await _receipt(operation, result(file.etag, content), intent);
+      } else {
+        await _decision(operation, 'write_outcome_unknown');
+      }
+    }
   }
 
   Future<void> _decision(

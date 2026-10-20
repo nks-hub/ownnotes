@@ -38,7 +38,14 @@ final class RemoteNote extends NoteRecord {
     required this.favorite,
     required this.readonly,
     required this.modified,
+    this.internalPath,
+    this.isShared = false,
   }) : super(id);
+
+  /// The file path in the account's files (`/Notes/Cat/Title.md`); what a
+  /// share of the note needs.
+  final String? internalPath;
+  final bool isShared;
   final String etag;
   final String title;
   final String content;
@@ -94,6 +101,10 @@ NoteRecord parseNote(Object? value) {
     favorite: field<bool>('favorite'),
     readonly: field<bool>('readonly'),
     modified: modified,
+    internalPath: value['internalPath'] is String
+        ? value['internalPath']! as String
+        : null,
+    isShared: value['isShared'] == true,
   );
 }
 

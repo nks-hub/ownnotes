@@ -16,6 +16,7 @@ LocalNote note(String title, String content, [String category = '']) =>
       revision: 1,
       syncState: 'clean',
       updatedAt: 0,
+      kind: 'note',
     );
 
 void main() {

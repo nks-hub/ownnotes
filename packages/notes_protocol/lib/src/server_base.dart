@@ -32,6 +32,30 @@ final class ServerBase {
 
   final Uri uri;
 
+  Uri _under(
+    List<String> prefix,
+    List<String> segments,
+    Map<String, String>? q,
+  ) => uri.replace(
+    pathSegments: [
+      ...uri.pathSegments.where((s) => s.isNotEmpty),
+      ...prefix,
+      ...segments,
+    ],
+    queryParameters: q == null || q.isEmpty ? null : q,
+  );
+
+  /// `/ocs/v2.php/apps/files_sharing/api/v1/<shares|sharees>/...`
+  Uri ocsSharing(List<String> segments, [Map<String, String>? query]) => _under(
+    ['ocs', 'v2.php', 'apps', 'files_sharing', 'api', 'v1'],
+    segments,
+    query,
+  );
+
+  /// `/remote.php/dav/files/<user>/...`
+  Uri davFile(String user, List<String> segments) =>
+      _under(['remote.php', 'dav', 'files', user], segments, null);
+
   Uri notesEndpoint(List<String> segments, [Map<String, String>? query]) =>
       uri.replace(
         pathSegments: [
