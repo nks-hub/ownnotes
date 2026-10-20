@@ -23,20 +23,8 @@ references: [docs/research/review-2026-10-20.md](docs/research/review-2026-10-20
       conflicts, settings, accounts), Android and iOS widgets, light/dark,
       tablet, accessibility, cs/en/de text lengths.
 
-- [ ] Note list stutters while scrolling.
-      Each row lays out the whole note content for a two-line subtitle.
-- [ ] Compact list header like OwnTalk: account switcher and search in the
-      app bar instead of the dropdown and the permanent search field.
-- [ ] Categories as a tree in a drawer, with All, Favorites, Uncategorised.
-      Nesting comes from `/` in the category name; `Work/Project` also
-      creates a selectable `Work`. A new note gets the selected category.
-- [ ] Richer note rows: excerpt without the repeated title, relative time,
-      category, task progress ("3/7"), attachment mark, sync state as a
-      word (Waiting, Sending, Needs decision), not only an icon.
-- [ ] Sync status in the list also when nothing is waiting to upload.
-      Today a failed download or a revoked password shows nothing.
-- [ ] Widget and share links open the right account.
-      They carry only a note id and use whichever account is shown.
+- [ ] Shared text from another app goes to the account shown in the list.
+      It carries no note id; ask which account when there are several.
 - [ ] Login and accounts like OwnTalk: onboarding screen, server address
       check, QR login, accounts screen with switch and remove (revokes the
       app password on the server).
@@ -46,26 +34,10 @@ references: [docs/research/review-2026-10-20.md](docs/research/review-2026-10-20
 - [ ] Login: say why it failed (unreachable, not Nextcloud, certificate,
       Notes app missing); Cancel must also stop a browser that is about to
       open.
-- [ ] Edit from the Markdown preview: a tap opens the raw editor at that
-      spot; an edit button in the preview.
-- [ ] Live Markdown styling while typing; the Markdown marks stay visible.
-- [ ] Preview checkboxes tick the right task.
-      They are matched by order, so a code sample with `- [ ]` or a task in
-      a quote shifts them; use the Markdown parser's source positions.
-- [ ] Overlapping edits during typing become a decision.
-      When the same line changed on the server while typing, the editor
-      now puts both versions under each other and uploads that.
-- [ ] Open editor follows readonly and conflict changes from the database.
-- [ ] Links in the preview open in the browser.
-- [ ] Share a note with another user (e.g. a partner) and edit it live.
-      A note shared through the OCS share API lands outside the recipient's
-      Notes folder, so the Notes API does not list it; needs WebDAV access
-      to the shared file with ETag checks and the same line merge as a 412.
-- [ ] App lock never opens on an error.
-      A second error while checking the device lock lets the user in, and
-      an unreadable preference turns the lock off.
-- [ ] Unsupported phone languages fall back to English (today Czech);
-      Face ID text in Czech too.
+- [ ] Sharing in the app: Share button in the editor (pick a user, list
+      and remove shares), a "Shared with me" view, conflict screen for
+      shared files. Server side and sync are done, see
+      [docs/architecture/sharing.md](docs/architecture/sharing.md).
 - [ ] German translation next to Czech and English: app texts (ARB),
       iOS system texts (Face ID, share extension) and the store listings.
       Done after the UI rework, so the new texts are translated too.

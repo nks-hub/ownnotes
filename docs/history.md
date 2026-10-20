@@ -2,6 +2,26 @@
 
 Finished work with how it was verified. Newest first is not guaranteed; dates are exact.
 
+- 2026-10-20 Note list, editor and app lock rework, verified on Galaxy S9
+  (candidate build, Docker server, 208 notes):
+  - scrolling no longer stutters: rows use a short excerpt computed once;
+    frames over 33 ms dropped from about 12 % to 2.3 % (two runs each);
+  - compact app bar with search, sync, account menu and status; category
+    tree in a drawer (side panel from 840 dp) with All, Favorites,
+    Uncategorised and virtual parents; rows with excerpt, time, category,
+    task progress, attachment mark and sync state in words; sync banner
+    also for failed downloads and sign-in problems;
+  - tap in the preview opens the raw editor at the tapped line (checked on
+    S9); live Markdown styling and a formatting bar above the keyboard;
+    preview links open in the browser; checkboxes follow the Markdown
+    parser; an overlapping pull during typing becomes a decision instead of
+    merged text; the open editor follows readonly and conflict changes;
+  - the app lock stays closed on errors and unreadable preferences;
+    unsupported languages fall back to English; Face ID text in cs and en;
+  - sharing with another user, protocol and sync (Notes 6.1 moves a note
+    shared from the Notes folder into the recipient's Notes folder; other
+    files sync over WebDAV), live-tested on the Docker server.
+
 - 2026-10-19 Writing to one note from two devices at once, verified on
   Galaxy S21 and Galaxy S9 against the Docker server:
   - a rejected write (412) whose edits touch other lines than the other
