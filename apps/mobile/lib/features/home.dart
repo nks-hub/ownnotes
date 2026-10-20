@@ -574,7 +574,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             : null,
                       ),
                     ),
-                  _accountMenu(account, accounts, l),
+                  _accountButton(account, l),
                   PopupMenuButton<String>(
                     onSelected: (value) => switch (value) {
                       'settings' => Navigator.of(context).push<void>(
@@ -617,14 +617,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _accountMenu(
-    Account account,
-    List<Account> accounts,
-    AppLocalizations l,
-  ) {
+  Widget _accountButton(Account account, AppLocalizations l) {
     final name = account.loginName;
-    return PopupMenuButton<String>(
+    return IconButton(
       tooltip: l.switchAccount,
+      onPressed: _busy
+          ? null
+          : () => showAccountSwitcher(context, currentId: account.id),
       icon: CircleAvatar(
         radius: 14,
         child: Text(
@@ -633,68 +632,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               : String.fromCharCode(name.runes.first).toUpperCase(),
         ),
       ),
-      onSelected: (id) {
-        if (id == _addKey) {
-          _addAccount();
-        } else if (id == _manageKey) {
-          openAccounts(context, currentId: account.id);
-        } else {
-          ref.read(selectedAccountIdProvider.notifier).state = id;
-        }
-      },
-      itemBuilder: (_) => [
-        for (final a in accounts)
-          PopupMenuItem(
-            value: a.id,
-            enabled: !_busy,
-            child: Row(
-              children: [
-                SizedBox(
-                  width: 28,
-                  child: a.id == account.id
-                      ? const Icon(Icons.check, size: 18)
-                      : null,
-                ),
-                Flexible(
-                  child: Text(
-                    '${a.loginName} · ${Uri.parse(a.server).host}',
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        const PopupMenuDivider(),
-        PopupMenuItem(
-          value: _addKey,
-          child: Row(
-            children: [
-              const SizedBox(
-                width: 28,
-                child: Icon(Icons.person_add_outlined, size: 18),
-              ),
-              Text(l.addAccount),
-            ],
-          ),
-        ),
-        PopupMenuItem(
-          value: _manageKey,
-          child: Row(
-            children: [
-              const SizedBox(
-                width: 28,
-                child: Icon(Icons.manage_accounts_outlined, size: 18),
-              ),
-              Text(l.accounts),
-            ],
-          ),
-        ),
-      ],
     );
   }
-
-  static const _addKey = '__add_account__';
-  static const _manageKey = '__manage_accounts__';
 
   void _addAccount() => Navigator.of(context).push<void>(
     MaterialPageRoute(

@@ -4,6 +4,7 @@ import 'core/telemetry.dart';
 import 'core/telemetry_bootstrap.dart';
 import 'data/background.dart';
 import 'data/runtime.dart';
+import 'data/settings.dart';
 import 'design/design.dart';
 import 'features/home.dart';
 import 'features/lock.dart';
@@ -98,19 +99,21 @@ Locale resolveLocale(List<Locale>? preferred, Iterable<Locale> supported) {
   return const Locale('en');
 }
 
-class OwnNotesApp extends StatelessWidget {
+class OwnNotesApp extends ConsumerWidget {
   const OwnNotesApp({super.key, this.observers = const []});
 
   /// Route names only, never note ids or titles; see lib/core/telemetry.dart.
   final List<NavigatorObserver> observers;
   @override
-  Widget build(BuildContext context) => MaterialApp(
+  Widget build(BuildContext context, WidgetRef ref) => MaterialApp(
     title: 'OwnNotes',
     navigatorObservers: observers,
     debugShowCheckedModeBanner: false,
     localizationsDelegates: AppLocalizations.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
     localeListResolutionCallback: resolveLocale,
+    locale: ref.watch(localeProvider),
+    themeMode: ref.watch(themeModeProvider),
     theme: OwnTheme.light(),
     darkTheme: OwnTheme.dark(),
     builder: (context, child) => AppLock(child: child!),

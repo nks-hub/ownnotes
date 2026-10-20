@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/material.dart' show Locale, ThemeMode;
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -11,24 +12,47 @@ final class AppSettings {
     this.fontSize = 16,
     this.lock = false,
     this.secure = false,
+    this.themeMode = ThemeMode.system,
+    this.languageCode,
   });
   final bool monospace;
   final double fontSize;
   final bool lock;
   final bool secure;
+  final ThemeMode themeMode;
+
+  /// Language the user picked, null follows the system.
+  final String? languageCode;
 
   AppSettings copyWith({
     bool? monospace,
     double? fontSize,
     bool? lock,
     bool? secure,
+    ThemeMode? themeMode,
+    String? languageCode,
+    bool systemLanguage = false,
   }) => AppSettings(
     monospace: monospace ?? this.monospace,
     fontSize: fontSize ?? this.fontSize,
     lock: lock ?? this.lock,
     secure: secure ?? this.secure,
+    themeMode: themeMode ?? this.themeMode,
+    languageCode: systemLanguage ? null : languageCode ?? this.languageCode,
   );
 }
+
+/// Theme the user picked; the app passes it to MaterialApp.themeMode.
+final themeModeProvider = Provider<ThemeMode>(
+  (ref) => ref.watch(settingsProvider.select((s) => s.themeMode)),
+);
+
+/// Language the user picked, null follows the system; the app passes it to
+/// MaterialApp.locale.
+final localeProvider = Provider<Locale?>((ref) {
+  final code = ref.watch(settingsProvider.select((s) => s.languageCode));
+  return code == null ? null : Locale(code);
+});
 
 final settingsProvider = NotifierProvider<SettingsController, AppSettings>(
   SettingsController.new,
@@ -66,6 +90,10 @@ class SettingsController extends Notifier<AppSettings> {
         fontSize: await prefs.getDouble('fontSize') ?? 16,
         lock: await prefs.getBool('lock') ?? false,
         secure: await prefs.getBool('secure') ?? false,
+        themeMode:
+            ThemeMode.values.asNameMap()[await prefs.getString('theme')] ??
+            ThemeMode.system,
+        languageCode: await prefs.getString('language'),
       );
       loadFailed = false;
     } catch (_) {
@@ -75,9 +103,9 @@ class SettingsController extends Notifier<AppSettings> {
     _applySecure().ignore();
   }
 
-  /// Applies and stores [value]. When storing fails, lock and secure go back
-  /// to their previous values (so a switch never shows an unsaved state) and
-  /// [saveFailures] fires. Other preferences are kept for this run only.
+  /// Applies and stores [value]. When storing fails, [saveFailures] fires; lock
+  /// and secure also go back to their previous values (so a switch never shows
+  /// an unsaved state). Other preferences are kept for this run only.
   Future<void> update(AppSettings value) async {
     final previous = state;
     state = value;
@@ -88,12 +116,17 @@ class SettingsController extends Notifier<AppSettings> {
       await prefs.setDouble('fontSize', value.fontSize);
       await prefs.setBool('lock', value.lock);
       await prefs.setBool('secure', value.secure);
+      await prefs.setString('theme', value.themeMode.name);
+      final language = value.languageCode;
+      language == null
+          ? await prefs.remove('language')
+          : await prefs.setString('language', language);
     } catch (_) {
       if (value.lock != previous.lock || value.secure != previous.secure) {
         state = value.copyWith(lock: previous.lock, secure: previous.secure);
         if (value.secure != previous.secure) await _applySecure();
-        _saveFailures.add(null);
       }
+      _saveFailures.add(null);
     }
   }
 

@@ -183,5 +183,65 @@
   "recSaveAsNew": "Uložit jako novou poznámku",
   "recKeepCategory": "Použít výsledek, ponechat kategorii ze serveru",
   "recReadFailed": "Verzi ze serveru se nepodařilo načíst.",
-  "recKeepRecovery": "Ponechat v záchraně"
+  "recKeepRecovery": "Ponechat v záchraně",
+  "settingsAppearance": "Vzhled",
+  "settingsWriting": "Psaní",
+  "settingsPrivacy": "Soukromí",
+  "settingsSync": "Synchronizace a úložiště",
+  "settingsTransfer": "Import a export",
+  "settingsAbout": "O aplikaci",
+  "settingsDeviceOnly": "Tato nastavení platí jen pro toto zařízení.",
+  "theme": "Motiv",
+  "themeSystem": "Systémový",
+  "themeLight": "Světlý",
+  "themeDark": "Tmavý",
+  "language": "Jazyk",
+  "languageSystem": "Systémový",
+  "exportMarkdown": "Exportovat Markdown",
+  "exportMarkdownHint": "Poznámky jako soubory Markdown v ZIPu. Přílohy a záchranné kopie se neexportují.",
+  "widgetPolicyTitle": "Widgety na ploše",
+  "widgetPolicyBody": "Při zapnutém zámku aplikace widgety skrývají obsah poznámek, i když je aplikace odemčená.",
+  "storageNotes": "{count, plural, one{1 poznámka v tomto zařízení} few{{count} poznámky v tomto zařízení} other{{count} poznámek v tomto zařízení}}",
+  "@storageNotes": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "storageUnsent": "{count, plural, =0{Vše je odesláno na server} one{1 poznámka ještě není odeslaná} few{{count} poznámky ještě nejsou odeslané} other{{count} poznámek ještě není odeslaných}}",
+  "@storageUnsent": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncHint": "Poznámky se synchronizují při otevření aplikace. Kdy poběží synchronizace na pozadí, rozhoduje systém.",
+  "exportUnsent": "Exportovat neodeslané poznámky",
+  "removeFromDevice": "Odebrat z tohoto zařízení",
+  "accountDetails": "Podrobnosti účtu",
+  "accountUserLabel": "Uživatel",
+  "accountServerLabel": "Server",
+  "accountStatusLabel": "Stav",
+  "accountSignedIn": "Přihlášen",
+  "accountsManage": "Spravovat účty",
+  "accountSwitchBlocked": "Nepodařilo se uložit na zařízení, účet se proto nepřepnul.",
+  "removeLocalNote": "Týká se to jen tohoto zařízení. Poznámky na serveru se nemažou.",
+  "loginCancelled": "Přihlášení bylo zrušeno. Nic se neuložilo.",
+  "reauthExplain": "Přihlas se jako stejný účet, aby zůstaly jeho poznámky a neodeslané změny.",
+  "scanConfirmTitle": "Přihlásit se tímto kódem?",
+  "scanConfirmBody": "{user} na {host}",
+  "@scanConfirmBody": {
+    "placeholders": {
+      "user": {
+        "type": "String"
+      },
+      "host": {
+        "type": "String"
+      }
+    }
+  },
+  "scanEnterAddress": "Zadat adresu serveru",
+  "appLocked": "OwnNotes je zamčené"
 }

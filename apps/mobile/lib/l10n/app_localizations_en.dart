@@ -601,4 +601,137 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get recKeepRecovery => 'Keep in recovery';
+
+  @override
+  String get settingsAppearance => 'Appearance';
+
+  @override
+  String get settingsWriting => 'Writing';
+
+  @override
+  String get settingsPrivacy => 'Privacy';
+
+  @override
+  String get settingsSync => 'Sync and storage';
+
+  @override
+  String get settingsTransfer => 'Import and export';
+
+  @override
+  String get settingsAbout => 'About';
+
+  @override
+  String get settingsDeviceOnly => 'These settings apply to this device only.';
+
+  @override
+  String get theme => 'Theme';
+
+  @override
+  String get themeSystem => 'System';
+
+  @override
+  String get themeLight => 'Light';
+
+  @override
+  String get themeDark => 'Dark';
+
+  @override
+  String get language => 'Language';
+
+  @override
+  String get languageSystem => 'System';
+
+  @override
+  String get exportMarkdown => 'Export Markdown';
+
+  @override
+  String get exportMarkdownHint =>
+      'Notes as Markdown files in a ZIP. Attachments and recovery copies are not included.';
+
+  @override
+  String get widgetPolicyTitle => 'Home-screen widgets';
+
+  @override
+  String get widgetPolicyBody =>
+      'With app lock on, widgets hide note content, even while the app is unlocked.';
+
+  @override
+  String storageNotes(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count notes on this device',
+      one: '1 note on this device',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String storageUnsent(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count notes not sent yet',
+      one: '1 note not sent yet',
+      zero: 'Everything is sent to the server',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get syncHint =>
+      'Notes sync when you open the app. The system decides when background sync runs.';
+
+  @override
+  String get exportUnsent => 'Export unsent notes';
+
+  @override
+  String get removeFromDevice => 'Remove from this device';
+
+  @override
+  String get accountDetails => 'Account details';
+
+  @override
+  String get accountUserLabel => 'User';
+
+  @override
+  String get accountServerLabel => 'Server';
+
+  @override
+  String get accountStatusLabel => 'Status';
+
+  @override
+  String get accountSignedIn => 'Signed in';
+
+  @override
+  String get accountsManage => 'Manage accounts';
+
+  @override
+  String get accountSwitchBlocked =>
+      'Could not save on this device, so the account was not switched.';
+
+  @override
+  String get removeLocalNote =>
+      'Only this device is affected. Notes on the server are not deleted.';
+
+  @override
+  String get loginCancelled => 'Sign-in cancelled. Nothing was saved.';
+
+  @override
+  String get reauthExplain =>
+      'Sign in as this account to keep its notes and unsent changes.';
+
+  @override
+  String get scanConfirmTitle => 'Sign in with this code?';
+
+  @override
+  String scanConfirmBody(String user, String host) {
+    return '$user on $host';
+  }
+
+  @override
+  String get scanEnterAddress => 'Enter server address';
+
+  @override
+  String get appLocked => 'OwnNotes is locked';
 }

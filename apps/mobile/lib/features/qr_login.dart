@@ -431,12 +431,18 @@ class _ScannerMessage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Center(
-    child: Padding(
+    child: SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.no_photography_outlined, color: Colors.white70),
+          const ExcludeSemantics(
+            child: Icon(
+              Icons.no_photography_outlined,
+              color: Colors.white70,
+              size: 48,
+            ),
+          ),
           const SizedBox(height: 16),
           Text(
             message,
@@ -445,11 +451,24 @@ class _ScannerMessage extends StatelessWidget {
           ),
           if (onOpenSettings != null) ...[
             const SizedBox(height: 16),
-            OutlinedButton(
+            FilledButton(
+              style: FilledButton.styleFrom(minimumSize: const Size(0, 48)),
               onPressed: () => unawaited(onOpenSettings!()),
-              child: Text(label),
+              child: Text(label, textAlign: TextAlign.center),
             ),
           ],
+          const SizedBox(height: 8),
+          TextButton(
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.white,
+              minimumSize: const Size(0, 48),
+            ),
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(
+              AppLocalizations.of(context)!.scanEnterAddress,
+              textAlign: TextAlign.center,
+            ),
+          ),
         ],
       ),
     ),

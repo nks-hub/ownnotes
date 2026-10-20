@@ -106,10 +106,13 @@ void main() {
     await tester.tap(find.text('Turn off app lock and continue'));
     await tester.pumpAndSettle();
     expect(find.byIcon(Icons.lock_outline), findsNothing);
-    expect(await SharedPreferencesAsyncPlatform.instance!.getBool(
-      'lock',
-      const SharedPreferencesOptions(),
-    ), isFalse);
+    expect(
+      await SharedPreferencesAsyncPlatform.instance!.getBool(
+        'lock',
+        const SharedPreferencesOptions(),
+      ),
+      isFalse,
+    );
   });
 
   testWidgets('unreadable preferences keep the app locked', (tester) async {
@@ -122,6 +125,44 @@ void main() {
     expect(find.text('Retry'), findsOneWidget);
   });
 
+  testWidgets('the cover is opaque and the notes underneath are gone', (
+    tester,
+  ) async {
+    await pumpLock(tester, FakeAuth(authenticateResult: false));
+    expect(find.text('OwnNotes is locked'), findsOneWidget);
+    expect(find.text('notes'), findsNothing);
+    final cover = tester.widget<Material>(
+      find
+          .ancestor(
+            of: find.text('OwnNotes is locked'),
+            matching: find.byType(Material),
+          )
+          .first,
+    );
+    expect(cover.color!.a, 1.0);
+    // Kept mounted so an open editor keeps its text, but never painted.
+    expect(find.text('notes', skipOffstage: false), findsOneWidget);
+    expect(
+      find.byWidgetPredicate((w) => w is Offstage && w.offstage),
+      findsWidgets,
+    );
+  });
+
+  testWidgets('going inactive covers the content without asking to unlock', (
+    tester,
+  ) async {
+    await pumpLock(tester, FakeAuth(authenticateResult: true));
+    expect(find.text('notes'), findsOneWidget);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    await tester.pump();
+    expect(find.text('notes'), findsNothing);
+    expect(find.text('OwnNotes is locked'), findsOneWidget);
+    expect(find.text('Unlock'), findsNothing);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pump();
+    expect(find.text('notes'), findsOneWidget);
+  });
+
   test('a failed security write is reverted and reported', () async {
     SharedPreferencesAsyncPlatform.instance = UnwritablePrefs();
     final container = ProviderContainer();
@@ -129,15 +170,23 @@ void main() {
     final controller = container.read(settingsProvider.notifier);
     await controller.loaded;
     final failure = controller.saveFailures.first;
-    await controller.update(container.read(settingsProvider).copyWith(lock: true));
+    await controller.update(
+      container.read(settingsProvider).copyWith(lock: true),
+    );
     await failure;
     expect(container.read(settingsProvider).lock, isFalse);
   });
 
   test('locale falls back to English, matches by language code', () {
     const supported = [Locale('cs'), Locale('en')];
-    expect(resolveLocale([const Locale('de', 'DE')], supported), const Locale('en'));
-    expect(resolveLocale([const Locale('cs', 'CZ')], supported), const Locale('cs'));
+    expect(
+      resolveLocale([const Locale('de', 'DE')], supported),
+      const Locale('en'),
+    );
+    expect(
+      resolveLocale([const Locale('cs', 'CZ')], supported),
+      const Locale('cs'),
+    );
     expect(
       resolveLocale([const Locale('de'), const Locale('cs')], supported),
       const Locale('cs'),

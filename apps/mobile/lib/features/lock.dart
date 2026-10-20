@@ -31,6 +31,10 @@ class _AppLockState extends ConsumerState<AppLock> {
   StreamSubscription<void>? _failures;
   bool _ready = false;
   bool _locked = false;
+
+  /// The app is inactive (app switcher, system dialog): hide the content from
+  /// the snapshot without asking for authentication.
+  bool _covered = false;
   bool _checking = false;
   _Problem _problem = _Problem.none;
 
@@ -43,8 +47,18 @@ class _AppLockState extends ConsumerState<AppLock> {
   void initState() {
     super.initState();
     _lifecycle = AppLifecycleListener(
+      onInactive: () {
+        if (!_lockActive) return;
+        FocusManager.instance.primaryFocus?.unfocus();
+        setState(() => _covered = true);
+      },
+      onResume: () {
+        if (_covered) setState(() => _covered = false);
+      },
       onHide: () {
-        if (_lockActive) setState(() => _locked = true);
+        if (!_lockActive) return;
+        FocusManager.instance.primaryFocus?.unfocus();
+        setState(() => _locked = true);
       },
       onShow: () {
         if (_locked) _unlock();
@@ -53,7 +67,9 @@ class _AppLockState extends ConsumerState<AppLock> {
     _failures = _controller.saveFailures.listen((_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context)!.settingSaveFailed)),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.settingSaveFailed),
+        ),
       );
     });
     _controller.loaded.then((_) {
@@ -62,6 +78,7 @@ class _AppLockState extends ConsumerState<AppLock> {
         _ready = true;
         _locked = _lockActive;
       });
+      if (_locked) FocusManager.instance.primaryFocus?.unfocus();
       if (_locked) _unlock();
     });
   }
@@ -117,9 +134,7 @@ class _AppLockState extends ConsumerState<AppLock> {
   }
 
   Future<void> _disableLock() async {
-    await _controller.update(
-      ref.read(settingsProvider).copyWith(lock: false),
-    );
+    await _controller.update(ref.read(settingsProvider).copyWith(lock: false));
     if (mounted) {
       setState(() {
         _locked = false;
@@ -130,46 +145,122 @@ class _AppLockState extends ConsumerState<AppLock> {
 
   @override
   Widget build(BuildContext context) {
-    if (!_ready) return const ColoredBox(color: Colors.black);
+    if (!_ready) {
+      return ColoredBox(color: Theme.of(context).scaffoldBackgroundColor);
+    }
     ref.watch(settingsProvider);
-    if (!(_locked && _lockActive)) return widget.child;
-    final l = AppLocalizations.of(context)!;
+    final covered = _lockActive && (_locked || _covered);
     return Stack(
       children: [
-        ExcludeSemantics(child: widget.child),
-        Positioned.fill(
-          child: Scaffold(
-            body: Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.lock_outline, size: 48),
-                    const SizedBox(height: 16),
-                    if (_problem == _Problem.serviceUnavailable)
-                      Text(l.lockUnavailable, textAlign: TextAlign.center),
-                    if (_problem == _Problem.noDeviceLock)
-                      Text(l.lockDeviceRemoved, textAlign: TextAlign.center),
-                    const SizedBox(height: 16),
-                    FilledButton(
-                      onPressed: _unlock,
+        // Not painted, not focusable and absent from the semantics tree while
+        // covered, yet kept mounted so an open editor keeps its text.
+        Visibility(
+          visible: !covered,
+          maintainState: true,
+          maintainAnimation: true,
+          child: widget.child,
+        ),
+        if (covered)
+          Positioned.fill(
+            child: _Cover(
+              unlockable: _locked,
+              problem: _problem,
+              onUnlock: _unlock,
+              onTurnOff: _disableLock,
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// Opaque lock screen: no note titles, no underlying content.
+class _Cover extends StatelessWidget {
+  const _Cover({
+    required this.unlockable,
+    required this.problem,
+    required this.onUnlock,
+    required this.onTurnOff,
+  });
+  final bool unlockable;
+  final _Problem problem;
+  final VoidCallback onUnlock;
+  final VoidCallback onTurnOff;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    return Material(
+      color: theme.colorScheme.surface.withValues(alpha: 1),
+      child: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 420),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const ExcludeSemantics(
+                    child: Icon(Icons.lock_outline, size: 48),
+                  ),
+                  const SizedBox(height: 16),
+                  Semantics(
+                    header: true,
+                    child: Text(
+                      l.appLocked,
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.titleLarge,
+                    ),
+                  ),
+                  if (problem == _Problem.serviceUnavailable) ...[
+                    const SizedBox(height: 12),
+                    Semantics(
+                      liveRegion: true,
                       child: Text(
-                        _problem == _Problem.none ? l.unlock : l.retry,
+                        l.lockUnavailable,
+                        textAlign: TextAlign.center,
                       ),
                     ),
-                    if (_problem == _Problem.noDeviceLock)
+                  ],
+                  if (problem == _Problem.noDeviceLock) ...[
+                    const SizedBox(height: 12),
+                    Semantics(
+                      liveRegion: true,
+                      child: Text(
+                        l.lockDeviceRemoved,
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ],
+                  if (unlockable) ...[
+                    const SizedBox(height: 24),
+                    FilledButton(
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size.fromHeight(48),
+                      ),
+                      onPressed: onUnlock,
+                      child: Text(
+                        problem == _Problem.none ? l.unlock : l.retry,
+                      ),
+                    ),
+                    if (problem == _Problem.noDeviceLock)
                       TextButton(
-                        onPressed: _disableLock,
-                        child: Text(l.lockTurnOff),
+                        style: TextButton.styleFrom(
+                          minimumSize: const Size.fromHeight(48),
+                        ),
+                        onPressed: onTurnOff,
+                        child: Text(l.lockTurnOff, textAlign: TextAlign.center),
                       ),
                   ],
-                ),
+                ],
               ),
             ),
           ),
         ),
-      ],
+      ),
     );
   }
 }

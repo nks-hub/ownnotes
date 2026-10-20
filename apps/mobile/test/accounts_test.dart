@@ -121,11 +121,11 @@ void main() {
     tester,
   ) async {
     await open(tester, const AccountsScreen());
-    await tester.tap(find.byType(PopupMenuButton<bool>).last);
+    await tester.tap(find.byType(PopupMenuButton<int>).last);
     await settle(tester);
-    await tester.tap(find.text('Remove account from this phone').last);
+    await tester.tap(find.text('Remove from this device').last);
     await settle(tester);
-    await tester.tap(find.text('Remove account from this phone').last);
+    await tester.tap(find.text('Remove from this device').last);
     await settle(tester);
     final revoke = requests.singleWhere((r) => r.method == 'DELETE');
     expect(revoke.url.toString(), startsWith('https://two.test/ocs/v2.php'));
@@ -148,11 +148,11 @@ void main() {
   ) async {
     await open(tester, const AccountsScreen());
     serverDown = true;
-    await tester.tap(find.byType(PopupMenuButton<bool>).first);
+    await tester.tap(find.byType(PopupMenuButton<int>).first);
     await settle(tester);
-    await tester.tap(find.text('Remove account from this phone').last);
+    await tester.tap(find.text('Remove from this device').last);
     await settle(tester);
-    await tester.tap(find.text('Remove account from this phone').last);
+    await tester.tap(find.text('Remove from this device').last);
     await settle(tester);
     final accounts = await tester.runAsync(
       () => runtime.database.watchAccounts().first,
