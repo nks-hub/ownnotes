@@ -68,6 +68,18 @@ references: [docs/research/review-2026-10-20.md](docs/research/review-2026-10-20
 - [ ] Shopping list mode for checklist notes: quick add, tap to tick,
       ticked items drop to the bottom and can be cleared, drag to reorder.
       On the server it stays a plain Markdown task list.
+- [ ] Suggestions while typing, same as the Notes web app (it uses the
+      Nextcloud Text editor when Text is installed):
+      - `@` mention: users from `/ocs/v2.php/core/autocomplete/get`, saved
+        exactly as Text saves it, `@[Name](mention://user/<id>)`. The web
+        notifies the user through a Text session
+        (`PUT /apps/text/session/{documentId}/mention`); check whether the
+        app can do that without opening a full Text session.
+      - `:` emoji suggestions.
+      - `/` smart picker: links to files, Deck cards, Talk and other
+        reference providers, saved as a plain link.
+- [ ] Preview renders what Text writes: mentions as chips, callouts
+      (`::: info`), tables, collapsible details, link previews.
 - [ ] Add attachments (photo, file) to a note; then the Keep import can
       bring images and audio too (skipped today).
 - [ ] Shared text must be stored before the share is acknowledged.
