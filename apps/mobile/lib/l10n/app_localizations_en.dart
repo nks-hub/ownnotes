@@ -734,4 +734,372 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get appLocked => 'OwnNotes is locked';
+
+  @override
+  String get undo => 'Undo';
+
+  @override
+  String get redo => 'Redo';
+
+  @override
+  String get dockFormat => 'Format';
+
+  @override
+  String get dockTask => 'Task';
+
+  @override
+  String get dockAttach => 'Attach';
+
+  @override
+  String get dockInsert => 'Insert';
+
+  @override
+  String get fmtStrike => 'Strikethrough';
+
+  @override
+  String get fmtQuote => 'Quote';
+
+  @override
+  String get fmtNumbered => 'Numbered list';
+
+  @override
+  String get fmtCode => 'Code';
+
+  @override
+  String get fmtIndent => 'Indent';
+
+  @override
+  String get fmtOutdent => 'Outdent';
+
+  @override
+  String get insertMention => 'Mention';
+
+  @override
+  String get insertEmoji => 'Emoji';
+
+  @override
+  String get smartPicker => 'Smart picker';
+
+  @override
+  String get smartPickerNone =>
+      'This server offers nothing the smart picker can search.';
+
+  @override
+  String get attachPhoto => 'Photo';
+
+  @override
+  String get attachCamera => 'Camera';
+
+  @override
+  String get attachFile => 'File';
+
+  @override
+  String get attachVoice => 'Voice';
+
+  @override
+  String get suggestSearching => 'Searching…';
+
+  @override
+  String get suggestError =>
+      'Suggestions are not available right now. You can keep writing.';
+
+  @override
+  String suggestCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count suggestions',
+      one: '1 suggestion',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get suggestInsert => 'Insert';
+
+  @override
+  String get cmdToday => 'Today\'s date';
+
+  @override
+  String get cmdTime => 'Current time';
+
+  @override
+  String get cmdTable => 'Table';
+
+  @override
+  String get cmdDivider => 'Divider';
+
+  @override
+  String get calloutInfo => 'Info';
+
+  @override
+  String get calloutWarning => 'Warning';
+
+  @override
+  String get calloutError => 'Error';
+
+  @override
+  String get calloutSuccess => 'Success';
+
+  @override
+  String get detailsDefault => 'Details';
+
+  @override
+  String mentionLabel(String name) {
+    return 'Mention: $name';
+  }
+
+  @override
+  String attachmentLabel(String name) {
+    return 'Attachment: $name';
+  }
+
+  @override
+  String tableLabel(int rows, int columns) {
+    String _temp0 = intl.Intl.pluralLogic(
+      rows,
+      locale: localeName,
+      other: '$rows rows',
+      one: '1 row',
+    );
+    String _temp1 = intl.Intl.pluralLogic(
+      columns,
+      locale: localeName,
+      other: '$columns columns',
+      one: '1 column',
+    );
+    return 'Table with $_temp0 and $_temp1';
+  }
+
+  @override
+  String get editSection => 'Edit this section';
+
+  @override
+  String get checklistMarkdown => 'Markdown';
+
+  @override
+  String get checklistEmpty => 'No tasks yet. Add the first item below.';
+
+  @override
+  String get checklistAdd => 'Add item';
+
+  @override
+  String checklistCompletedGroup(int count) {
+    return 'Completed ($count)';
+  }
+
+  @override
+  String get clearCompleted => 'Clear completed items';
+
+  @override
+  String clearCompletedConfirm(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Remove $count completed items from the note?',
+      one: 'Remove 1 completed item from the note?',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String clearedCompleted(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count items removed',
+      one: '1 item removed',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String checklistPosition(int position, int total) {
+    return '$position of $total';
+  }
+
+  @override
+  String get checklistItemMenu => 'Item options';
+
+  @override
+  String get moveUp => 'Move up';
+
+  @override
+  String get moveDown => 'Move down';
+
+  @override
+  String get shareTitle => 'Share';
+
+  @override
+  String get shareSendCopy => 'Send a copy';
+
+  @override
+  String get shareAsText => 'Send as text';
+
+  @override
+  String get shareAsFile => 'Send as Markdown file';
+
+  @override
+  String get shareWithPeople => 'Share with people';
+
+  @override
+  String get sharePeopleWithAccess => 'People with access';
+
+  @override
+  String get shareSearchHint => 'Search people';
+
+  @override
+  String get sharePermissionView => 'Can view';
+
+  @override
+  String get sharePermissionEdit => 'Can edit';
+
+  @override
+  String get shareRemove => 'Remove access';
+
+  @override
+  String get sharePending => 'Sharing…';
+
+  @override
+  String get shareRemoving => 'Removing access…';
+
+  @override
+  String get shareFailed =>
+      'This did not work. Check the connection and try again.';
+
+  @override
+  String get shareNotUploaded =>
+      'This note is not on the server yet. It is uploaded first, then it can be shared.';
+
+  @override
+  String get shareUploadFirst => 'Upload and continue';
+
+  @override
+  String get shareUploading => 'Uploading the note…';
+
+  @override
+  String get shareUploadFailed =>
+      'The note could not be uploaded yet. It stays saved on this device.';
+
+  @override
+  String get shareIncoming =>
+      'Somebody shared this note with you. Only its owner can share it further.';
+
+  @override
+  String get shareAttachmentsWarning =>
+      'This note has attachments. People you share it with may not be able to open them.';
+
+  @override
+  String get shareNone => 'Not shared with anyone yet.';
+
+  @override
+  String get shareNoResults => 'No matching people.';
+
+  @override
+  String get shareChecking => 'Checking the shares…';
+
+  @override
+  String shareWithName(String name) {
+    return 'Share with $name';
+  }
+
+  @override
+  String get moreOptions => 'More options';
+
+  @override
+  String get openDetails => 'Details';
+
+  @override
+  String get unfavorite => 'Remove from favorites';
+
+  @override
+  String get openChecklist => 'Open checklist';
+
+  @override
+  String get attachments => 'Attachments';
+
+  @override
+  String get historyRecovery => 'History and recovery';
+
+  @override
+  String get exportNote => 'Export';
+
+  @override
+  String findCount(int index, int total) {
+    return '$index of $total';
+  }
+
+  @override
+  String get findPrevious => 'Previous match';
+
+  @override
+  String get saveFailedTitle => 'Could not save on this device';
+
+  @override
+  String get noteUnreadable =>
+      'The server could not hand out this note\'s text. Your last copy is kept. Retry, or copy your text.';
+
+  @override
+  String get exportDraft => 'Export draft';
+
+  @override
+  String get attachmentsNone => 'No attachments in this note.';
+
+  @override
+  String get attachmentImage => 'Image';
+
+  @override
+  String get attachmentFile => 'File';
+
+  @override
+  String get templates => 'Templates';
+
+  @override
+  String get templatesEmpty => 'No templates yet.';
+
+  @override
+  String get templatesManage => 'Manage templates';
+
+  @override
+  String get templateNew => 'New template';
+
+  @override
+  String get templateEdit => 'Edit template';
+
+  @override
+  String get templateSave => 'Save';
+
+  @override
+  String get templateName => 'Template name';
+
+  @override
+  String templatePlaceholders(String placeholders) {
+    return 'Filled in when a note is created: $placeholders';
+  }
+
+  @override
+  String templateDeleteConfirm(String name) {
+    return 'Delete the template \"$name\"?';
+  }
+
+  @override
+  String get templatesDeviceOnly =>
+      'Templates and the daily note stay on this device.';
+
+  @override
+  String get dailyNote => 'Daily note';
+
+  @override
+  String get dailyNotePattern => 'Title pattern (for example yyyy-MM-dd)';
+
+  @override
+  String get dailyNoteTemplate => 'Template';
+
+  @override
+  String get dailyNoteNoTemplate => 'No template';
+
+  @override
+  String dailyNotePreview(String title, String category) {
+    return 'Today: \"$title\" in $category';
+  }
 }

@@ -742,4 +742,377 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get appLocked => 'OwnNotes je zamčené';
+
+  @override
+  String get undo => 'Zpět';
+
+  @override
+  String get redo => 'Znovu';
+
+  @override
+  String get dockFormat => 'Formát';
+
+  @override
+  String get dockTask => 'Úkol';
+
+  @override
+  String get dockAttach => 'Příloha';
+
+  @override
+  String get dockInsert => 'Vložit';
+
+  @override
+  String get fmtStrike => 'Přeškrtnutí';
+
+  @override
+  String get fmtQuote => 'Citace';
+
+  @override
+  String get fmtNumbered => 'Číslovaný seznam';
+
+  @override
+  String get fmtCode => 'Kód';
+
+  @override
+  String get fmtIndent => 'Odsadit';
+
+  @override
+  String get fmtOutdent => 'Předsadit';
+
+  @override
+  String get insertMention => 'Zmínka';
+
+  @override
+  String get insertEmoji => 'Emoji';
+
+  @override
+  String get smartPicker => 'Chytrý výběr';
+
+  @override
+  String get smartPickerNone =>
+      'Tento server nenabízí nic, co by chytrý výběr uměl hledat.';
+
+  @override
+  String get attachPhoto => 'Fotka';
+
+  @override
+  String get attachCamera => 'Fotoaparát';
+
+  @override
+  String get attachFile => 'Soubor';
+
+  @override
+  String get attachVoice => 'Hlas';
+
+  @override
+  String get suggestSearching => 'Hledám…';
+
+  @override
+  String get suggestError => 'Návrhy teď nejsou k dispozici. Můžete psát dál.';
+
+  @override
+  String suggestCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count návrhů',
+      few: '$count návrhy',
+      one: '1 návrh',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get suggestInsert => 'Vložit';
+
+  @override
+  String get cmdToday => 'Dnešní datum';
+
+  @override
+  String get cmdTime => 'Aktuální čas';
+
+  @override
+  String get cmdTable => 'Tabulka';
+
+  @override
+  String get cmdDivider => 'Oddělovač';
+
+  @override
+  String get calloutInfo => 'Informace';
+
+  @override
+  String get calloutWarning => 'Upozornění';
+
+  @override
+  String get calloutError => 'Chyba';
+
+  @override
+  String get calloutSuccess => 'Úspěch';
+
+  @override
+  String get detailsDefault => 'Podrobnosti';
+
+  @override
+  String mentionLabel(String name) {
+    return 'Zmínka: $name';
+  }
+
+  @override
+  String attachmentLabel(String name) {
+    return 'Příloha: $name';
+  }
+
+  @override
+  String tableLabel(int rows, int columns) {
+    String _temp0 = intl.Intl.pluralLogic(
+      rows,
+      locale: localeName,
+      other: '$rows řádků',
+      few: '$rows řádky',
+      one: '1 řádek',
+    );
+    String _temp1 = intl.Intl.pluralLogic(
+      columns,
+      locale: localeName,
+      other: '$columns sloupců',
+      few: '$columns sloupce',
+      one: '1 sloupec',
+    );
+    return 'Tabulka, $_temp0 a $_temp1';
+  }
+
+  @override
+  String get editSection => 'Upravit tuto část';
+
+  @override
+  String get checklistMarkdown => 'Markdown';
+
+  @override
+  String get checklistEmpty =>
+      'Zatím tu nejsou žádné úkoly. První položku přidejte dole.';
+
+  @override
+  String get checklistAdd => 'Přidat položku';
+
+  @override
+  String checklistCompletedGroup(int count) {
+    return 'Hotovo ($count)';
+  }
+
+  @override
+  String get clearCompleted => 'Odstranit hotové položky';
+
+  @override
+  String clearCompletedConfirm(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Odstranit z poznámky $count hotových položek?',
+      few: 'Odstranit z poznámky $count hotové položky?',
+      one: 'Odstranit z poznámky 1 hotovou položku?',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String clearedCompleted(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Odstraněno $count položek',
+      few: 'Odstraněny $count položky',
+      one: 'Odstraněna 1 položka',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String checklistPosition(int position, int total) {
+    return '$position z $total';
+  }
+
+  @override
+  String get checklistItemMenu => 'Možnosti položky';
+
+  @override
+  String get moveUp => 'Posunout nahoru';
+
+  @override
+  String get moveDown => 'Posunout dolů';
+
+  @override
+  String get shareTitle => 'Sdílet';
+
+  @override
+  String get shareSendCopy => 'Odeslat kopii';
+
+  @override
+  String get shareAsText => 'Odeslat jako text';
+
+  @override
+  String get shareAsFile => 'Odeslat jako soubor Markdown';
+
+  @override
+  String get shareWithPeople => 'Sdílet s lidmi';
+
+  @override
+  String get sharePeopleWithAccess => 'Lidé s přístupem';
+
+  @override
+  String get shareSearchHint => 'Hledat lidi';
+
+  @override
+  String get sharePermissionView => 'Může zobrazit';
+
+  @override
+  String get sharePermissionEdit => 'Může upravovat';
+
+  @override
+  String get shareRemove => 'Odebrat přístup';
+
+  @override
+  String get sharePending => 'Sdílím…';
+
+  @override
+  String get shareRemoving => 'Odebírám přístup…';
+
+  @override
+  String get shareFailed =>
+      'Nepodařilo se. Zkontrolujte připojení a zkuste to znovu.';
+
+  @override
+  String get shareNotUploaded =>
+      'Poznámka ještě není na serveru. Nejdřív se nahraje, potom ji lze sdílet.';
+
+  @override
+  String get shareUploadFirst => 'Nahrát a pokračovat';
+
+  @override
+  String get shareUploading => 'Nahrávám poznámku…';
+
+  @override
+  String get shareUploadFailed =>
+      'Poznámku se zatím nepodařilo nahrát. Zůstává uložená v tomto zařízení.';
+
+  @override
+  String get shareIncoming =>
+      'Tuto poznámku s vámi někdo sdílí. Dál ji může sdílet jen její vlastník.';
+
+  @override
+  String get shareAttachmentsWarning =>
+      'Poznámka má přílohy. Lidé, se kterými ji sdílíte, je nemusí umět otevřít.';
+
+  @override
+  String get shareNone => 'Zatím s nikým nesdíleno.';
+
+  @override
+  String get shareNoResults => 'Nikdo takový nenalezen.';
+
+  @override
+  String get shareChecking => 'Zjišťuji sdílení…';
+
+  @override
+  String shareWithName(String name) {
+    return 'Sdílet s uživatelem $name';
+  }
+
+  @override
+  String get moreOptions => 'Další možnosti';
+
+  @override
+  String get openDetails => 'Podrobnosti';
+
+  @override
+  String get unfavorite => 'Odebrat z oblíbených';
+
+  @override
+  String get openChecklist => 'Otevřít seznam úkolů';
+
+  @override
+  String get attachments => 'Přílohy';
+
+  @override
+  String get historyRecovery => 'Historie a obnova';
+
+  @override
+  String get exportNote => 'Exportovat';
+
+  @override
+  String findCount(int index, int total) {
+    return '$index z $total';
+  }
+
+  @override
+  String get findPrevious => 'Předchozí shoda';
+
+  @override
+  String get saveFailedTitle => 'Nepodařilo se uložit v tomto zařízení';
+
+  @override
+  String get noteUnreadable =>
+      'Server nevydal text této poznámky. Poslední kopie je uložená. Zkuste to znovu, nebo si text zkopírujte.';
+
+  @override
+  String get exportDraft => 'Exportovat koncept';
+
+  @override
+  String get attachmentsNone => 'Poznámka nemá žádné přílohy.';
+
+  @override
+  String get attachmentImage => 'Obrázek';
+
+  @override
+  String get attachmentFile => 'Soubor';
+
+  @override
+  String get templates => 'Šablony';
+
+  @override
+  String get templatesEmpty => 'Zatím žádné šablony.';
+
+  @override
+  String get templatesManage => 'Spravovat šablony';
+
+  @override
+  String get templateNew => 'Nová šablona';
+
+  @override
+  String get templateEdit => 'Upravit šablonu';
+
+  @override
+  String get templateSave => 'Uložit';
+
+  @override
+  String get templateName => 'Název šablony';
+
+  @override
+  String templatePlaceholders(String placeholders) {
+    return 'Doplní se při vytvoření poznámky: $placeholders';
+  }
+
+  @override
+  String templateDeleteConfirm(String name) {
+    return 'Smazat šablonu „$name“?';
+  }
+
+  @override
+  String get templatesDeviceOnly =>
+      'Šablony a denní poznámka zůstávají jen v tomto zařízení.';
+
+  @override
+  String get dailyNote => 'Denní poznámka';
+
+  @override
+  String get dailyNotePattern => 'Vzor názvu (například yyyy-MM-dd)';
+
+  @override
+  String get dailyNoteTemplate => 'Šablona';
+
+  @override
+  String get dailyNoteNoTemplate => 'Bez šablony';
+
+  @override
+  String dailyNotePreview(String title, String category) {
+    return 'Dnes: „$title“ v kategorii $category';
+  }
 }

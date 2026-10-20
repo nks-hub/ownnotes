@@ -1357,6 +1357,612 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'OwnNotes is locked'**
   String get appLocked;
+
+  /// No description provided for @undo.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo'**
+  String get undo;
+
+  /// No description provided for @redo.
+  ///
+  /// In en, this message translates to:
+  /// **'Redo'**
+  String get redo;
+
+  /// No description provided for @dockFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'Format'**
+  String get dockFormat;
+
+  /// No description provided for @dockTask.
+  ///
+  /// In en, this message translates to:
+  /// **'Task'**
+  String get dockTask;
+
+  /// No description provided for @dockAttach.
+  ///
+  /// In en, this message translates to:
+  /// **'Attach'**
+  String get dockAttach;
+
+  /// No description provided for @dockInsert.
+  ///
+  /// In en, this message translates to:
+  /// **'Insert'**
+  String get dockInsert;
+
+  /// No description provided for @fmtStrike.
+  ///
+  /// In en, this message translates to:
+  /// **'Strikethrough'**
+  String get fmtStrike;
+
+  /// No description provided for @fmtQuote.
+  ///
+  /// In en, this message translates to:
+  /// **'Quote'**
+  String get fmtQuote;
+
+  /// No description provided for @fmtNumbered.
+  ///
+  /// In en, this message translates to:
+  /// **'Numbered list'**
+  String get fmtNumbered;
+
+  /// No description provided for @fmtCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Code'**
+  String get fmtCode;
+
+  /// No description provided for @fmtIndent.
+  ///
+  /// In en, this message translates to:
+  /// **'Indent'**
+  String get fmtIndent;
+
+  /// No description provided for @fmtOutdent.
+  ///
+  /// In en, this message translates to:
+  /// **'Outdent'**
+  String get fmtOutdent;
+
+  /// No description provided for @insertMention.
+  ///
+  /// In en, this message translates to:
+  /// **'Mention'**
+  String get insertMention;
+
+  /// No description provided for @insertEmoji.
+  ///
+  /// In en, this message translates to:
+  /// **'Emoji'**
+  String get insertEmoji;
+
+  /// No description provided for @smartPicker.
+  ///
+  /// In en, this message translates to:
+  /// **'Smart picker'**
+  String get smartPicker;
+
+  /// No description provided for @smartPickerNone.
+  ///
+  /// In en, this message translates to:
+  /// **'This server offers nothing the smart picker can search.'**
+  String get smartPickerNone;
+
+  /// No description provided for @attachPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo'**
+  String get attachPhoto;
+
+  /// No description provided for @attachCamera.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera'**
+  String get attachCamera;
+
+  /// No description provided for @attachFile.
+  ///
+  /// In en, this message translates to:
+  /// **'File'**
+  String get attachFile;
+
+  /// No description provided for @attachVoice.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice'**
+  String get attachVoice;
+
+  /// No description provided for @suggestSearching.
+  ///
+  /// In en, this message translates to:
+  /// **'Searching…'**
+  String get suggestSearching;
+
+  /// No description provided for @suggestError.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggestions are not available right now. You can keep writing.'**
+  String get suggestError;
+
+  /// No description provided for @suggestCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 suggestion} other{{count} suggestions}}'**
+  String suggestCount(int count);
+
+  /// No description provided for @suggestInsert.
+  ///
+  /// In en, this message translates to:
+  /// **'Insert'**
+  String get suggestInsert;
+
+  /// No description provided for @cmdToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s date'**
+  String get cmdToday;
+
+  /// No description provided for @cmdTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Current time'**
+  String get cmdTime;
+
+  /// No description provided for @cmdTable.
+  ///
+  /// In en, this message translates to:
+  /// **'Table'**
+  String get cmdTable;
+
+  /// No description provided for @cmdDivider.
+  ///
+  /// In en, this message translates to:
+  /// **'Divider'**
+  String get cmdDivider;
+
+  /// No description provided for @calloutInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Info'**
+  String get calloutInfo;
+
+  /// No description provided for @calloutWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Warning'**
+  String get calloutWarning;
+
+  /// No description provided for @calloutError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error'**
+  String get calloutError;
+
+  /// No description provided for @calloutSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Success'**
+  String get calloutSuccess;
+
+  /// No description provided for @detailsDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get detailsDefault;
+
+  /// No description provided for @mentionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Mention: {name}'**
+  String mentionLabel(String name);
+
+  /// No description provided for @attachmentLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Attachment: {name}'**
+  String attachmentLabel(String name);
+
+  /// No description provided for @tableLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Table with {rows, plural, one{1 row} other{{rows} rows}} and {columns, plural, one{1 column} other{{columns} columns}}'**
+  String tableLabel(int rows, int columns);
+
+  /// No description provided for @editSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit this section'**
+  String get editSection;
+
+  /// No description provided for @checklistMarkdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Markdown'**
+  String get checklistMarkdown;
+
+  /// No description provided for @checklistEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No tasks yet. Add the first item below.'**
+  String get checklistEmpty;
+
+  /// No description provided for @checklistAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add item'**
+  String get checklistAdd;
+
+  /// No description provided for @checklistCompletedGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed ({count})'**
+  String checklistCompletedGroup(int count);
+
+  /// No description provided for @clearCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear completed items'**
+  String get clearCompleted;
+
+  /// No description provided for @clearCompletedConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{Remove 1 completed item from the note?} other{Remove {count} completed items from the note?}}'**
+  String clearCompletedConfirm(int count);
+
+  /// No description provided for @clearedCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 item removed} other{{count} items removed}}'**
+  String clearedCompleted(int count);
+
+  /// No description provided for @checklistPosition.
+  ///
+  /// In en, this message translates to:
+  /// **'{position} of {total}'**
+  String checklistPosition(int position, int total);
+
+  /// No description provided for @checklistItemMenu.
+  ///
+  /// In en, this message translates to:
+  /// **'Item options'**
+  String get checklistItemMenu;
+
+  /// No description provided for @moveUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Move up'**
+  String get moveUp;
+
+  /// No description provided for @moveDown.
+  ///
+  /// In en, this message translates to:
+  /// **'Move down'**
+  String get moveDown;
+
+  /// No description provided for @shareTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get shareTitle;
+
+  /// No description provided for @shareSendCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Send a copy'**
+  String get shareSendCopy;
+
+  /// No description provided for @shareAsText.
+  ///
+  /// In en, this message translates to:
+  /// **'Send as text'**
+  String get shareAsText;
+
+  /// No description provided for @shareAsFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Send as Markdown file'**
+  String get shareAsFile;
+
+  /// No description provided for @shareWithPeople.
+  ///
+  /// In en, this message translates to:
+  /// **'Share with people'**
+  String get shareWithPeople;
+
+  /// No description provided for @sharePeopleWithAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'People with access'**
+  String get sharePeopleWithAccess;
+
+  /// No description provided for @shareSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search people'**
+  String get shareSearchHint;
+
+  /// No description provided for @sharePermissionView.
+  ///
+  /// In en, this message translates to:
+  /// **'Can view'**
+  String get sharePermissionView;
+
+  /// No description provided for @sharePermissionEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Can edit'**
+  String get sharePermissionEdit;
+
+  /// No description provided for @shareRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove access'**
+  String get shareRemove;
+
+  /// No description provided for @sharePending.
+  ///
+  /// In en, this message translates to:
+  /// **'Sharing…'**
+  String get sharePending;
+
+  /// No description provided for @shareRemoving.
+  ///
+  /// In en, this message translates to:
+  /// **'Removing access…'**
+  String get shareRemoving;
+
+  /// No description provided for @shareFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'This did not work. Check the connection and try again.'**
+  String get shareFailed;
+
+  /// No description provided for @shareNotUploaded.
+  ///
+  /// In en, this message translates to:
+  /// **'This note is not on the server yet. It is uploaded first, then it can be shared.'**
+  String get shareNotUploaded;
+
+  /// No description provided for @shareUploadFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload and continue'**
+  String get shareUploadFirst;
+
+  /// No description provided for @shareUploading.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploading the note…'**
+  String get shareUploading;
+
+  /// No description provided for @shareUploadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The note could not be uploaded yet. It stays saved on this device.'**
+  String get shareUploadFailed;
+
+  /// No description provided for @shareIncoming.
+  ///
+  /// In en, this message translates to:
+  /// **'Somebody shared this note with you. Only its owner can share it further.'**
+  String get shareIncoming;
+
+  /// No description provided for @shareAttachmentsWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'This note has attachments. People you share it with may not be able to open them.'**
+  String get shareAttachmentsWarning;
+
+  /// No description provided for @shareNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Not shared with anyone yet.'**
+  String get shareNone;
+
+  /// No description provided for @shareNoResults.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching people.'**
+  String get shareNoResults;
+
+  /// No description provided for @shareChecking.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking the shares…'**
+  String get shareChecking;
+
+  /// No description provided for @shareWithName.
+  ///
+  /// In en, this message translates to:
+  /// **'Share with {name}'**
+  String shareWithName(String name);
+
+  /// No description provided for @moreOptions.
+  ///
+  /// In en, this message translates to:
+  /// **'More options'**
+  String get moreOptions;
+
+  /// No description provided for @openDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get openDetails;
+
+  /// No description provided for @unfavorite.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from favorites'**
+  String get unfavorite;
+
+  /// No description provided for @openChecklist.
+  ///
+  /// In en, this message translates to:
+  /// **'Open checklist'**
+  String get openChecklist;
+
+  /// No description provided for @attachments.
+  ///
+  /// In en, this message translates to:
+  /// **'Attachments'**
+  String get attachments;
+
+  /// No description provided for @historyRecovery.
+  ///
+  /// In en, this message translates to:
+  /// **'History and recovery'**
+  String get historyRecovery;
+
+  /// No description provided for @exportNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Export'**
+  String get exportNote;
+
+  /// No description provided for @findCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{index} of {total}'**
+  String findCount(int index, int total);
+
+  /// No description provided for @findPrevious.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous match'**
+  String get findPrevious;
+
+  /// No description provided for @saveFailedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save on this device'**
+  String get saveFailedTitle;
+
+  /// No description provided for @noteUnreadable.
+  ///
+  /// In en, this message translates to:
+  /// **'The server could not hand out this note\'s text. Your last copy is kept. Retry, or copy your text.'**
+  String get noteUnreadable;
+
+  /// No description provided for @exportDraft.
+  ///
+  /// In en, this message translates to:
+  /// **'Export draft'**
+  String get exportDraft;
+
+  /// No description provided for @attachmentsNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No attachments in this note.'**
+  String get attachmentsNone;
+
+  /// No description provided for @attachmentImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Image'**
+  String get attachmentImage;
+
+  /// No description provided for @attachmentFile.
+  ///
+  /// In en, this message translates to:
+  /// **'File'**
+  String get attachmentFile;
+
+  /// No description provided for @templates.
+  ///
+  /// In en, this message translates to:
+  /// **'Templates'**
+  String get templates;
+
+  /// No description provided for @templatesEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No templates yet.'**
+  String get templatesEmpty;
+
+  /// No description provided for @templatesManage.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage templates'**
+  String get templatesManage;
+
+  /// No description provided for @templateNew.
+  ///
+  /// In en, this message translates to:
+  /// **'New template'**
+  String get templateNew;
+
+  /// No description provided for @templateEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit template'**
+  String get templateEdit;
+
+  /// No description provided for @templateSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get templateSave;
+
+  /// No description provided for @templateName.
+  ///
+  /// In en, this message translates to:
+  /// **'Template name'**
+  String get templateName;
+
+  /// No description provided for @templatePlaceholders.
+  ///
+  /// In en, this message translates to:
+  /// **'Filled in when a note is created: {placeholders}'**
+  String templatePlaceholders(String placeholders);
+
+  /// No description provided for @templateDeleteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete the template \"{name}\"?'**
+  String templateDeleteConfirm(String name);
+
+  /// No description provided for @templatesDeviceOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Templates and the daily note stay on this device.'**
+  String get templatesDeviceOnly;
+
+  /// No description provided for @dailyNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily note'**
+  String get dailyNote;
+
+  /// No description provided for @dailyNotePattern.
+  ///
+  /// In en, this message translates to:
+  /// **'Title pattern (for example yyyy-MM-dd)'**
+  String get dailyNotePattern;
+
+  /// No description provided for @dailyNoteTemplate.
+  ///
+  /// In en, this message translates to:
+  /// **'Template'**
+  String get dailyNoteTemplate;
+
+  /// No description provided for @dailyNoteNoTemplate.
+  ///
+  /// In en, this message translates to:
+  /// **'No template'**
+  String get dailyNoteNoTemplate;
+
+  /// No description provided for @dailyNotePreview.
+  ///
+  /// In en, this message translates to:
+  /// **'Today: \"{title}\" in {category}'**
+  String dailyNotePreview(String title, String category);
 }
 
 class _AppLocalizationsDelegate

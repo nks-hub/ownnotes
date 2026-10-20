@@ -1,21 +1,37 @@
 import 'dart:async';
-import 'dart:typed_data';
-import 'package:flutter/gestures.dart';
+import 'dart:math' as math;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:notes_store/notes_store.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../core/markdown/live_controller.dart';
 import '../core/markdown/live_styling.dart';
 import '../core/markdown/markdown_document.dart';
 import '../data/runtime.dart';
 import '../data/settings.dart';
+import '../design/design.dart';
 import '../l10n/app_localizations.dart';
+import 'checklist/checklist_screen.dart';
+import 'editor/document_header.dart';
+import 'editor/edit_history.dart';
+import 'editor/editing_commands.dart';
+import 'editor/format_dock.dart';
+import 'editor/preview.dart';
+import 'editor/reference_picker.dart';
+import 'editor/share_sheet.dart';
+import 'editor/suggestion_controller.dart';
+import 'editor/suggestion_model.dart';
+import 'editor/suggestion_popup.dart';
+import 'editor/suggestion_source.dart';
 import 'recovery.dart';
+import 'templates/templates.dart';
+import 'templates/templates_screen.dart';
 
 export '../core/markdown/live_controller.dart' show MarkdownTextController;
+export 'editor/format_dock.dart' show AttachKind, AttachHandler;
 
 /// Offsets of the mark between the brackets of each task item (`- [ ]`,
 /// `1. [x]`) in the order the preview shows its checkboxes. The document
@@ -57,9 +73,37 @@ List<TextSpan> markdownSpans(
   ),
 );
 
+enum _Details { title, category }
+
+enum _Overflow {
+  details,
+  favorite,
+  find,
+  checklist,
+  attachments,
+  history,
+  export,
+  delete,
+}
+
+/// The writing screen of one note: raw Markdown with live styling, formatting
+/// dock, typing suggestions, explicit preview and checklist mode.
 class EditorScreen extends ConsumerStatefulWidget {
-  const EditorScreen({required this.note, super.key});
+  const EditorScreen({
+    required this.note,
+    this.onAttach,
+    this.startInChecklist = false,
+    super.key,
+  });
   final LocalNote note;
+
+  /// Chosen in the dock's Attach menu. Null leaves the rows disabled.
+  final AttachHandler? onAttach;
+
+  /// Opens checklist mode at once (a checklist widget or "New checklist").
+  /// Notes never open in it on their own.
+  final bool startInChecklist;
+
   @override
   ConsumerState<EditorScreen> createState() => _EditorScreenState();
 }
@@ -68,229 +112,37 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
     with WidgetsBindingObserver {
   late final TextEditingController _title;
   late final MarkdownTextController _text;
+  late final EditHistory _history;
+  late final TextEditingController _category;
+  late final SuggestionController _suggest;
+  final _textFocus = FocusNode();
+  final _fieldKey = GlobalKey();
+  final _bodyKey = GlobalKey();
 
   /// The note's current database row; the widget's copy is the one opened.
   late LocalNote _row;
   bool get _readonly => _row.readonly;
-  late final TextEditingController _category;
   late int _revision;
   late bool _favorite;
   Timer? _debounce;
   Future<void> _tail = Future<void>.value();
   bool _dirty = false;
   bool _failed = false;
+  String _failReason = 'local_write';
   bool _preview = false;
-  bool _tapConsumed = false;
-  Offset? _down;
-  Duration? _downAt;
   bool _finding = false;
   final _find = TextEditingController();
-  final _textFocus = FocusNode();
-
-  /// Selects the next match after the cursor, wrapping to the start.
-  void _findNext() {
-    final query = _find.text.toLowerCase();
-    if (query.isEmpty) return;
-    final text = _text.text.toLowerCase();
-    var at = text.indexOf(query, _text.selection.end.clamp(0, text.length));
-    if (at < 0) at = text.indexOf(query);
-    if (at < 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context)!.notFound)),
-      );
-      return;
-    }
-    _text.selection = TextSelection(
-      baseOffset: at,
-      extentOffset: at + query.length,
-    );
-    _textFocus.requestFocus();
-  }
-
+  List<int> _matches = const [];
+  int _matchAt = -1;
   bool _allowPop = false;
-  final _images = <String, Future<List<int>>>{};
-  int _boxes = 0;
+  bool _external = false;
+  late String _lastText;
+  Future<SuggestionSource?>? _sourceFuture;
 
-  /// Switches between the raw text and the preview.
-  void _setPreview(bool value) {
-    setState(() {
-      _preview = value;
-      _finding = false;
-    });
-  }
-
-  /// Edit mode with the caret at [offset] (the end when null).
-  void _startEditing([int? offset]) {
-    if (_readonly) return;
-    _text.selection = TextSelection.collapsed(
-      offset: (offset ?? _text.text.length).clamp(0, _text.text.length),
-    );
-    _setPreview(false);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _textFocus.requestFocus();
-    });
-  }
-
-  void _pointerUp(PointerUpEvent e) {
-    final down = _down, at = _downAt;
-    _down = null;
-    // A drag scrolls and a long press selects; only a short tap edits.
-    if (down == null ||
-        at == null ||
-        !_preview ||
-        _readonly ||
-        (e.position - down).distance > kTouchSlop ||
-        e.timeStamp - at > kLongPressTimeout) {
-      return;
-    }
-    // Links and checkboxes claim the tap after this event is dispatched.
-    scheduleMicrotask(() {
-      if (!_tapConsumed && mounted && _preview) _editAt(e.position, e.viewId);
-    });
-  }
-
-  void _editAt(Offset global, int viewId) {
-    final hit = HitTestResult();
-    WidgetsBinding.instance.hitTestInView(hit, global, viewId);
-    for (final entry in hit.path) {
-      final target = entry.target;
-      final (String, int)? found = switch (target) {
-        RenderParagraph() => (
-          target.text.toPlainText(),
-          target.getPositionForOffset(target.globalToLocal(global)).offset,
-        ),
-        RenderEditable(:final text?) => (
-          text.toPlainText(),
-          target.getPositionForPoint(global).offset,
-        ),
-        _ => null,
-      };
-      if (found == null) continue;
-      final (plain, at) = found;
-      final word = RegExp(r'[\p{L}\p{N}]+', unicode: true)
-          .allMatches(plain)
-          .where((m) => m.end >= at && m.start <= at)
-          .firstOrNull;
-      _startEditing(
-        sourceOffsetFor(
-          _text.text,
-          word?.group(0) ?? '',
-          plain.substring(word?.start ?? at.clamp(0, plain.length)),
-        ),
-      );
-      return;
-    }
-  }
-
-  /// Replaces the selection with [left] + selection + [right].
-  void _wrap(String left, String right) {
-    final text = _text.text;
-    final sel = _text.selection;
-    final a = sel.isValid ? sel.start : text.length;
-    final b = sel.isValid ? sel.end : text.length;
-    _text.value = TextEditingValue(
-      text: text.replaceRange(a, b, '$left${text.substring(a, b)}$right'),
-      selection: TextSelection(
-        baseOffset: a + left.length,
-        extentOffset: b + left.length,
-      ),
-    );
-    _changed();
-    _textFocus.requestFocus();
-  }
-
-  /// Puts [marker] at the start of the line holding the caret.
-  void _prefix(String marker) {
-    final text = _text.text;
-    final caret = _text.selection.isValid ? _text.selection.start : text.length;
-    final start = caret == 0 ? 0 : text.lastIndexOf('\n', caret - 1) + 1;
-    // A second tap on the heading button makes it one level deeper.
-    final deeper = marker == '# ' && text.startsWith('#', start);
-    final added = deeper ? '#' : marker;
-    _text.value = TextEditingValue(
-      text: text.replaceRange(start, start, added),
-      selection: TextSelection.collapsed(offset: caret + added.length),
-    );
-    _changed();
-    _textFocus.requestFocus();
-  }
-
-  Widget _toolbar(AppLocalizations l) {
-    Widget button(String tip, IconData icon, VoidCallback onTap) =>
-        IconButton(tooltip: tip, onPressed: onTap, icon: Icon(icon));
-    return Material(
-      color: Theme.of(context).colorScheme.surfaceContainer,
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: [
-            button(l.fmtBold, Icons.format_bold, () => _wrap('**', '**')),
-            button(l.fmtItalic, Icons.format_italic, () => _wrap('*', '*')),
-            button(l.fmtHeading, Icons.title, () => _prefix('# ')),
-            button(l.fmtList, Icons.format_list_bulleted, () => _prefix('- ')),
-            button(l.fmtChecklist, Icons.checklist, () => _prefix('- [ ] ')),
-            button(l.fmtLink, Icons.link, () => _wrap('[', '](https://)')),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// The preview builds checkboxes in document order, so the n-th one is the
-  /// n-th task item in the raw text. A tick edits that one character.
-  Widget _checkbox(bool value) {
-    final index = _boxes++;
-    // Shrunk to the text line, otherwise the 48 px tap target sits below it.
-    return Checkbox(
-      value: value,
-      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-      visualDensity: VisualDensity.compact,
-      onChanged: _readonly
-          ? null
-          : (_) {
-              _tapConsumed = true;
-              final doc = MarkdownDocument.parse(_text.text);
-              final task = doc.renderedTasks().elementAtOrNull(index);
-              final next = task == null ? null : doc.toggled(_text.text, task);
-              if (next == null) return;
-              _text.text = next;
-              _changed();
-            },
-    );
-  }
-
-  /// Attachments of this note (`.attachments.<id>/…`) load through the Notes
-  /// API with the account's credentials. Remote URLs stay placeholders: the
-  /// preview does not contact third-party hosts.
-  // shortcut: no offline cache; an offline preview shows the placeholder.
-  Widget _image(MarkdownImageConfig config, Widget placeholder) {
-    final remoteId = widget.note.remoteId;
-    if (remoteId == null || config.uri.hasScheme) return placeholder;
-    final path = Uri.decodeFull(config.uri.toString());
-    final bytes = _images.putIfAbsent(path, () async {
-      final runtime = ref.read(runtimeProvider);
-      final account = await runtime.database.account(widget.note.accountId);
-      if (account == null) throw StateError('account_missing');
-      return (await runtime.clientFor(account)).attachment(remoteId, path);
-    });
-    return FutureBuilder<List<int>>(
-      future: bytes,
-      builder: (context, snapshot) => switch (snapshot) {
-        AsyncSnapshot(hasData: true, :final data?) => Image.memory(
-          Uint8List.fromList(data),
-          width: config.width,
-          height: config.height,
-          semanticLabel: config.alt,
-          errorBuilder: (_, _, _) => placeholder,
-        ),
-        AsyncSnapshot(hasError: true) => placeholder,
-        _ => const SizedBox.square(
-          dimension: 48,
-          child: Center(child: CircularProgressIndicator()),
-        ),
-      },
-    );
-  }
+  /// The note as last saved here or taken from the database.
+  late LocalNote _saved;
+  StreamSubscription<List<LocalNote>>? _pulled;
+  Timer? _live;
 
   @override
   void initState() {
@@ -299,10 +151,19 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
     _title = TextEditingController(text: widget.note.title);
     _text = MarkdownTextController(text: widget.note.content);
     _category = TextEditingController(text: widget.note.category);
+    _history = EditHistory(_text);
+    _lastText = _text.text;
     _revision = widget.note.revision;
     _favorite = widget.note.favorite;
     _saved = widget.note;
     _row = widget.note;
+    _suggest = SuggestionController(
+      source: _source,
+      commands: const [],
+      czech: false,
+    );
+    _textFocus.onKeyEvent = _onKey;
+    _text.addListener(_textChanged);
     _pulled = ref
         .read(runtimeProvider)
         .database
@@ -319,13 +180,433 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
           .sync(widget.note.accountId)
           .catchError((Object _) {});
     });
+    if (widget.startInChecklist) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _openChecklist();
+      });
+    }
   }
 
-  StreamSubscription<List<LocalNote>>? _pulled;
-  Timer? _live;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final l = AppLocalizations.of(context)!;
+    _suggest.czech = Localizations.localeOf(context).languageCode == 'cs';
+    _suggest.commands = _localCommands(l);
+  }
 
-  /// The note as last saved here or taken from the database.
-  late LocalNote _saved;
+  Future<SuggestionSource?> _source() => _sourceFuture ??= () async {
+    try {
+      final runtime = ref.read(runtimeProvider);
+      final account = await runtime.database.account(widget.note.accountId);
+      if (account == null) return null;
+      return await ref.read(suggestionSourceFactoryProvider)(account);
+    } on Object {
+      return null;
+    }
+  }();
+
+  List<LocalCommand> _localCommands(AppLocalizations l) {
+    SuggestionItem item(
+      String id,
+      String title,
+      IconData icon,
+      String insert, {
+      int caretBack = 0,
+      SuggestionAction action = SuggestionAction.none,
+    }) => SuggestionItem(
+      id: 'cmd:$id',
+      title: title,
+      subtitle: insert.split('\n').first.trim(),
+      icon: icon,
+      insert: insert,
+      caretBack: caretBack,
+      action: action,
+    );
+    final now = DateTime.now();
+    return [
+      LocalCommand(
+        item('today', l.cmdToday, Icons.event_outlined, DateFormat('yyyy-MM-dd', 'en').format(now)),
+        ['date', 'today', 'datum', 'dnes'],
+      ),
+      LocalCommand(
+        item('time', l.cmdTime, Icons.schedule, DateFormat('HH:mm', 'en').format(now)),
+        ['time', 'cas', 'čas'],
+      ),
+      LocalCommand(item('h1', '${l.fmtHeading} 1', Icons.looks_one_outlined, '# '), ['h1', 'heading', 'nadpis']),
+      LocalCommand(item('h2', '${l.fmtHeading} 2', Icons.looks_two_outlined, '## '), ['h2', 'heading', 'nadpis']),
+      LocalCommand(item('h3', '${l.fmtHeading} 3', Icons.looks_3_outlined, '### '), ['h3', 'heading', 'nadpis']),
+      LocalCommand(item('list', l.fmtList, Icons.format_list_bulleted, '- '), ['list', 'bullet', 'seznam']),
+      LocalCommand(item('tasks', l.fmtChecklist, Icons.check_box_outlined, '- [ ] '), ['task', 'todo', 'ukol', 'úkol']),
+      LocalCommand(item('quote', l.fmtQuote, Icons.format_quote, '> '), ['quote', 'citace']),
+      LocalCommand(item('code', l.fmtCode, Icons.code, '```\n\n```', caretBack: 4), ['code', 'kod', 'kód']),
+      LocalCommand(
+        item('table', l.cmdTable, Icons.table_chart_outlined, '| A | B |\n| --- | --- |\n|   |   |\n'),
+        ['table', 'tabulka'],
+      ),
+      LocalCommand(item('rule', l.cmdDivider, Icons.horizontal_rule, '---\n'), ['divider', 'rule', 'cara', 'čára']),
+      LocalCommand(
+        item('info', l.calloutInfo, Icons.info_outline, '::: info\n\n:::\n', caretBack: 5),
+        ['callout', 'info'],
+      ),
+      LocalCommand(
+        item('warn', l.calloutWarning, Icons.warning_amber, '::: warn\n\n:::\n', caretBack: 5),
+        ['callout', 'warning', 'varovani', 'varování'],
+      ),
+      LocalCommand(
+        item(
+          'details',
+          l.detailsDefault,
+          Icons.expand_circle_down_outlined,
+          '<details>\n<summary>${l.detailsDefault}</summary>\n\n\n</details>\n',
+          caretBack: 12,
+        ),
+        ['details', 'summary', 'detail'],
+      ),
+      LocalCommand(
+        item('template', l.templates, Icons.description_outlined, '', action: SuggestionAction.template),
+        ['template', 'sablona', 'šablona'],
+      ),
+    ];
+  }
+
+  // ---- text changes ----
+
+  void _textChanged() {
+    final changed = _text.text != _lastText;
+    _lastText = _text.text;
+    if (changed && !_external) _changed();
+    if (_preview || _readonly) return;
+    _suggest.update(_text.value, _text.document);
+    if (_suggest.eagerStart != null && !_suggest.isOpen && changed) {
+      _suggest.eagerStart = null;
+    }
+  }
+
+  void _changed() {
+    setState(() {
+      _dirty = true;
+      _failed = false;
+    });
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 350), _save);
+  }
+
+  TextEditingValue get _value {
+    final v = _text.value;
+    return v.selection.isValid
+        ? v
+        : v.copyWith(selection: TextSelection.collapsed(offset: v.text.length));
+  }
+
+  /// Applies [edit] to the text as one undo step and keeps the focus.
+  void _apply(TextEditingValue Function(TextEditingValue) edit) {
+    if (_readonly) return;
+    _history.apply(edit(_value));
+    _textFocus.requestFocus();
+  }
+
+  void _runCommand(EditorCommand command) {
+    switch (command) {
+      case EditorCommand.heading1:
+        _apply((v) => toggleHeading(v, 1));
+      case EditorCommand.heading2:
+        _apply((v) => toggleHeading(v, 2));
+      case EditorCommand.heading3:
+        _apply((v) => toggleHeading(v, 3));
+      case EditorCommand.bold:
+        _apply((v) => toggleWrap(v, '**', '**'));
+      case EditorCommand.italic:
+        _apply((v) => toggleWrap(v, '*', '*'));
+      case EditorCommand.strike:
+        _apply((v) => toggleWrap(v, '~~', '~~'));
+      case EditorCommand.quote:
+        _apply(toggleQuote);
+      case EditorCommand.bullets:
+        _apply((v) => toggleList(v, ListKind.bullet));
+      case EditorCommand.numbered:
+        _apply((v) => toggleList(v, ListKind.numbered));
+      case EditorCommand.code:
+        _apply(toggleCode);
+      case EditorCommand.indent:
+        _apply(indent);
+      case EditorCommand.outdent:
+        _apply(outdent);
+      case EditorCommand.task:
+        _apply(toggleTask);
+      case EditorCommand.link:
+        _apply(insertLink);
+      case EditorCommand.mention:
+        _apply((v) => insertTrigger(v, '@'));
+      case EditorCommand.emoji:
+        _apply((v) {
+          final next = insertTrigger(v, ':');
+          _suggest.eagerStart = next.selection.start - 1;
+          return next;
+        });
+      case EditorCommand.smartPicker:
+        _insertReference();
+      case EditorCommand.template:
+        _insertTemplate();
+    }
+  }
+
+  // ---- suggestions ----
+
+  KeyEventResult _onKey(FocusNode node, KeyEvent event) {
+    if (!_suggest.isOpen || event is KeyUpEvent) return KeyEventResult.ignored;
+    final key = event.logicalKey;
+    if (key == LogicalKeyboardKey.arrowDown) {
+      _suggest.move(1);
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.arrowUp) {
+      _suggest.move(-1);
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.escape) {
+      _suggest.dismiss();
+      return KeyEventResult.handled;
+    }
+    if ((key == LogicalKeyboardKey.enter ||
+            key == LogicalKeyboardKey.numpadEnter) &&
+        _suggest.current != null) {
+      if (event is KeyDownEvent) _accept(_suggest.current!);
+      return KeyEventResult.handled;
+    }
+    return KeyEventResult.ignored;
+  }
+
+  Future<void> _accept(SuggestionItem item) async {
+    final state = _suggest.state;
+    if (state == null) return;
+    final q = state.query;
+    _suggest.dismiss();
+    final v = _value;
+    final end = v.selection.isCollapsed && v.selection.start >= q.start
+        ? v.selection.start
+        : q.end;
+    if (q.start >= v.text.length || end > v.text.length) return;
+    switch (item.action) {
+      case SuggestionAction.none:
+        _apply((v) {
+          final next = replaceRange(v, q.start, end, item.insert);
+          return item.caretBack == 0
+              ? next
+              : next.copyWith(
+                  selection: TextSelection.collapsed(
+                    offset: next.selection.start - item.caretBack,
+                  ),
+                );
+        });
+      case SuggestionAction.template:
+        final template = await showTemplatePicker(context);
+        if (template == null || !mounted) return;
+        _apply(
+          (v) => _replaceChecked(
+            v,
+            q.start,
+            end,
+            expandTemplate(template.content, DateTime.now(), title: _title.text),
+          ),
+        );
+      case SuggestionAction.reference:
+        final link = await showReferencePicker(
+          context,
+          source: _source,
+          providerId: item.id.substring('ref:'.length),
+        );
+        if (link == null || !mounted) return;
+        _apply((v) => _replaceChecked(v, q.start, end, link));
+    }
+  }
+
+  /// Replaces the typed trigger text when it is still there, otherwise
+  /// inserts at the caret.
+  TextEditingValue _replaceChecked(
+    TextEditingValue v,
+    int start,
+    int end,
+    String insert,
+  ) {
+    final intact =
+        end <= v.text.length &&
+        start < end &&
+        '@:/'.contains(v.text[start]);
+    return intact
+        ? replaceRange(v, start, end, insert)
+        : insertAtSelection(v, insert);
+  }
+
+  Future<void> _insertReference() async {
+    final link = await showReferencePicker(context, source: _source);
+    if (link == null || !mounted) return;
+    _apply((v) => insertAtSelection(v, link));
+  }
+
+  Future<void> _insertTemplate() async {
+    final template = await showTemplatePicker(context);
+    if (template == null || !mounted) return;
+    final content = expandTemplate(
+      template.content,
+      DateTime.now(),
+      title: _title.text,
+    );
+    _apply((v) => insertAtSelection(v, content));
+  }
+
+  Rect? _caretRect() {
+    final stack = _bodyKey.currentContext?.findRenderObject();
+    final field = _fieldKey.currentContext?.findRenderObject();
+    if (stack is! RenderBox || field == null || !stack.attached) return null;
+    RenderEditable? editable;
+    void visit(RenderObject o) {
+      if (editable != null) return;
+      if (o is RenderEditable) {
+        editable = o;
+        return;
+      }
+      o.visitChildren(visit);
+    }
+
+    visit(field);
+    final e = editable;
+    final sel = _text.selection;
+    if (e == null || !e.attached || !sel.isValid || !e.hasSize) return null;
+    try {
+      final local = e.getLocalRectForCaret(TextPosition(offset: sel.extentOffset));
+      return MatrixUtils.transformRect(e.getTransformTo(stack), local);
+    } on Object {
+      return null;
+    }
+  }
+
+  Widget _popup() => ListenableBuilder(
+    listenable: Listenable.merge([_suggest, _text]),
+    builder: (context, _) {
+      final box = _bodyKey.currentContext?.findRenderObject();
+      if (_preview || !_suggest.isOpen || box is! RenderBox || !box.hasSize) {
+        return const SizedBox.shrink();
+      }
+      final caret = _caretRect();
+      final placement = placeSuggestionPopup(
+        caret: caret ?? Rect.fromLTWH(0, box.size.height, 0, 0),
+        area: box.size,
+        items: math.max(1, _suggest.state?.items.length ?? 1),
+      );
+      return SuggestionPopup(
+        controller: _suggest,
+        placement: placement,
+        onAccept: _accept,
+      );
+    },
+  );
+
+  // ---- preview ----
+
+  /// Switches between the raw text and the preview.
+  void _setPreview(bool value) {
+    _suggest.dismiss();
+    setState(() {
+      _preview = value;
+      _finding = false;
+    });
+  }
+
+  /// Edit mode with the caret at [offset] (where it was when null).
+  void _startEditing([int? offset]) {
+    if (_readonly) return;
+    final length = _text.text.length;
+    final at = offset ?? (_text.selection.isValid ? _text.selection.extentOffset : length);
+    _text.selection = TextSelection.collapsed(offset: at.clamp(0, length));
+    _setPreview(false);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _textFocus.requestFocus();
+    });
+  }
+
+  void _replaceRange(SourceRange range, String expected, String replacement) {
+    final text = _text.text;
+    if (range.end > text.length || range.of(text) != expected) return;
+    final next = text.replaceRange(range.start, range.end, replacement);
+    final caret = _text.selection.isValid
+        ? _text.selection.extentOffset.clamp(0, next.length)
+        : next.length;
+    _history.apply(
+      TextEditingValue(text: next, selection: TextSelection.collapsed(offset: caret)),
+    );
+  }
+
+  /// Attachments of this note (`.attachments.<id>/…`) load through the Notes
+  /// API with the account's credentials. Remote URLs stay placeholders: the
+  /// preview does not contact third-party hosts.
+  // shortcut: no offline cache; an offline preview shows the placeholder.
+  Future<List<int>> _loadAttachment(String path) async {
+    final remoteId = _row.remoteId ?? widget.note.remoteId;
+    if (remoteId == null) throw StateError('not_uploaded');
+    final runtime = ref.read(runtimeProvider);
+    final account = await runtime.database.account(widget.note.accountId);
+    if (account == null) throw StateError('account_missing');
+    return (await runtime.clientFor(account)).attachment(remoteId, path);
+  }
+
+  // ---- find ----
+
+  void _findChanged() {
+    final query = _find.text.toLowerCase();
+    final text = _text.text.toLowerCase();
+    final found = <int>[];
+    if (query.isNotEmpty) {
+      var at = text.indexOf(query);
+      while (at >= 0) {
+        found.add(at);
+        at = text.indexOf(query, at + query.length);
+      }
+    }
+    setState(() {
+      _matches = found;
+      _matchAt = -1;
+    });
+  }
+
+  /// Selects the next match after the caret ([dir] 1) or the previous one
+  /// before it (-1), wrapping around.
+  void _findStep(int dir) {
+    if (_find.text.isEmpty) return;
+    if (_matches.isEmpty) {
+      showOwnSnackBar(context, AppLocalizations.of(context)!.notFound);
+      return;
+    }
+    final sel = _text.selection;
+    final from = sel.isValid ? (dir > 0 ? sel.end : sel.start) : 0;
+    int at;
+    if (dir > 0) {
+      at = _matches.indexWhere((m) => m >= from);
+      if (at < 0) at = 0;
+    } else {
+      at = _matches.lastIndexWhere((m) => m < from);
+      if (at < 0) at = _matches.length - 1;
+    }
+    _text.selection = TextSelection(
+      baseOffset: _matches[at],
+      extentOffset: _matches[at] + _find.text.length,
+    );
+    setState(() => _matchAt = at);
+    _textFocus.requestFocus();
+  }
+
+  void _toggleFind() {
+    if (_preview) return;
+    setState(() {
+      _finding = !_finding;
+      if (!_finding) {
+        _matches = const [];
+        _matchAt = -1;
+      }
+    });
+  }
+
+  // ---- sync with the database ----
 
   void _takePulled(List<LocalNote> notes) {
     final note = notes.where((n) => n.id == widget.note.id).firstOrNull;
@@ -370,17 +651,20 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
           same++;
         }
         final at = _text.selection.extentOffset;
-        _text.value = TextEditingValue(
-          text: content,
-          selection: TextSelection.collapsed(
-            offset: at <= same
-                ? at
-                : (at + content.length - old.length).clamp(
-                    same,
-                    content.length,
-                  ),
+        _external = true;
+        // Text from another device starts a new undo history: local undo
+        // must not walk across it.
+        _history.rebase(
+          TextEditingValue(
+            text: content,
+            selection: TextSelection.collapsed(
+              offset: at <= same
+                  ? at
+                  : (at + content.length - old.length).clamp(same, content.length),
+            ),
           ),
         );
+        _external = false;
       }
       _dirty =
           title != note.title ||
@@ -425,7 +709,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
           });
         }
       } catch (_) {
-        if (mounted) setState(() => _failed = true);
+        if (mounted) _fail('local_write');
       }
     });
   }
@@ -452,13 +736,26 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
     }
   }
 
-  void _changed() {
+  // ---- saving ----
+
+  /// Local persistence failed: the editor stays open, the failure is listed
+  /// under Needs attention until a save succeeds.
+  void _fail(String reason) {
     setState(() {
-      _dirty = true;
-      _failed = false;
+      _failed = true;
+      _failReason = reason;
     });
-    _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 350), _save);
+    ref
+        .read(runtimeProvider)
+        .attention
+        .reportSaveFailure(widget.note.accountId, widget.note.id, reason);
+  }
+
+  void _clearFailure() {
+    ref
+        .read(runtimeProvider)
+        .attention
+        .clearSaveFailure(widget.note.accountId, widget.note.id);
   }
 
   Future<void> _save() {
@@ -487,6 +784,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
           favorite: favorite,
           revision: _revision,
         );
+        _clearFailure();
         if (mounted) {
           setState(() {
             _failed = false;
@@ -506,13 +804,18 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
         if (note != null && note.revision > _revision) {
           _adopt(note);
         } else {
-          setState(() => _failed = true);
+          _fail(e.message);
         }
       } catch (_) {
-        if (mounted) setState(() => _failed = true);
+        if (mounted) _fail('local_write');
       }
     });
     return _tail;
+  }
+
+  Future<void> _retrySave() {
+    setState(() => _dirty = true);
+    return _save();
   }
 
   Future<void> _leave() async {
@@ -569,7 +872,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
           .database
           .markDeleted(widget.note.accountId, widget.note.id);
     } catch (_) {
-      if (mounted) setState(() => _failed = true);
+      if (mounted) _fail('local_write');
       return;
     }
     if (!mounted) return;
@@ -585,6 +888,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
     _pulled?.cancel();
     _live?.cancel();
     _debounce?.cancel();
+    _text.removeListener(_textChanged);
+    _history.dispose();
+    _suggest.dispose();
+    _sourceFuture?.then((s) => s?.close());
     _title.dispose();
     _text.dispose();
     _category.dispose();
@@ -593,220 +900,479 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
     super.dispose();
   }
 
-  @override
-  Widget build(BuildContext context) {
+  // ---- surfaces ----
+
+  Future<void> _openShare() async {
+    _suggest.dismiss();
+    await showShareSheet(
+      context,
+      note: _row,
+      title: _title.text,
+      text: () => _text.text,
+      flush: _save,
+      hasAttachments: _text.document.attachments.isNotEmpty,
+    );
+  }
+
+  Future<void> _openDetails([_Details focus = _Details.title]) {
     final l = AppLocalizations.of(context)!;
-    final keyboard = MediaQuery.viewInsetsOf(context).bottom;
-    return PopScope(
-      canPop: _allowPop,
-      onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) _leave();
-      },
-      child: Scaffold(
-        appBar: AppBar(
-          title: _finding
-              ? TextField(
-                  controller: _find,
-                  autofocus: true,
-                  textInputAction: TextInputAction.search,
-                  decoration: InputDecoration(
-                    hintText: l.findInNote,
-                    border: InputBorder.none,
-                  ),
-                  onSubmitted: (_) => _findNext(),
-                )
-              : Text(l.appTitle),
-          actions: [
-            if (_finding)
-              IconButton(
-                tooltip: l.findNext,
-                onPressed: _findNext,
-                icon: const Icon(Icons.arrow_downward),
-              ),
-            if (!_preview)
-              IconButton(
-                tooltip: _finding ? l.cancel : l.findInNote,
-                onPressed: () => setState(() => _finding = !_finding),
-                icon: Icon(_finding ? Icons.close : Icons.search),
-              ),
-            IconButton(
-              tooltip: _preview ? l.edit : l.preview,
-              onPressed: () => _setPreview(!_preview),
-              icon: Icon(
-                _preview ? Icons.edit_outlined : Icons.visibility_outlined,
+    return showOwnSheet<void>(
+      context: context,
+      title: l.openDetails,
+      fullScreen: true,
+      builder: (_) => StatefulBuilder(
+        builder: (context, setSheet) => Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            TextField(
+              controller: _title,
+              readOnly: _readonly,
+              autofocus: focus == _Details.title && !_readonly,
+              textInputAction: TextInputAction.next,
+              onChanged: (_) => _changed(),
+              decoration: InputDecoration(
+                labelText: l.title,
+                prefixIcon: const Icon(Icons.title),
               ),
             ),
-            IconButton(
-              tooltip: l.save,
-              onPressed: _save,
-              icon: const Icon(Icons.save_outlined),
-            ),
-            if (!_readonly)
-              IconButton(
-                tooltip: l.delete,
-                onPressed: _delete,
-                icon: const Icon(Icons.delete_outline),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _category,
+              readOnly: _readonly,
+              autofocus: focus == _Details.category && !_readonly,
+              onChanged: (_) => _changed(),
+              decoration: InputDecoration(
+                labelText: l.category,
+                prefixIcon: const Icon(Icons.folder_outlined),
               ),
+            ),
+            const SizedBox(height: 8),
+            SwitchListTile(
+              secondary: Icon(_favorite ? Icons.star : Icons.star_border),
+              title: Text(l.favorite),
+              value: _favorite,
+              onChanged: (v) {
+                setSheet(() => _favorite = v);
+                _changed();
+              },
+            ),
           ],
-        ),
-        floatingActionButton:
-            _preview &&
-                !_readonly &&
-                MediaQuery.sizeOf(context).width < 600
-            ? FloatingActionButton(
-                tooltip: l.editNote,
-                onPressed: _startEditing,
-                child: const Icon(Icons.edit),
-              )
-            : null,
-        body: SafeArea(
-          // A phone on its side leaves too little height for a fixed layout;
-          // the editor then scrolls as a whole. The keyboard does not count:
-          // switching layout when it opens rebuilds the focused field, which
-          // closes the keyboard again (seen on Galaxy S21 in portrait).
-          child: LayoutBuilder(
-            builder: (context, constraints) =>
-                _body(l, compact: constraints.maxHeight + keyboard < 400),
-          ),
         ),
       ),
     );
   }
 
-  void _openLink(String text, String? href, String title) {
-    _tapConsumed = true;
-    final uri = href == null ? null : Uri.tryParse(href);
-    if (uri == null || !{'http', 'https', 'mailto'}.contains(uri.scheme)) {
-      return;
-    }
-    launchUrl(uri, mode: LaunchMode.externalApplication).ignore();
+  Future<void> _openAttachments() {
+    final l = AppLocalizations.of(context)!;
+    return showOwnSheet<void>(
+      context: context,
+      title: l.attachments,
+      builder: (_) => AttachmentsList(document: _text.document),
+    );
   }
 
-  Widget _body(AppLocalizations l, {required bool compact}) {
-    final settings = ref.watch(settingsProvider);
-    final image = Semantics(
-      label: l.imageUnavailable,
-      child: const Icon(Icons.image_not_supported_outlined),
+  Future<void> _openChecklist() async {
+    _suggest.dismiss();
+    _textFocus.unfocus();
+    int? edit;
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute(
+        settings: const RouteSettings(name: '/checklist'),
+        builder: (routeContext) => ChecklistScreen(
+          text: _text,
+          history: _history,
+          title: _title.text,
+          readonly: _readonly,
+          onChanged: _changed,
+          onEditAt: (offset) {
+            edit = offset;
+            Navigator.of(routeContext).pop();
+          },
+        ),
+      ),
     );
-    _boxes = 0;
-    _text.monospace = settings.monospace;
-    final Widget text = _preview
-        ? Listener(
-            onPointerDown: (e) {
-              _down = e.position;
-              _downAt = e.timeStamp;
-              _tapConsumed = false;
-            },
-            onPointerUp: _pointerUp,
-            onPointerCancel: (_) => _down = null,
-            child: compact
-              ? Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: MarkdownBody(
-                    data: _text.text,
-                    selectable: true,
-                    sizedImageBuilder: (c) => _image(c, image),
-                    checkboxBuilder: _checkbox,
-                    onTapLink: _openLink,
-                  ),
-                )
-              : Markdown(
-                  data: _text.text,
-                  selectable: true,
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 88),
-                  sizedImageBuilder: (c) => _image(c, image),
-                  checkboxBuilder: _checkbox,
-                  onTapLink: _openLink,
-                ),
-          )
-        : Padding(
-            padding: const EdgeInsets.all(16),
+    final at = edit;
+    if (at != null && mounted) _startEditing(at);
+  }
+
+  Future<void> _export() => ref.read(copySenderProvider)(
+    title: _title.text,
+    text: _text.text,
+    asFile: true,
+  );
+
+  void _onOverflow(_Overflow item) {
+    switch (item) {
+      case _Overflow.details:
+        _openDetails();
+      case _Overflow.favorite:
+        _favorite = !_favorite;
+        _changed();
+      case _Overflow.find:
+        _toggleFind();
+      case _Overflow.checklist:
+        _openChecklist();
+      case _Overflow.attachments:
+        _openAttachments();
+      case _Overflow.history:
+        _openRecovery();
+      case _Overflow.export:
+        _export();
+      case _Overflow.delete:
+        _delete();
+    }
+  }
+
+  // ---- build ----
+
+  PopupMenuItem<_Overflow> _menuItem(
+    _Overflow value,
+    IconData icon,
+    String label, {
+    bool enabled = true,
+    Color? color,
+  }) => PopupMenuItem(
+    value: value,
+    enabled: enabled,
+    child: Row(
+      children: [
+        Icon(icon, color: enabled ? color : null),
+        const SizedBox(width: 16),
+        Flexible(child: Text(label, style: TextStyle(color: enabled ? color : null))),
+      ],
+    ),
+  );
+
+  List<Widget> _actions(AppLocalizations l) {
+    if (_finding) {
+      return [
+        if (_find.text.isNotEmpty)
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: Text(
+                _matches.isEmpty
+                    ? '0'
+                    : l.findCount(_matchAt < 0 ? 0 : _matchAt + 1, _matches.length),
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ),
+          ),
+        IconButton(
+          tooltip: l.findPrevious,
+          onPressed: () => _findStep(-1),
+          icon: const Icon(Icons.arrow_upward),
+        ),
+        IconButton(
+          tooltip: l.findNext,
+          onPressed: () => _findStep(1),
+          icon: const Icon(Icons.arrow_downward),
+        ),
+        IconButton(
+          tooltip: l.cancel,
+          onPressed: _toggleFind,
+          icon: const Icon(Icons.close),
+        ),
+      ];
+    }
+    final error = context.own.error;
+    return [
+      IconButton(
+        tooltip: _preview ? l.edit : l.preview,
+        onPressed: () => _setPreview(!_preview),
+        icon: Icon(_preview ? Icons.edit_outlined : Icons.visibility_outlined),
+      ),
+      IconButton(
+        tooltip: l.shareTitle,
+        onPressed: _openShare,
+        icon: Icon(
+          defaultTargetPlatform == TargetPlatform.iOS ||
+                  defaultTargetPlatform == TargetPlatform.macOS
+              ? Icons.ios_share
+              : Icons.share_outlined,
+        ),
+      ),
+      PopupMenuButton<_Overflow>(
+        tooltip: l.moreOptions,
+        onSelected: _onOverflow,
+        itemBuilder: (_) => [
+          _menuItem(_Overflow.details, Icons.info_outline, l.openDetails),
+          _menuItem(
+            _Overflow.favorite,
+            _favorite ? Icons.star : Icons.star_border,
+            _favorite ? l.unfavorite : l.favorite,
+          ),
+          _menuItem(_Overflow.find, Icons.search, l.findInNote, enabled: !_preview),
+          _menuItem(_Overflow.checklist, Icons.checklist, l.openChecklist),
+          _menuItem(_Overflow.attachments, Icons.attach_file, l.attachments),
+          _menuItem(_Overflow.history, Icons.history, l.historyRecovery),
+          _menuItem(_Overflow.export, Icons.file_download_outlined, l.exportNote),
+          _menuItem(
+            _Overflow.delete,
+            Icons.delete_outline,
+            l.delete,
+            enabled: !_readonly,
+            color: error,
+          ),
+        ],
+      ),
+    ];
+  }
+
+  Widget _appBarTitle(AppLocalizations l) {
+    if (_finding) {
+      return TextField(
+        controller: _find,
+        autofocus: true,
+        textInputAction: TextInputAction.search,
+        decoration: InputDecoration(hintText: l.findInNote, border: InputBorder.none),
+        onChanged: (_) => _findChanged(),
+        onSubmitted: (_) => _findStep(1),
+      );
+    }
+    return ListenableBuilder(
+      listenable: _title,
+      builder: (context, _) => Text(
+        _title.text.trim().isEmpty ? l.untitled : _title.text.trim(),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
+    );
+  }
+
+  Widget _banners(AppLocalizations l) {
+    return Column(
+      children: [
+        if (_row.syncState == 'needsDecision')
+          OwnBanner(
+            tone: OwnTone.decision,
+            message: l.decisionRequired,
+            actions: [OwnButton.text(label: l.resolve, onPressed: _openRecovery)],
+          ),
+        if (_readonly)
+          OwnBanner(tone: OwnTone.info, icon: Icons.lock_outline, message: l.readonly),
+        if (_failed)
+          OwnBanner(
+            tone: OwnTone.error,
+            title: l.saveFailedTitle,
+            message: _failReason == 'note_unreadable' ? l.noteUnreadable : l.saveFailed,
+            actions: [
+              OwnButton.text(label: l.retry, icon: Icons.refresh, onPressed: _retrySave),
+              OwnButton.text(
+                label: l.copyMarkdown,
+                icon: Icons.copy,
+                onPressed: () => Clipboard.setData(ClipboardData(text: _text.text)),
+              ),
+              OwnButton.text(
+                label: l.exportDraft,
+                icon: Icons.file_download_outlined,
+                onPressed: _export,
+              ),
+            ],
+          ),
+      ],
+    );
+  }
+
+  static SingleActivator _primary(LogicalKeyboardKey key, {bool shift = false}) {
+    final apple =
+        defaultTargetPlatform == TargetPlatform.iOS ||
+        defaultTargetPlatform == TargetPlatform.macOS;
+    return SingleActivator(key, control: !apple, meta: apple, shift: shift);
+  }
+
+  Widget _sourceField(AppLocalizations l, AppSettings settings) {
+    final style = LiveMarkdownMetrics.onGrid(
+      settings.monospace
+          ? monoTextStyle().copyWith(fontSize: settings.fontSize)
+          : TextStyle(fontSize: settings.fontSize),
+    );
+    return Actions(
+      actions: {
+        UndoTextIntent: CallbackAction<UndoTextIntent>(
+          onInvoke: (_) {
+            _history.undo();
+            return null;
+          },
+        ),
+        RedoTextIntent: CallbackAction<RedoTextIntent>(
+          onInvoke: (_) {
+            _history.redo();
+            return null;
+          },
+        ),
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: OwnShape.editorMeasure),
             child: TextField(
+              key: _fieldKey,
               controller: _text,
               focusNode: _textFocus,
               readOnly: _readonly,
-              expands: !compact,
-              minLines: compact ? 6 : null,
+              expands: true,
               maxLines: null,
               textAlignVertical: TextAlignVertical.top,
               keyboardType: TextInputType.multiline,
-              style: LiveMarkdownMetrics.onGrid(
-                settings.monospace
-                    ? monoTextStyle().copyWith(fontSize: settings.fontSize)
-                    : TextStyle(fontSize: settings.fontSize),
-              ),
+              inputFormatters: const [ListContinuationFormatter()],
+              style: style,
               strutStyle: LiveMarkdownMetrics.strut(settings.fontSize),
               decoration: InputDecoration(
                 hintText: l.content,
+                filled: false,
+                isCollapsed: false,
+                contentPadding: const EdgeInsets.symmetric(vertical: 8),
                 border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                disabledBorder: InputBorder.none,
               ),
-              onChanged: (_) => _changed(),
             ),
-          );
-    final children = [
-      if (_row.syncState == 'needsDecision')
-        Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            children: [
-              Text(l.decisionRequired),
-              TextButton(onPressed: _openRecovery, child: Text(l.resolve)),
-            ],
           ),
         ),
-      if (_readonly) Text(l.readonly),
-      Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Row(
-          children: [
-            Expanded(
-              child: TextField(
-                controller: _title,
-                readOnly: _readonly,
-                decoration: InputDecoration(labelText: l.title),
-                onChanged: (_) => _changed(),
-              ),
-            ),
-            IconButton(
-              tooltip: l.favorite,
-              onPressed: () {
-                _favorite = !_favorite;
-                _changed();
-              },
-              icon: Icon(_favorite ? Icons.star : Icons.star_border),
-            ),
-          ],
-        ),
       ),
-      Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: TextField(
-          controller: _category,
-          readOnly: _readonly,
-          decoration: InputDecoration(labelText: l.category),
-          onChanged: (_) => _changed(),
-        ),
-      ),
-      compact ? text : Expanded(child: text),
-      // A phone on its side has no height to spare for it.
-      if (!compact && !_preview && !_readonly) _toolbar(l),
-      Padding(
-        padding: const EdgeInsets.all(8),
-        child: Semantics(
-          liveRegion: true,
-          child: Text(
-            _failed
-                ? l.saveFailed
-                : _dirty
-                ? l.saving
-                : l.saved,
-            style: _failed
-                ? TextStyle(color: Theme.of(context).colorScheme.error)
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
+    final settings = ref.watch(settingsProvider);
+    final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
+    _text.monospace = settings.monospace;
+    final narrow = MediaQuery.sizeOf(context).width < 600;
+    return PopScope(
+      canPop: _allowPop,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        // Back closes the innermost layer first.
+        if (_suggest.isOpen) {
+          _suggest.dismiss();
+        } else if (_finding) {
+          _toggleFind();
+        } else {
+          _leave();
+        }
+      },
+      child: CallbackShortcuts(
+        bindings: {
+          _primary(LogicalKeyboardKey.keyB): () => _runCommand(EditorCommand.bold),
+          _primary(LogicalKeyboardKey.keyI): () => _runCommand(EditorCommand.italic),
+          _primary(LogicalKeyboardKey.keyK): () => _runCommand(EditorCommand.link),
+          _primary(LogicalKeyboardKey.keyS): _save,
+          _primary(LogicalKeyboardKey.keyF): _toggleFind,
+          _primary(LogicalKeyboardKey.keyP, shift: true): () => _setPreview(!_preview),
+          const SingleActivator(LogicalKeyboardKey.keyY, control: true): _history.redo,
+          const SingleActivator(LogicalKeyboardKey.escape): () {
+            if (_finding) _toggleFind();
+          },
+        },
+        child: Scaffold(
+          appBar: AppBar(
+            automaticallyImplyLeading: false,
+            // A pane next to the list has nothing to go back to.
+            leading: (ModalRoute.of(context)?.canPop ?? false)
+                ? BackButton(onPressed: _leave)
                 : null,
+            title: _appBarTitle(l),
+            actions: _actions(l),
+          ),
+          floatingActionButton: _preview && !_readonly && narrow
+              ? FloatingActionButton(
+                  tooltip: l.editNote,
+                  onPressed: _startEditing,
+                  child: const Icon(Icons.edit),
+                )
+              : null,
+          body: SafeArea(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                // Header and routine status give way to the text when the
+                // keyboard is up or the window is short. The widgets stay in
+                // the tree (keyed), so focus, selection and composition
+                // survive the change.
+                final lowSpace = keyboardOpen || constraints.maxHeight < 360;
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    KeyedSubtree(key: const ValueKey('banners'), child: _banners(l)),
+                    KeyedSubtree(
+                      key: const ValueKey('header'),
+                      child: ListenableBuilder(
+                        listenable: Listenable.merge([_title, _category]),
+                        builder: (context, _) => DocumentHeader(
+                          title: _title.text.trim(),
+                          category: _category.text,
+                          favorite: _favorite,
+                          collapsed: lowSpace && !_preview,
+                          onTitle: () => _openDetails(_Details.title),
+                          onCategory: () => _openDetails(_Details.category),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      key: const ValueKey('body'),
+                      child: Stack(
+                        key: _bodyKey,
+                        fit: StackFit.expand,
+                        children: [
+                          Positioned.fill(
+                            child: _preview
+                                ? MarkdownPreview(
+                                    text: _text.text,
+                                    readonly: _readonly,
+                                    onEditAt: _startEditing,
+                                    onReplaceRange: _replaceRange,
+                                    loadAttachment: (_row.remoteId ?? widget.note.remoteId) == null
+                                        ? null
+                                        : _loadAttachment,
+                                  )
+                                : _sourceField(l, settings),
+                          ),
+                          _popup(),
+                        ],
+                      ),
+                    ),
+                    if (keyboardOpen && !_failed)
+                      const SizedBox.shrink(key: ValueKey('status'))
+                    else
+                      Padding(
+                        key: const ValueKey('status'),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                        child: Semantics(
+                          liveRegion: true,
+                          child: Text(
+                            _failed
+                                ? l.saveFailedTitle
+                                : _dirty
+                                ? l.saving
+                                : l.saved,
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: _failed ? context.own.error : context.own.textSecondary,
+                            ),
+                          ),
+                        ),
+                      ),
+                    if (!_preview && !_readonly)
+                      KeyedSubtree(
+                        key: const ValueKey('dock'),
+                        child: FormattingDock(
+                          history: _history,
+                          onCommand: _runCommand,
+                          onAttach: widget.onAttach,
+                        ),
+                      )
+                    else
+                      const SizedBox.shrink(key: ValueKey('dock')),
+                  ],
+                );
+              },
+            ),
           ),
         ),
       ),
-    ];
-    return compact ? ListView(children: children) : Column(children: children);
+    );
   }
 }

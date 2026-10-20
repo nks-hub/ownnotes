@@ -231,7 +231,7 @@ void main() {
     );
     await settle();
 
-    expect(find.widgetWithText(TextField, 'From Keep'), findsOneWidget);
+    expect(find.text('From Keep'), findsWidgets);
     expect(
       find.widgetWithText(TextField, '- [ ] milk\n- [x] bread'),
       findsOneWidget,
@@ -269,7 +269,7 @@ void main() {
       final titles = (await db.select(db.localNotes).get()).map((n) => n.title);
       expect(titles, containsAll(['From Keep', 'Call the garage']));
     });
-    expect(find.widgetWithText(TextField, 'Call the garage'), findsOneWidget);
+    expect(find.text('Call the garage'), findsWidgets);
 
     // A third share is appended to an existing note.
     shared = {'title': '', 'text': '- [ ] eggs'};
@@ -423,7 +423,9 @@ void main() {
     await settle();
     await tester.tap(find.text('From HTTP'));
     await settle();
-    await tester.tap(find.byTooltip('Delete'));
+    await tester.tap(find.byTooltip('More options'));
+    await settle();
+    await tester.tap(find.text('Delete'));
     await settle();
     await tester.tap(find.widgetWithText(TextButton, 'Delete'));
     await settle();
@@ -879,7 +881,9 @@ void main() {
     await tester.tap(find.text('Tasks'));
     await settle();
     // Find in note selects the next match and wraps around.
-    await tester.tap(find.byTooltip('Find in note'));
+    await tester.tap(find.byTooltip('More options'));
+    await settle();
+    await tester.tap(find.text('Find in note'));
     await settle();
     await tester.enterText(
       find.widgetWithText(TextField, 'Find in note'),
@@ -899,6 +903,8 @@ void main() {
     await tester.tap(find.byTooltip('Next match'));
     await settle();
     expect(editor.controller!.selection.baseOffset, 2);
+    await tester.tap(find.byTooltip('Cancel'));
+    await settle();
     await tester.tap(find.byTooltip('Preview'));
     await settle();
     expect(find.byType(Checkbox), findsNWidgets(2));
