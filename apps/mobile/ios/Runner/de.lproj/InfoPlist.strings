@@ -1,0 +1,3 @@
+"NSCameraUsageDescription" = "OwnNotes nutzt die Kamera, um den QR-Code für die Anmeldung an deinem Nextcloud-Server zu scannen und Fotos aufzunehmen, die du an eine Notiz anhängst.";
+"NSMicrophoneUsageDescription" = "OwnNotes nutzt das Mikrofon nur, während du eine Sprachnotiz für eine Notiz aufnimmst.";
+"NSFaceIDUsageDescription" = "Face ID entsperrt OwnNotes, wenn die App-Sperre aktiv ist.";

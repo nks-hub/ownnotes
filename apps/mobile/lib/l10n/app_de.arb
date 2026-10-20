@@ -1,0 +1,680 @@
+{
+  "@@locale": "de",
+  "appTitle": "OwnNotes",
+  "addAccount": "Konto hinzufügen",
+  "serverUrl": "Nextcloud-Serveradresse",
+  "connect": "Verbinden",
+  "cancel": "Abbrechen",
+  "waitingLogin": "Schließe die Anmeldung im Browser ab …",
+  "loginFailed": "Anmeldung fehlgeschlagen. Prüfe die Serveradresse und starte erneut.",
+  "noAccounts": "Verbinde dein Nextcloud-Konto.",
+  "noNotes": "Noch keine Notizen. Erstelle eine oder synchronisiere.",
+  "newNote": "Neue Notiz",
+  "untitled": "Unbenannt",
+  "search": "Notizen durchsuchen",
+  "sync": "Synchronisieren",
+  "syncFailed": "Synchronisierung fehlgeschlagen. Lokale Notizen bleiben erhalten.",
+  "loadFailed": "Lokale Daten konnten nicht geladen werden.",
+  "retry": "Erneut versuchen",
+  "title": "Titel",
+  "content": "Markdown-Text",
+  "category": "Kategorie",
+  "favorite": "Favorit",
+  "preview": "Vorschau",
+  "edit": "Quelltext bearbeiten",
+  "save": "Lokal speichern",
+  "saved": "Lokal gespeichert",
+  "saving": "Speichern …",
+  "saveFailed": "Speichern fehlgeschlagen. Lass den Editor offen und kopiere deinen Text.",
+  "decisionRequired": "Die Synchronisierung braucht eine Entscheidung. Dein lokaler Text bleibt erhalten.",
+  "readonly": "Schreibgeschützte Notiz",
+  "selectNote": "Wähle eine Notiz",
+  "imageUnavailable": "Bild nicht geladen",
+  "startupFailed": "Der lokale Speicher konnte nicht geöffnet werden. Versuche es erneut, ohne die App-Daten zu löschen.",
+  "resolve": "Konflikt lösen",
+  "readServer": "Serverversion vergleichen",
+  "localVersion": "Lokale Version",
+  "serverVersion": "Serverversion",
+  "useServer": "Serverversion verwenden",
+  "keepLocal": "Lokale Änderungen behalten",
+  "newCopy": "Separate Kopie erstellen",
+  "copyWarning": "Die Notiz ist möglicherweise schon auf dem Server. Eine separate Kopie kann ein Duplikat erzeugen. Der ursprüngliche Wiederherstellungseintrag bleibt erhalten.",
+  "confirm": "Bestätigen",
+  "copyMarkdown": "Markdown kopieren",
+  "decisionFailed": "Die Entscheidung konnte nicht angewendet werden. Lade neu und vergleiche erneut.",
+  "importKeep": "Aus Google Keep importieren (Takeout-.zip)",
+  "importDone": "Importierte Notizen: {count}",
+  "importFailed": "Import fehlgeschlagen. Die Datei ist kein Google-Takeout-Zip mit Keep-Notizen.",
+  "delete": "Löschen",
+  "deleteConfirm": "Diese Notiz löschen? Sie wird auch auf dem Server gelöscht.",
+  "allCategories": "Alle",
+  "unsent": "Noch nicht gesendet: {count}",
+  "reasonOffline": "Keine Verbindung. Notizen werden automatisch hochgeladen, sobald sie wieder da ist.",
+  "reasonAuth": "Der Server hat die Anmeldung abgelehnt. Melde dich unter Konten erneut an.",
+  "reasonLocked": "Die Datei ist auf dem Server gesperrt. Neuer Versuch in Kürze.",
+  "reasonStorageFull": "Der Speicher auf dem Server ist voll.",
+  "reasonServer": "Der Server hat mit einem Fehler geantwortet. Neuer Versuch in Kürze.",
+  "sortByTitle": "Nach Titel sortieren",
+  "sortByModified": "Nach letzter Änderung sortieren",
+  "settings": "Einstellungen",
+  "monospace": "Festbreitenschrift im Editor",
+  "textSize": "Textgröße im Editor",
+  "appLock": "App-Sperre",
+  "appLockHint": "Fragt nach Fingerabdruck, Gesicht oder Geräte-PIN, wenn du zur App zurückkehrst.",
+  "appLockUnavailable": "Auf diesem Gerät ist keine Displaysperre eingerichtet.",
+  "blockScreenshots": "Bildschirmfotos blockieren",
+  "exportNotes": "Notizen exportieren (Zip)",
+  "exportDone": "Exportierte Notizen: {count}",
+  "exportFailed": "Export fehlgeschlagen.",
+  "removeAccount": "Konto von diesem Gerät entfernen",
+  "removeAccountConfirm": "Das Konto von diesem Gerät entfernen und sein App-Passwort auf dem Server widerrufen? Die Notizen auf dem Server bleiben erhalten.",
+  "removeAccountUnsent": "Konto entfernen? {count, plural, one{1 Notiz ist noch nicht auf dem Server und geht verloren.} other{{count} Notizen sind noch nicht auf dem Server und gehen verloren.}} Du kannst sie vorher exportieren.",
+  "unlockReason": "OwnNotes entsperren",
+  "unlock": "Entsperren",
+  "findInNote": "In Notiz suchen",
+  "findNext": "Nächster Treffer",
+  "notFound": "Nicht gefunden",
+  "shareTo": "Wohin soll der geteilte Text?",
+  "remoteDeleted": "Diese Notiz wurde inzwischen auf dem Server gelöscht. Der Text auf diesem Gerät bleibt erhalten.",
+  "uploadAgain": "Erneut auf den Server hochladen",
+  "deleteHere": "Auch auf diesem Gerät löschen",
+  "mergeBoth": "Beide Versionen zusammenführen",
+  "settingSaveFailed": "Die Einstellung konnte nicht gespeichert werden. Sie bleibt unverändert.",
+  "lockUnavailable": "Die Sperre konnte gerade nicht geprüft werden. Versuche es erneut.",
+  "lockDeviceRemoved": "Die Displaysperre dieses Geräts wurde entfernt, daher kann die App-Sperre nicht funktionieren.",
+  "lockTurnOff": "App-Sperre ausschalten und fortfahren",
+  "editNote": "Bearbeiten",
+  "fmtBold": "Fett",
+  "fmtItalic": "Kursiv",
+  "fmtHeading": "Überschrift",
+  "fmtList": "Liste",
+  "fmtChecklist": "Checkliste",
+  "fmtLink": "Link",
+  "allNotes": "Alle Notizen",
+  "favorites": "Favoriten",
+  "uncategorised": "Nicht kategorisiert",
+  "categories": "Kategorien",
+  "switchAccount": "Konto wechseln",
+  "clearSearch": "Suche löschen",
+  "noMatches": "Keine Notiz passt zu deiner Suche.",
+  "noNotesHere": "Noch keine Notizen in dieser Kategorie.",
+  "newNoteHere": "Neue Notiz hier",
+  "stateWaiting": "Wartet",
+  "stateSending": "Wird gesendet",
+  "stateNeedsDecision": "Entscheidung nötig",
+  "relNow": "Gerade eben",
+  "relMinutes": "vor {count} Min.",
+  "relHours": "vor {count} Std.",
+  "relYesterday": "Gestern",
+  "relDays": "vor {count} Tagen",
+  "conflictsCount": "{count, plural, one{1 Notiz braucht eine Entscheidung} other{{count} Notizen brauchen eine Entscheidung}}",
+  "signInAgain": "Erneut anmelden",
+  "resolveNow": "Lösen",
+  "syncStatus": "Synchronisierungsstatus",
+  "tasksDone": "{done} von {total} Aufgaben erledigt",
+  "hasAttachments": "Hat Anhänge",
+  "serverEmpty": "Gib die Adresse deines Nextcloud-Servers ein.",
+  "serverInsecure": "Nur https://-Server werden unterstützt. Sonst würde deine Anmeldung unverschlüsselt übertragen.",
+  "serverInvalid": "Das ist keine gültige Serveradresse. Beispiel: cloud.example.com",
+  "serverNoLogin": "Dieser Server bietet keine Nextcloud-Anmeldung an. Prüfe die Adresse.",
+  "serverUnreachable": "Der Server ist nicht erreichbar. Prüfe die Adresse und deine Verbindung.",
+  "browserUnavailable": "Der Browser für die Anmeldung konnte nicht geöffnet werden.",
+  "loginExpired": "Die Anmeldung hat zu lange gedauert. Starte erneut.",
+  "scannedLoginRejected": "Der Server hat den gescannten Code abgelehnt. Er ist vielleicht alt oder widerrufen. Erstelle einen neuen.",
+  "onboardingTitle": "Deine Notizen in deiner eigenen Nextcloud",
+  "onboardingBody": "OwnNotes synchronisiert Markdown-Notizen mit der Nextcloud-App Notes. Sie landen auf deinem Server und nirgendwo sonst.",
+  "multiAccountTitle": "Mehrere Konten",
+  "multiAccountBody": "Füge weitere Server oder Benutzer hinzu und wechsle jederzeit zwischen ihnen.",
+  "secureLoginTitle": "Kein Passwort in der App",
+  "secureLoginBody": "Du meldest dich im Browser an. Das Gerät speichert nur ein App-Passwort, das du widerrufen kannst.",
+  "checkingServer": "Server wird geprüft …",
+  "waitingForLogin": "Warten auf die Anmeldung",
+  "waitingForLoginBody": "Gewähre den Zugriff im Browser und kehre dann zur App zurück.",
+  "savingAccount": "Anmeldung läuft …",
+  "scanLoginCode": "QR-Code scannen",
+  "scanLoginCodeHint": "Richte die Kamera auf den Anmelde-QR-Code aus Nextcloud (Einstellungen, Sicherheit, App-Passwörter).",
+  "scanLoginCodeUnreadable": "Das ist kein Nextcloud-Anmeldecode.",
+  "scanCameraDenied": "Der Kamerazugriff ist aus. Erlaube ihn in den App-Einstellungen, um den Code zu scannen.",
+  "scanCameraUnavailable": "Die Kamera konnte nicht gestartet werden.",
+  "openAppSettings": "App-Einstellungen öffnen",
+  "accounts": "Konten",
+  "currentAccount": "Aktuelles Konto",
+  "accountRemovedRevoked": "Konto entfernt. Sein App-Passwort ist auf dem Server widerrufen.",
+  "accountRemovedNotRevoked": "Konto von diesem Gerät entfernt. Der Server hat es nicht bestätigt, widerrufe das App-Passwort daher in Nextcloud unter Einstellungen, Sicherheit.",
+  "accountRemoveFailed": "Das Konto konnte nicht entfernt werden.",
+  "serverCertificate": "Das Serverzertifikat konnte nicht überprüft werden. Prüfe die Adresse oder repariere das Zertifikat auf dem Server.",
+  "serverTimeout": "Der Server hat zu lange nicht geantwortet. Versuche es erneut.",
+  "notesAppMissing": "Die App Notes ist auf diesem Server nicht verfügbar. Installiere oder aktiviere zuerst Nextcloud Notes.",
+  "reauthMismatch": "Diese Anmeldung gehört zu einem anderen Server oder Benutzer. Melde dich mit demselben Konto an, um seine Notizen zu behalten.",
+  "recTitle": "Versionen vergleichen",
+  "recTabDevice": "Gerät",
+  "recTabServer": "Server",
+  "recTabResult": "Ergebnis",
+  "recUseResult": "Ergebnis verwenden",
+  "recKeepSeparate": "Als separate Notiz behalten",
+  "recUseServer": "Serverversion verwenden",
+  "recLeave": "Ungelöst lassen",
+  "recFillDevice": "Gerätetext ins Ergebnis übernehmen",
+  "recFillServer": "Servertext ins Ergebnis übernehmen",
+  "recFillBoth": "Beide ins Ergebnis übernehmen",
+  "recResultReplaced": "Ergebnis ersetzt",
+  "recUndo": "Rückgängig",
+  "recReasonConflict": "Sowohl dieses Gerät als auch der Server haben diese Notiz geändert.",
+  "recReasonUnknown": "Das Ergebnis des letzten Hochladens ist unbekannt. Vergleiche die Versionen, bevor du wählst.",
+  "recReasonReadonly": "Der Server lässt dich diese Notiz nicht mehr bearbeiten. Dein Text bleibt erhalten; speichere ihn als eigene Notiz.",
+  "recReasonMove": "Eine Notiz mit Anhängen kann hier ihre Kategorie nicht ändern. Behalte die Kategorie vom Server oder speichere deinen Text als separate Notiz.",
+  "recReasonGeneric": "Diese Notiz braucht deine Entscheidung.",
+  "recChangeCounter": "Änderung {number} von {total}",
+  "@recChangeCounter": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "recNoChanges": "Geräte- und Servertext sind gleich.",
+  "recPrevChange": "Vorherige Änderung",
+  "recNextChange": "Nächste Änderung",
+  "recServerChanged": "Die Serverversion hat sich erneut geändert. Der Vergleich zeigt jetzt die neuere Version; dein Ergebnis bleibt erhalten. Prüfe es und entscheide erneut.",
+  "recKept": "Beide Versionen bleiben auf diesem Gerät gespeichert, bis du sie entfernst.",
+  "recSaveAsNew": "Als neue Notiz speichern",
+  "recKeepCategory": "Ergebnis verwenden, Serverkategorie behalten",
+  "recReadFailed": "Die Serverversion konnte nicht gelesen werden.",
+  "recKeepRecovery": "In der Wiederherstellung behalten",
+  "settingsAppearance": "Darstellung",
+  "settingsWriting": "Schreiben",
+  "settingsPrivacy": "Datenschutz",
+  "settingsSync": "Synchronisierung und Speicher",
+  "settingsTransfer": "Import und Export",
+  "settingsAbout": "Über",
+  "settingsDeviceOnly": "Diese Einstellungen gelten nur für dieses Gerät.",
+  "theme": "Design",
+  "themeSystem": "System",
+  "themeLight": "Hell",
+  "themeDark": "Dunkel",
+  "language": "Sprache",
+  "languageSystem": "System",
+  "exportMarkdown": "Markdown exportieren",
+  "exportMarkdownHint": "Notizen als Markdown-Dateien in einem ZIP. Anhänge und Wiederherstellungskopien sind nicht enthalten.",
+  "widgetPolicyTitle": "Widgets auf dem Startbildschirm",
+  "widgetPolicyBody": "Bei aktiver App-Sperre blenden Widgets Notizinhalte aus, auch wenn die App entsperrt ist.",
+  "storageNotes": "{count, plural, one{1 Notiz auf diesem Gerät} other{{count} Notizen auf diesem Gerät}}",
+  "@storageNotes": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "storageUnsent": "{count, plural, =0{Alles ist an den Server gesendet} one{1 Notiz noch nicht gesendet} other{{count} Notizen noch nicht gesendet}}",
+  "@storageUnsent": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncHint": "Notizen werden beim Öffnen der App synchronisiert. Wann die Synchronisierung im Hintergrund läuft, entscheidet das System.",
+  "exportUnsent": "Nicht gesendete Notizen exportieren",
+  "removeFromDevice": "Von diesem Gerät entfernen",
+  "accountDetails": "Kontodetails",
+  "accountUserLabel": "Benutzer",
+  "accountServerLabel": "Server",
+  "accountStatusLabel": "Status",
+  "accountSignedIn": "Angemeldet",
+  "accountsManage": "Konten verwalten",
+  "accountSwitchBlocked": "Speichern auf diesem Gerät nicht möglich, daher wurde das Konto nicht gewechselt.",
+  "removeLocalNote": "Betrifft nur dieses Gerät. Notizen auf dem Server werden nicht gelöscht.",
+  "loginCancelled": "Anmeldung abgebrochen. Nichts wurde gespeichert.",
+  "reauthExplain": "Melde dich mit diesem Konto an, um seine Notizen und nicht gesendeten Änderungen zu behalten.",
+  "scanConfirmTitle": "Mit diesem Code anmelden?",
+  "scanConfirmBody": "{user} auf {host}",
+  "@scanConfirmBody": {
+    "placeholders": {
+      "user": {
+        "type": "String"
+      },
+      "host": {
+        "type": "String"
+      }
+    }
+  },
+  "scanEnterAddress": "Serveradresse eingeben",
+  "appLocked": "OwnNotes ist gesperrt",
+  "undo": "Rückgängig",
+  "redo": "Wiederholen",
+  "dockFormat": "Format",
+  "dockTask": "Aufgabe",
+  "dockAttach": "Anhängen",
+  "dockInsert": "Einfügen",
+  "fmtStrike": "Durchgestrichen",
+  "fmtQuote": "Zitat",
+  "fmtNumbered": "Nummerierte Liste",
+  "fmtCode": "Code",
+  "fmtIndent": "Einrücken",
+  "fmtOutdent": "Ausrücken",
+  "insertMention": "Erwähnung",
+  "insertEmoji": "Emoji",
+  "smartPicker": "Intelligente Auswahl",
+  "smartPickerNone": "Dieser Server bietet nichts, was die intelligente Auswahl durchsuchen kann.",
+  "attachPhoto": "Foto",
+  "attachCamera": "Kamera",
+  "attachFile": "Datei",
+  "attachVoice": "Sprachnotiz",
+  "suggestSearching": "Suche …",
+  "suggestError": "Vorschläge sind gerade nicht verfügbar. Du kannst weiterschreiben.",
+  "suggestCount": "{count, plural, one{1 Vorschlag} other{{count} Vorschläge}}",
+  "suggestInsert": "Einfügen",
+  "cmdToday": "Heutiges Datum",
+  "cmdTime": "Aktuelle Uhrzeit",
+  "cmdTable": "Tabelle",
+  "cmdDivider": "Trennlinie",
+  "calloutInfo": "Info",
+  "calloutWarning": "Warnung",
+  "calloutError": "Fehler",
+  "calloutSuccess": "Erfolg",
+  "detailsDefault": "Details",
+  "mentionLabel": "Erwähnung: {name}",
+  "attachmentLabel": "Anhang: {name}",
+  "tableLabel": "Tabelle mit {rows, plural, one{1 Zeile} other{{rows} Zeilen}} und {columns, plural, one{1 Spalte} other{{columns} Spalten}}",
+  "editSection": "Diesen Abschnitt bearbeiten",
+  "checklistMarkdown": "Markdown",
+  "checklistEmpty": "Noch keine Aufgaben. Füge unten den ersten Eintrag hinzu.",
+  "checklistAdd": "Eintrag hinzufügen",
+  "checklistCompletedGroup": "Erledigt ({count})",
+  "clearCompleted": "Erledigte Einträge entfernen",
+  "clearCompletedConfirm": "{count, plural, one{1 erledigten Eintrag aus der Notiz entfernen?} other{{count} erledigte Einträge aus der Notiz entfernen?}}",
+  "clearedCompleted": "{count, plural, one{1 Eintrag entfernt} other{{count} Einträge entfernt}}",
+  "checklistPosition": "{position} von {total}",
+  "checklistItemMenu": "Eintragsoptionen",
+  "moveUp": "Nach oben",
+  "moveDown": "Nach unten",
+  "shareTitle": "Teilen",
+  "shareSendCopy": "Kopie senden",
+  "shareAsText": "Als Text senden",
+  "shareAsFile": "Als Markdown-Datei senden",
+  "shareWithPeople": "Mit Personen teilen",
+  "sharePeopleWithAccess": "Personen mit Zugriff",
+  "shareSearchHint": "Personen suchen",
+  "sharePermissionView": "Kann ansehen",
+  "sharePermissionEdit": "Kann bearbeiten",
+  "shareRemove": "Zugriff entfernen",
+  "sharePending": "Wird geteilt …",
+  "shareRemoving": "Zugriff wird entfernt …",
+  "shareFailed": "Das hat nicht geklappt. Prüfe die Verbindung und versuche es erneut.",
+  "shareNotUploaded": "Diese Notiz ist noch nicht auf dem Server. Sie wird zuerst hochgeladen, dann kann sie geteilt werden.",
+  "shareUploadFirst": "Hochladen und fortfahren",
+  "shareUploading": "Notiz wird hochgeladen …",
+  "shareUploadFailed": "Die Notiz konnte noch nicht hochgeladen werden. Sie bleibt auf diesem Gerät gespeichert.",
+  "shareIncoming": "Jemand hat diese Notiz mit dir geteilt. Nur der Besitzer kann sie weiter teilen.",
+  "shareAttachmentsWarning": "Diese Notiz hat Anhänge. Personen, mit denen du sie teilst, können sie eventuell nicht öffnen.",
+  "shareNone": "Noch mit niemandem geteilt.",
+  "shareNoResults": "Keine passenden Personen.",
+  "shareChecking": "Freigaben werden geprüft …",
+  "shareWithName": "Mit {name} teilen",
+  "moreOptions": "Weitere Optionen",
+  "openDetails": "Details",
+  "unfavorite": "Aus Favoriten entfernen",
+  "openChecklist": "Checkliste öffnen",
+  "attachments": "Anhänge",
+  "historyRecovery": "Verlauf und Wiederherstellung",
+  "exportNote": "Exportieren",
+  "findCount": "{index} von {total}",
+  "findPrevious": "Vorheriger Treffer",
+  "saveFailedTitle": "Speichern auf diesem Gerät nicht möglich",
+  "noteUnreadable": "Der Server konnte den Text dieser Notiz nicht liefern. Deine letzte Kopie bleibt erhalten. Versuche es erneut oder kopiere deinen Text.",
+  "exportDraft": "Entwurf exportieren",
+  "attachmentsNone": "Keine Anhänge in dieser Notiz.",
+  "attachmentImage": "Bild",
+  "attachmentFile": "Datei",
+  "templates": "Vorlagen",
+  "templatesEmpty": "Noch keine Vorlagen.",
+  "templatesManage": "Vorlagen verwalten",
+  "templateNew": "Neue Vorlage",
+  "templateEdit": "Vorlage bearbeiten",
+  "templateSave": "Speichern",
+  "templateName": "Name der Vorlage",
+  "templatePlaceholders": "Wird beim Erstellen einer Notiz ausgefüllt: {placeholders}",
+  "templateDeleteConfirm": "Die Vorlage „{name}“ löschen?",
+  "templatesDeviceOnly": "Vorlagen und die Tagesnotiz bleiben auf diesem Gerät.",
+  "dailyNote": "Tagesnotiz",
+  "dailyNotePattern": "Titelmuster (zum Beispiel yyyy-MM-dd)",
+  "dailyNoteTemplate": "Vorlage",
+  "dailyNoteNoTemplate": "Keine Vorlage",
+  "dailyNotePreview": "Heute: „{title}“ in {category}",
+  "categoriesMenu": "Kategorien",
+  "syncNow": "Jetzt synchronisieren",
+  "syncDetails": "Synchronisierungsdetails",
+  "selectNotes": "Notizen auswählen",
+  "sortAndFilter": "Sortieren und filtern",
+  "accountSyncHint": "Synchronisierungsdetails für {account}",
+  "@accountSyncHint": {
+    "placeholders": {
+      "account": {
+        "type": "String"
+      }
+    }
+  },
+  "checkingForUpdates": "Nach Aktualisierungen suchen",
+  "syncSavedWaiting": "{count, plural, one{Auf dem Gerät gespeichert · 1 wartet} other{Auf dem Gerät gespeichert · {count} warten}}",
+  "@syncSavedWaiting": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncUploading": "{count, plural, one{1 Änderung wird hochgeladen} other{{count} Änderungen werden hochgeladen}}",
+  "@syncUploading": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncUpToDate": "Aktuell · geprüft {time}",
+  "@syncUpToDate": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "syncOffline": "Offline · Änderungen auf dem Gerät gespeichert",
+  "syncOfflineShort": "Offline",
+  "syncAuthFailure": "Erneut anmelden · lokale Notizen bleiben erhalten",
+  "syncSaveFailure": "Speichern auf diesem Gerät nicht möglich",
+  "needsAttention": "Erfordert Aufmerksamkeit",
+  "sharedWithMe": "Mit mir geteilt",
+  "savedViews": "Gespeicherte Ansichten",
+  "onThisDevice": "Auf diesem Gerät",
+  "saveView": "Diese Ansicht speichern",
+  "saveViewName": "Name der Ansicht",
+  "deleteView": "Gespeicherte Ansicht löschen",
+  "sheetUploads": "Uploads",
+  "sheetDownloads": "Downloads",
+  "sheetDecisions": "Entscheidungen",
+  "sheetDeletions": "Löschungen",
+  "uploadsNone": "Nichts wartet auf das Hochladen",
+  "downloadsNever": "Noch nicht geprüft",
+  "downloadsUnreadable": "{count, plural, one{1 Notiz kann nicht aktualisiert werden} other{{count} Notizen können nicht aktualisiert werden}}",
+  "@downloadsUnreadable": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "downloadsMissing": "{count, plural, one{1 Notiz wird vom Server nicht mehr aufgeführt} other{{count} Notizen werden vom Server nicht mehr aufgeführt}}",
+  "@downloadsMissing": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "decisionsNone": "Keine Notiz braucht eine Entscheidung",
+  "deletionsNone": "Keine Löschungen ausstehend",
+  "deletionsWaiting": "{count, plural, one{1 Löschung wartet auf den Server} other{{count} Löschungen warten auf den Server}}",
+  "@deletionsWaiting": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "deletionsFailed": "{count, plural, one{1 Löschung fehlgeschlagen} other{{count} Löschungen fehlgeschlagen}}",
+  "@deletionsFailed": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "reviewItems": "Prüfen",
+  "rowSavedWaiting": "Auf dem Gerät gespeichert · Warten auf das Hochladen",
+  "rowUploading": "Änderungen werden hochgeladen",
+  "rowNeedsDecision": "Benötigt deine Entscheidung",
+  "rowUnavailable": "Diese Notiz kann nicht aktualisiert werden",
+  "rowMissing": "Vom Server nicht mehr aufgeführt",
+  "rowSharedEdit": "Geteilt · Kann bearbeiten",
+  "rowSharedView": "Geteilt · Nur ansehen",
+  "attachmentsCount": "{count, plural, one{1 Anhang} other{{count} Anhänge}}",
+  "@attachmentsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "rowMenu": "Aktionen für {title}",
+  "@rowMenu": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "openNote": "Öffnen",
+  "moveNote": "Verschieben",
+  "rowDeletionWaiting": "Löschung ausstehend",
+  "rowDeletionFailed": "Löschung fehlgeschlagen · {reason}",
+  "@rowDeletionFailed": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "undoAction": "Rückgängig",
+  "saveCopy": "Kopie speichern",
+  "categoryCount": "{name}, {count, plural, one{1 Notiz} other{{count} Notizen}} einschließlich Unterkategorien",
+  "@categoryCount": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "expandCategory": "{name} aufklappen",
+  "@expandCategory": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "collapseCategory": "{name} zuklappen",
+  "@collapseCategory": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "openSubtree": "Nur {name} anzeigen",
+  "@openSubtree": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "allCategoriesUp": "Alle Kategorien",
+  "createNote": "Notiz",
+  "createChecklist": "Checkliste",
+  "createTemplate": "Vorlage",
+  "createDaily": "Tagesnotiz",
+  "createWhere": "In welche Kategorie soll die Notiz?",
+  "createNoteAction": "Notiz erstellen",
+  "createHere": "Hier erstellen",
+  "filterTasks": "Offene Aufgaben",
+  "filterAttachments": "Mit Anhängen",
+  "filterShared": "Geteilt",
+  "filterWaiting": "Noch nicht hochgeladen",
+  "filterDecision": "Entscheidung nötig",
+  "filterSharing": "Teilen",
+  "filterSync": "Sync-Status",
+  "clearFilters": "Filter zurücksetzen",
+  "sortTitle": "Sortieren",
+  "sortFavoritesFirst": "Favoriten zuerst",
+  "emptyFavoritesTitle": "Noch keine Favoriten",
+  "emptyFavoritesBody": "Markiere eine Notiz mit einem Stern, um sie hier zu finden. Nutze das Notizmenü oder wische über eine Notiz.",
+  "emptySharedTitle": "Nichts mit dir geteilt",
+  "emptySharedBody": "Notizen, die andere mit diesem Konto teilen, erscheinen hier.",
+  "emptyAttentionTitle": "Nichts erfordert deine Aufmerksamkeit",
+  "emptyAttentionBody": "Entscheidungen, fehlgeschlagene Löschungen und Notizen, die nicht aktualisiert werden können, erscheinen hier.",
+  "emptyCategoryTitle": "{category} ist leer",
+  "@emptyCategoryTitle": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "downloadingTitle": "Deine Notizen werden heruntergeladen",
+  "downloadingBody": "{count, plural, one{Bisher 1 Notiz heruntergeladen} other{Bisher {count} Notizen heruntergeladen}}",
+  "@downloadingBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "connectNextcloud": "Nextcloud verbinden",
+  "scanLoginQr": "Anmelde-QR-Code scannen",
+  "selectedCount": "{count, plural, one{1 ausgewählt} other{{count} ausgewählt}}",
+  "@selectedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "bulkFavorite": "Favorisieren",
+  "bulkUnfavorite": "Aus Favoriten entfernen",
+  "bulkMove": "Verschieben",
+  "bulkExport": "Exportieren",
+  "bulkMixedMove": "Verschieben ist nicht möglich, weil einige ausgewählte Notizen schreibgeschützt oder geteilt sind oder Anhänge haben.",
+  "bulkMixedDelete": "Löschen ist nicht möglich, weil einige ausgewählte Notizen schreibgeschützt oder geteilt sind oder gerade gesendet werden.",
+  "bulkMixedFavorite": "Favorisieren ist nicht möglich, weil einige ausgewählte Notizen geteilt sind.",
+  "bulkDeleteConfirm": "{count, plural, one{1 Notiz löschen?} other{{count} Notizen löschen?}}",
+  "@bulkDeleteConfirm": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "bulkDeleteBody": "Die Notizen werden auch auf dem Server gelöscht. Du kannst das rückgängig machen, bis der Server es ausgeführt hat.",
+  "notesDeleted": "{count, plural, one{1 Notiz gelöscht} other{{count} Notizen gelöscht}}",
+  "@notesDeleted": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "notesMoved": "{count, plural, one{1 Notiz verschoben} other{{count} Notizen verschoben}}",
+  "@notesMoved": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "bulkFailed": "{count, plural, one{1 Notiz konnte nicht geändert werden} other{{count} Notizen konnten nicht geändert werden}}",
+  "@bulkFailed": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "moveTitle": "In Kategorie verschieben",
+  "moveNewCategory": "Neue Kategorie",
+  "moveNewCategoryHint": "Name, / für Unterkategorien",
+  "clearSelection": "Auswahl aufheben",
+  "rowFavoriteOn": "Zu Favoriten hinzufügen",
+  "rowFavoriteOff": "Aus Favoriten entfernen",
+  "attachmentsTitle": "Anhänge",
+  "attachmentsEmpty": "Keine Anhänge in dieser Notiz.",
+  "attachStored": "Auf dem Gerät gespeichert",
+  "attachWaiting": "Warten auf das Hochladen",
+  "attachWaitingNote": "Wartet, bis die Notiz hochgeladen ist",
+  "attachUploading": "Wird hochgeladen",
+  "attachOffline": "Offline verfügbar",
+  "attachOnServer": "Auf dem Server",
+  "attachUnavailable": "Nicht verfügbar",
+  "attachFailedState": "Fehlgeschlagen: {reason}",
+  "attachErrOffline": "Der Server war nicht erreichbar.",
+  "attachErrAuth": "Melde dich erneut an, um hochzuladen.",
+  "attachErrTooLarge": "Der Server hat die Datei als zu groß abgelehnt.",
+  "attachErrDenied": "Der Server hat das Hochladen nicht erlaubt.",
+  "attachErrNoteGone": "Die Notiz existiert auf dem Server nicht mehr.",
+  "attachErrServer": "Der Server hat einen Fehler gemeldet.",
+  "attachRemoveQueue": "Aus der Warteschlange entfernen",
+  "attachRemoveLink": "Link aus der Notiz entfernen",
+  "attachRemoveLinkHelp": "Das Entfernen des Links ändert nur diese Notiz. Die Datei bleibt auf dem Server.",
+  "attachDeleteFile": "Datei auf dem Server löschen",
+  "attachDeleteTitle": "Die Datei auf dem Server löschen?",
+  "attachDeleteBody": "Die Datei wird endgültig vom Server entfernt. Andere Notizen und Geräte, die darauf verlinken, zeigen dann eine fehlende Datei.",
+  "attachDeleteFileOnly": "Datei löschen",
+  "attachDeleteFileAndLink": "Datei und Link löschen",
+  "attachDeleteUnsupported": "Diese Serverversion kann keine Anhänge löschen. Entferne stattdessen den Link; die Datei bleibt auf dem Server.",
+  "attachDeleteFailed": "Die Datei konnte nicht gelöscht werden.",
+  "attachKeepOffline": "Offline behalten",
+  "attachUploadFailedTitle": "Hochladen fehlgeschlagen",
+  "attachKeepForLater": "Für später behalten",
+  "attachSavedWaiting": "Auf dem Gerät gespeichert. Die Datei wird hochgeladen, sobald die Notiz auf dem Server ist, dann wird der Link in die Notiz eingefügt.",
+  "attachSavedQueued": "Auf dem Gerät gespeichert. Der Link wird nach dem Hochladen in die Notiz eingefügt.",
+  "attachTooLarge": "Diese Datei ist größer als 64 MB und wurde nicht angehängt.",
+  "attachReadFailed": "Die Datei konnte nicht gelesen werden.",
+  "attachWorking": "Anhang wird hinzugefügt …",
+  "voiceTitle": "Sprachaufnahme",
+  "voiceReady": "Bereit zur Aufnahme",
+  "voiceRecording": "Aufnahme läuft",
+  "voicePaused": "Pausiert",
+  "voiceStopped": "Aufnahme beendet",
+  "voiceStart": "Aufnahme starten",
+  "voicePause": "Pausieren",
+  "voiceResume": "Fortsetzen",
+  "voiceStop": "Stoppen",
+  "voiceListen": "Anhören",
+  "voiceStopListening": "Wiedergabe stoppen",
+  "voiceAttach": "Anhängen",
+  "voiceDiscard": "Verwerfen",
+  "voiceDiscardTitle": "Diese Aufnahme verwerfen?",
+  "voiceDiscardBody": "Die Aufnahme wird von diesem Gerät gelöscht.",
+  "voiceMicDenied": "Der Mikrofonzugriff ist aus. Erlaube ihn in den Systemeinstellungen, um aufzunehmen.",
+  "voiceInterrupted": "Die Aufnahme wurde pausiert, weil die App unterbrochen wurde. Sie bleibt erhalten.",
+  "voiceRecovered": "Eine frühere Aufnahme wurde wiederhergestellt.",
+  "voiceFailed": "Aufnahme nicht möglich.",
+  "voiceElapsed": "Aufnahmedauer {time}",
+  "captureTitle": "Geteilte Inhalte",
+  "captureAccount": "Konto",
+  "captureChooseAccount": "Wähle das Konto für diese Inhalte.",
+  "captureUnknownAccount": "Der Absender hat ein Konto angegeben, das hier nicht angemeldet ist. Wähle eines aus.",
+  "captureNewNote": "Neue Notiz",
+  "captureAppend": "An eine Notiz anhängen",
+  "captureCategory": "Kategorie (optional)",
+  "captureSearchTarget": "Notiz zum Anhängen suchen",
+  "captureNoTarget": "Wähle die Notiz, an die angehängt werden soll.",
+  "captureNoMatches": "Keine passenden Notizen.",
+  "captureSave": "Auf dem Gerät speichern",
+  "captureDiscard": "Verwerfen",
+  "captureDiscardTitle": "Geteilte Inhalte verwerfen?",
+  "captureDiscardBody": "Sie werden von diesem Gerät gelöscht und es wird keine Notiz erstellt.",
+  "captureKept": "Wenn du diesen Bildschirm schließt, bleiben die Inhalte erhalten, bis du entscheidest.",
+  "captureNoText": "Kein Text, nur Dateien.",
+  "captureSaveFailed": "Speichern auf diesem Gerät nicht möglich. Die Inhalte bleiben erhalten.",
+  "captureFiles": "{count, plural, =1{1 Datei} other{{count} Dateien}}",
+  "importKeepAttachments": "Importierte Notizen: {notes}, Anhänge: {files}, übersprungene Dateien: {skipped}.",
+  "attachMoreOptions": "Weitere Optionen"
+}
