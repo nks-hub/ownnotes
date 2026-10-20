@@ -5,7 +5,6 @@
   "serverUrl": "Nextcloud server URL",
   "connect": "Connect",
   "cancel": "Cancel",
-  "waitingLogin": "Complete login in your browser…",
   "loginFailed": "Login failed. Check the server address and start again.",
   "noAccounts": "Connect your Nextcloud account.",
   "noNotes": "No notes yet. Create one or synchronize.",
@@ -49,7 +48,8 @@
       "count": {"type": "int"}
     }
   },
-  "importFailed": "Import failed. The file is not a Google Takeout zip with Keep notes.",
+  "importFailed": "Import failed. The file is not a Google Takeout zip with Keep notes."
+,
   "delete": "Delete",
   "deleteConfirm": "Delete this note? It is also deleted on the server.",
   "allCategories": "All",
@@ -60,7 +60,7 @@
     }
   },
   "reasonOffline": "No connection. Notes upload on their own when it is back.",
-  "reasonAuth": "The server refused the login. Add the account again.",
+  "reasonAuth": "The server refused the login. Sign in again from Accounts.",
   "reasonLocked": "The file is locked on the server. Trying again shortly.",
   "reasonStorageFull": "The server storage is full.",
   "reasonServer": "The server answered with an error. Trying again shortly.",
@@ -82,7 +82,7 @@
   },
   "exportFailed": "Export failed.",
   "removeAccount": "Remove account from this phone",
-  "removeAccountConfirm": "Remove the account from this phone? Notes on the server stay.",
+  "removeAccountConfirm": "Remove the account from this phone and revoke its app password on the server? Notes on the server stay.",
   "removeAccountUnsent": "Remove the account? {count, plural, one{1 note is not on the server yet and will be lost.} other{{count} notes are not on the server yet and will be lost.}} You can export them first.",
   "@removeAccountUnsent": {
     "placeholders": {
@@ -98,5 +98,39 @@
   "remoteDeleted": "This note was deleted on the server meanwhile. The text on this phone is kept.",
   "uploadAgain": "Upload it to the server again",
   "deleteHere": "Delete on this phone too",
-  "mergeBoth": "Combine both versions"
+  "mergeBoth": "Combine both versions",
+  "serverEmpty": "Enter the address of your Nextcloud server.",
+  "serverInsecure": "Only https:// servers are supported. Your login would travel unencrypted otherwise.",
+  "serverInvalid": "That is not a valid server address. Example: cloud.example.com",
+  "serverNoLogin": "This server did not offer the Nextcloud login. Check the address.",
+  "serverUnreachable": "Could not reach the server. Check the address and your connection.",
+  "browserUnavailable": "Could not open the browser for the login.",
+  "loginExpired": "The login took too long. Start again.",
+  "scannedLoginRejected": "The server refused the scanned code. It may be old or revoked. Create a new one.",
+  "onboardingTitle": "Your notes on your own Nextcloud",
+  "onboardingBody": "OwnNotes syncs Markdown notes with the Nextcloud Notes app. They go to your server and nowhere else.",
+  "multiAccountTitle": "Several accounts",
+  "multiAccountBody": "Add more servers or users and switch between them any time.",
+  "secureLoginTitle": "No password in the app",
+  "secureLoginBody": "You sign in in your browser. The phone keeps only an app password that you can revoke.",
+  "checkingServer": "Checking server…",
+  "waitingForLogin": "Waiting for the login",
+  "waitingForLoginBody": "Approve the access in your browser, then come back to the app.",
+  "savingAccount": "Signing in…",
+  "scanLoginCode": "Scan QR code",
+  "scanLoginCodeHint": "Point the camera at the login QR code from Nextcloud (Settings, Security, app passwords).",
+  "scanLoginCodeUnreadable": "That is not a Nextcloud login code.",
+  "scanCameraDenied": "Camera access is off. Allow it in the app settings to scan the code.",
+  "scanCameraUnavailable": "The camera could not be started.",
+  "openAppSettings": "Open app settings",
+  "accounts": "Accounts",
+  "currentAccount": "Current account",
+  "accountRemovedRevoked": "Account removed. Its app password is revoked on the server.",
+  "accountRemovedNotRevoked": "Account removed from this phone. The server did not confirm it, so revoke the app password in Nextcloud under Settings, Security.",
+  "accountRemoveFailed": "The account could not be removed.",
+  "serverCertificate": "The server certificate could not be verified. Check the address, or fix the certificate on the server.",
+  "serverTimeout": "The server took too long to answer. Try again.",
+  "notesAppMissing": "The Notes app is not available on this server. Install or enable Nextcloud Notes first.",
+  "reauthMismatch": "That login belongs to another server or user. Sign in as the same account to keep its notes.",
+  "signInAgain": "Sign in again"
 }

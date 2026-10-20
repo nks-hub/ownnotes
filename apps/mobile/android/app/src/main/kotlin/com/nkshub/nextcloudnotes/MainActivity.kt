@@ -1,9 +1,14 @@
 package com.nkshub.nextcloudnotes
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
+import android.provider.Settings
 import android.view.WindowManager
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
@@ -14,12 +19,14 @@ import io.flutter.plugin.common.MethodChannel
 
 /**
  * Receives text shared from other apps (Google Keep, Samsung Notes, ...) and
- * blocks screenshots on request. A FragmentActivity is what the device-unlock
+ * blocks screenshots on request and answers the camera permission of the
+ * QR login scanner, which the camera plugin cannot report back to Dart. A FragmentActivity is what the device-unlock
  * prompt of local_auth needs.
  */
 class MainActivity : FlutterFragmentActivity() {
     private var shared: Map<String, String>? = null
     private var channel: MethodChannel? = null
+    private var pendingCamera: MethodChannel.Result? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         // A recreated activity still carries the old intent; it was taken already.
@@ -58,6 +65,23 @@ class MainActivity : FlutterFragmentActivity() {
         }
         MethodChannel(
             flutterEngine.dartExecutor.binaryMessenger,
+            "com.nkshub.nextcloudnotes/camera_permission",
+        ).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "status" -> result.success(cameraStatus())
+                "request" -> requestCamera(result)
+                "openSettings" -> {
+                    startActivity(
+                        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                            .setData(Uri.parse("package:$packageName")),
+                    )
+                    result.success(true)
+                }
+                else -> result.notImplemented()
+            }
+        }
+        MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
             "com.nkshub.nextcloudnotes/window",
         ).setMethodCallHandler { call, result ->
             if (call.method == "setSecure") {
@@ -71,6 +95,56 @@ class MainActivity : FlutterFragmentActivity() {
                 result.notImplemented()
             }
         }
+    }
+
+    private fun cameraStatus(): Map<String, String> {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) ==
+            PackageManager.PERMISSION_GRANTED
+        ) {
+            return mapOf("status" to "granted")
+        }
+        val asked = getSharedPreferences("permissions", MODE_PRIVATE)
+            .getBoolean("camera_asked", false)
+        return mapOf("status" to if (asked) "denied" else "notDetermined")
+    }
+
+    private fun requestCamera(result: MethodChannel.Result) {
+        if (cameraStatus()["status"] == "granted") {
+            result.success(cameraStatus())
+            return
+        }
+        if (pendingCamera != null) {
+            result.error("in_progress", "A camera request is already active.", null)
+            return
+        }
+        pendingCamera = result
+        getSharedPreferences("permissions", MODE_PRIVATE).edit()
+            .putBoolean("camera_asked", true).apply()
+        ActivityCompat.requestPermissions(
+            this, arrayOf(Manifest.permission.CAMERA), CAMERA_REQUEST,
+        )
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray,
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode != CAMERA_REQUEST) return
+        // An interrupted request is not a refusal; allow the prompt again.
+        if (grantResults.isEmpty()) {
+            getSharedPreferences("permissions", MODE_PRIVATE).edit()
+                .putBoolean("camera_asked", false).apply()
+        }
+        pendingCamera?.success(cameraStatus())
+        pendingCamera = null
+    }
+
+    override fun onDestroy() {
+        pendingCamera?.error("cancelled", "The camera request was cancelled.", null)
+        pendingCamera = null
+        super.onDestroy()
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -87,5 +161,9 @@ class MainActivity : FlutterFragmentActivity() {
             "title" to (intent.getStringExtra(Intent.EXTRA_SUBJECT) ?: ""),
             "text" to text,
         )
+    }
+
+    private companion object {
+        const val CAMERA_REQUEST = 4108
     }
 }

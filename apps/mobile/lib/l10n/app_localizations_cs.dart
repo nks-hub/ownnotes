@@ -24,9 +24,6 @@ class AppLocalizationsCs extends AppLocalizations {
   String get cancel => 'Zrušit';
 
   @override
-  String get waitingLogin => 'Dokonči přihlášení v prohlížeči…';
-
-  @override
   String get loginFailed =>
       'Přihlášení selhalo. Zkontroluj adresu serveru a zkus to znovu.';
 
@@ -173,7 +170,8 @@ class AppLocalizationsCs extends AppLocalizations {
       'Bez připojení. Poznámky se odešlou samy, až bude síť.';
 
   @override
-  String get reasonAuth => 'Server odmítl přihlášení. Přidej účet znovu.';
+  String get reasonAuth =>
+      'Server odmítl přihlášení. Přihlas se znovu v Účtech.';
 
   @override
   String get reasonLocked =>
@@ -230,7 +228,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get removeAccountConfirm =>
-      'Odebrat účet z tohoto telefonu? Poznámky na serveru zůstanou.';
+      'Odebrat účet z tohoto telefonu a zrušit jeho heslo aplikace na serveru? Poznámky na serveru zůstanou.';
 
   @override
   String removeAccountUnsent(int count) {
@@ -274,4 +272,124 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get mergeBoth => 'Spojit obě verze';
+
+  @override
+  String get serverEmpty => 'Zadej adresu svého serveru Nextcloud.';
+
+  @override
+  String get serverInsecure =>
+      'Podporované jsou jen servery s https://. Jinak by přihlášení šlo sítí nešifrovaně.';
+
+  @override
+  String get serverInvalid =>
+      'Tohle není platná adresa serveru. Příklad: cloud.example.com';
+
+  @override
+  String get serverNoLogin =>
+      'Tento server nenabídl přihlášení Nextcloud. Zkontroluj adresu.';
+
+  @override
+  String get serverUnreachable =>
+      'Server se nepodařilo zastihnout. Zkontroluj adresu a připojení.';
+
+  @override
+  String get browserUnavailable =>
+      'Prohlížeč se pro přihlášení nepodařilo otevřít.';
+
+  @override
+  String get loginExpired => 'Přihlášení trvalo moc dlouho. Začni znovu.';
+
+  @override
+  String get scannedLoginRejected =>
+      'Server naskenovaný kód odmítl. Možná je starý nebo zrušený. Vytvoř nový.';
+
+  @override
+  String get onboardingTitle => 'Tvoje poznámky na tvém Nextcloudu';
+
+  @override
+  String get onboardingBody =>
+      'OwnNotes synchronizuje poznámky v Markdownu s aplikací Nextcloud Notes. Jdou na tvůj server a nikam jinam.';
+
+  @override
+  String get multiAccountTitle => 'Více účtů';
+
+  @override
+  String get multiAccountBody =>
+      'Přidej další servery nebo uživatele a přepínej mezi nimi kdykoli.';
+
+  @override
+  String get secureLoginTitle => 'Žádné heslo v aplikaci';
+
+  @override
+  String get secureLoginBody =>
+      'Přihlásíš se v prohlížeči. Telefon si ponechá jen heslo aplikace, které můžeš zrušit.';
+
+  @override
+  String get checkingServer => 'Kontroluji server…';
+
+  @override
+  String get waitingForLogin => 'Čekám na přihlášení';
+
+  @override
+  String get waitingForLoginBody =>
+      'Schval přístup v prohlížeči a vrať se do aplikace.';
+
+  @override
+  String get savingAccount => 'Přihlašuji…';
+
+  @override
+  String get scanLoginCode => 'Skenovat QR kód';
+
+  @override
+  String get scanLoginCodeHint =>
+      'Namiř kameru na přihlašovací QR kód z Nextcloudu (Nastavení, Zabezpečení, hesla aplikací).';
+
+  @override
+  String get scanLoginCodeUnreadable =>
+      'Tohle není přihlašovací kód Nextcloudu.';
+
+  @override
+  String get scanCameraDenied =>
+      'Přístup ke kameře je vypnutý. Povol ho v nastavení aplikace, aby šel kód naskenovat.';
+
+  @override
+  String get scanCameraUnavailable => 'Kameru se nepodařilo spustit.';
+
+  @override
+  String get openAppSettings => 'Otevřít nastavení aplikace';
+
+  @override
+  String get accounts => 'Účty';
+
+  @override
+  String get currentAccount => 'Aktuální účet';
+
+  @override
+  String get accountRemovedRevoked =>
+      'Účet je odebraný. Jeho heslo aplikace je na serveru zrušené.';
+
+  @override
+  String get accountRemovedNotRevoked =>
+      'Účet je odebraný z telefonu. Server to nepotvrdil, proto zruš heslo aplikace v Nextcloudu v Nastavení, Zabezpečení.';
+
+  @override
+  String get accountRemoveFailed => 'Účet se nepodařilo odebrat.';
+
+  @override
+  String get serverCertificate =>
+      'Certifikát serveru se nepodařilo ověřit. Zkontroluj adresu, nebo oprav certifikát na serveru.';
+
+  @override
+  String get serverTimeout => 'Server odpovídal příliš dlouho. Zkus to znovu.';
+
+  @override
+  String get notesAppMissing =>
+      'Aplikace Notes na tomto serveru není dostupná. Nainstaluj nebo zapni Nextcloud Notes.';
+
+  @override
+  String get reauthMismatch =>
+      'Toto přihlášení patří jinému serveru nebo uživateli. Přihlas se stejným účtem, aby poznámky zůstaly.';
+
+  @override
+  String get signInAgain => 'Přihlásit znovu';
 }

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io' show TlsException;
 
 import 'package:http/http.dart' as http;
 
@@ -82,7 +83,7 @@ final class LoginSession {
       // so the flow stays open for another poll. If a successful response was
       // lost instead, later polls keep returning pending until the caller
       // cancels or the flow expires.
-      if (e.code != 'transport_failed') cancel();
+      if (e.code != 'transport_failed' && e.code != 'timeout') cancel();
       rethrow;
     } catch (_) {
       cancel();
@@ -177,6 +178,10 @@ final class LoginClient {
       })().timeout(timeout);
     } on LoginException {
       rethrow;
+    } on TimeoutException {
+      throw const LoginException('timeout');
+    } on TlsException {
+      throw const LoginException('tls_failed');
     } catch (_) {
       throw const LoginException('transport_failed');
     } finally {
