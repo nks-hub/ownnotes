@@ -309,5 +309,209 @@
     }
   },
   "scanEnterAddress": "Enter server address",
-  "appLocked": "OwnNotes is locked"
+  "appLocked": "OwnNotes is locked",
+  "undo": "Undo",
+  "redo": "Redo",
+  "dockFormat": "Format",
+  "dockTask": "Task",
+  "dockAttach": "Attach",
+  "dockInsert": "Insert",
+  "fmtStrike": "Strikethrough",
+  "fmtQuote": "Quote",
+  "fmtNumbered": "Numbered list",
+  "fmtCode": "Code",
+  "fmtIndent": "Indent",
+  "fmtOutdent": "Outdent",
+  "insertMention": "Mention",
+  "insertEmoji": "Emoji",
+  "smartPicker": "Smart picker",
+  "smartPickerNone": "This server offers nothing the smart picker can search.",
+  "attachPhoto": "Photo",
+  "attachCamera": "Camera",
+  "attachFile": "File",
+  "attachVoice": "Voice",
+  "suggestSearching": "Searching…",
+  "suggestError": "Suggestions are not available right now. You can keep writing.",
+  "suggestCount": "{count, plural, one{1 suggestion} other{{count} suggestions}}",
+  "@suggestCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "suggestInsert": "Insert",
+  "cmdToday": "Today's date",
+  "cmdTime": "Current time",
+  "cmdTable": "Table",
+  "cmdDivider": "Divider",
+  "calloutInfo": "Info",
+  "calloutWarning": "Warning",
+  "calloutError": "Error",
+  "calloutSuccess": "Success",
+  "detailsDefault": "Details",
+  "mentionLabel": "Mention: {name}",
+  "@mentionLabel": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "attachmentLabel": "Attachment: {name}",
+  "@attachmentLabel": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "tableLabel": "Table with {rows, plural, one{1 row} other{{rows} rows}} and {columns, plural, one{1 column} other{{columns} columns}}",
+  "@tableLabel": {
+    "placeholders": {
+      "rows": {
+        "type": "int"
+      },
+      "columns": {
+        "type": "int"
+      }
+    }
+  },
+  "editSection": "Edit this section",
+  "checklistMarkdown": "Markdown",
+  "checklistEmpty": "No tasks yet. Add the first item below.",
+  "checklistAdd": "Add item",
+  "checklistCompletedGroup": "Completed ({count})",
+  "@checklistCompletedGroup": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "clearCompleted": "Clear completed items",
+  "clearCompletedConfirm": "{count, plural, one{Remove 1 completed item from the note?} other{Remove {count} completed items from the note?}}",
+  "@clearCompletedConfirm": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "clearedCompleted": "{count, plural, one{1 item removed} other{{count} items removed}}",
+  "@clearedCompleted": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "checklistPosition": "{position} of {total}",
+  "@checklistPosition": {
+    "placeholders": {
+      "position": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "checklistItemMenu": "Item options",
+  "moveUp": "Move up",
+  "moveDown": "Move down",
+  "shareTitle": "Share",
+  "shareSendCopy": "Send a copy",
+  "shareAsText": "Send as text",
+  "shareAsFile": "Send as Markdown file",
+  "shareWithPeople": "Share with people",
+  "sharePeopleWithAccess": "People with access",
+  "shareSearchHint": "Search people",
+  "sharePermissionView": "Can view",
+  "sharePermissionEdit": "Can edit",
+  "shareRemove": "Remove access",
+  "sharePending": "Sharing…",
+  "shareRemoving": "Removing access…",
+  "shareFailed": "This did not work. Check the connection and try again.",
+  "shareNotUploaded": "This note is not on the server yet. It is uploaded first, then it can be shared.",
+  "shareUploadFirst": "Upload and continue",
+  "shareUploading": "Uploading the note…",
+  "shareUploadFailed": "The note could not be uploaded yet. It stays saved on this device.",
+  "shareIncoming": "Somebody shared this note with you. Only its owner can share it further.",
+  "shareAttachmentsWarning": "This note has attachments. People you share it with may not be able to open them.",
+  "shareNone": "Not shared with anyone yet.",
+  "shareNoResults": "No matching people.",
+  "shareChecking": "Checking the shares…",
+  "shareWithName": "Share with {name}",
+  "@shareWithName": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "moreOptions": "More options",
+  "openDetails": "Details",
+  "unfavorite": "Remove from favorites",
+  "openChecklist": "Open checklist",
+  "attachments": "Attachments",
+  "historyRecovery": "History and recovery",
+  "exportNote": "Export",
+  "findCount": "{index} of {total}",
+  "@findCount": {
+    "placeholders": {
+      "index": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "findPrevious": "Previous match",
+  "saveFailedTitle": "Could not save on this device",
+  "noteUnreadable": "The server could not hand out this note's text. Your last copy is kept. Retry, or copy your text.",
+  "exportDraft": "Export draft",
+  "attachmentsNone": "No attachments in this note.",
+  "attachmentImage": "Image",
+  "attachmentFile": "File",
+  "templates": "Templates",
+  "templatesEmpty": "No templates yet.",
+  "templatesManage": "Manage templates",
+  "templateNew": "New template",
+  "templateEdit": "Edit template",
+  "templateSave": "Save",
+  "templateName": "Template name",
+  "templatePlaceholders": "Filled in when a note is created: {placeholders}",
+  "@templatePlaceholders": {
+    "placeholders": {
+      "placeholders": {
+        "type": "String"
+      }
+    }
+  },
+  "templateDeleteConfirm": "Delete the template \"{name}\"?",
+  "@templateDeleteConfirm": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "templatesDeviceOnly": "Templates and the daily note stay on this device.",
+  "dailyNote": "Daily note",
+  "dailyNotePattern": "Title pattern (for example yyyy-MM-dd)",
+  "dailyNoteTemplate": "Template",
+  "dailyNoteNoTemplate": "No template",
+  "dailyNotePreview": "Today: \"{title}\" in {category}",
+  "@dailyNotePreview": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      },
+      "category": {
+        "type": "String"
+      }
+    }
+  }
 }
