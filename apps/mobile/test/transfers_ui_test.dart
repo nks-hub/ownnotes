@@ -80,7 +80,9 @@ Future<void> finish(WidgetTester tester) async {
 }
 
 Future<void> until(WidgetTester tester, bool Function() done) async {
-  for (var i = 0; i < 200 && !done(); i++) {
+  // Real file I/O; the full suite runs files in parallel, so allow wall time.
+  final clock = Stopwatch()..start();
+  while (!done() && clock.elapsed < const Duration(seconds: 20)) {
     await tester.runAsync(
       () => Future<void>.delayed(const Duration(milliseconds: 15)),
     );
