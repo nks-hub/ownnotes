@@ -22,8 +22,6 @@ references: [docs/research/review-2026-10-20.md](docs/research/review-2026-10-20
       portal, build and run on the simulator, signed archive, then a
       TestFlight build. The Swift share extension changes and the
       WidgetKit sources are not compiled yet.
-- [ ] Wire the iOS widgets in Flutter: `publishIosWidgets` on start, on
-      note and lock changes, `takeIosWidgetCommands` on resume.
 - [ ] New store screenshots of the redesigned app (cs, en, de; light and
       dark) and upload the German Play listing.
 - [ ] On real phones: camera, microphone and file attachments; sharing a
