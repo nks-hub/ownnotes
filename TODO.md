@@ -53,6 +53,70 @@ switches to preview without the user asking.
       coverage, gaps versus notes-android and the iOS client, ideas from
       competing apps; results go into this file as items.
 
+### From the Codex review (2026-10-20)
+
+Full report with file references: [review-2026-10-20](docs/research/review-2026-10-20.md).
+Items already handed to the UI rework above (checkbox source mapping,
+overlapping-edit merge, live readonly/decision state in the editor,
+re-login of an existing account, login errors and cancel, category tree
+details, sync status in the list, account-aware widget links) are not
+repeated here.
+
+Next:
+
+- [ ] Shared text is acknowledged before it is stored: Android clears its
+      slot when Flutter reads it, iOS removes the inbox entry at once and
+      keeps only 16 entries without a lock. Make share delivery a durable
+      command with an id, acknowledged after the database commit.
+- [ ] App lock can fail open: a second error while checking device support
+      grants access, and an unreadable preference becomes `lock=false`.
+- [ ] Failed deletions vanish: `deleting` rows are hidden from the list and
+      export, non-404 failures are swallowed. Show pending deletion with the
+      reason, retry and undo.
+- [ ] Read OCS capabilities and Notes `/settings` (notesPath, fileSuffix,
+      API versions). Attachments: Notes 6.0.x serves them only under
+      `/api/v1.4/attachment/{id}`, 6.1 adds the `v1` alias and DELETE; pick
+      the route by version instead of always using `v1`.
+- [ ] Sync problems live in a process-local map: persist a safe error
+      category per account and per unreadable note, and show stale or
+      unreadable notes with a retry.
+- [ ] Unsupported system languages fall back to Czech; fall back to
+      English. Translate the Face ID usage text.
+
+Later:
+
+- [ ] Census deletes clean rows that disappear from a pull without a
+      recovery copy; validate the sync scope (notesPath change) first and
+      use the final page's membership of a chunked pull.
+- [ ] Attachment moves end in a repeated decision; explain the cause and
+      give a working way out.
+- [ ] Share the current note out (text or `.md`), single-note export.
+- [ ] Markdown text actions: list continuation, indent, link insert,
+      explicit undo/redo; in-note search with previous and match count.
+- [ ] Tablet list/detail layout that keeps the open editor across resizes.
+- [ ] Android sync preferences (interval, Wi-Fi only).
+- [ ] Configurable Android widgets (account, category, favorites, single
+      note or checklist) and an iOS WidgetKit widget.
+- [ ] Restorable backups: ZIP with a manifest, metadata and attachments,
+      verified import.
+- [ ] File versions and trash through DAV, with restore that keeps the
+      current draft.
+- [ ] Bulk actions in the list (delete, move to category, favorite).
+- [ ] Persist `pruneBefore` watermarks; use the list `If-None-Match`.
+
+Ideas:
+
+- [ ] Templates and a daily note.
+- [ ] Saved views: unfinished tasks, recent changes, sync problems.
+- [ ] Quick capture: append to an inbox note, iOS quick actions, Android
+      quick settings tile.
+- [ ] Spotlight / Android search indexing (opt-in, respects the app lock)
+      and Siri / App Intents (new note, append, open, search).
+- [ ] Internal links between notes and backlinks.
+- [ ] Optional online search through Nextcloud unified search.
+- [ ] Notification when a new conflict needs a decision.
+- [ ] Optional grid layout and word/character count.
+
 ### From the server and original-app analysis (2026-10-19)
 
 Sources: Notes 6.1.0 server code (routes, `Helper.php`, `NoteUtil.php`,
