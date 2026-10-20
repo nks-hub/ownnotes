@@ -40,6 +40,15 @@ switches to preview without the user asking.
 - [ ] Better system integration (share in and out, widgets, shortcuts,
       quick settings tile, search, iOS quick actions); scope from the
       review below.
+- [ ] Shopping list mode for checklist notes: quick add of an item, tap to
+      tick, ticked items drop to the bottom (with an option to clear them),
+      reorder by dragging. Stays a plain Markdown task list on the server.
+- [ ] Sharing a note with another Nextcloud user (for example a partner)
+      and editing it live together. The open note already syncs live
+      between devices of one account (`5d5c12f`); a note shared through the
+      OCS share API lands outside the recipient's Notes folder, so the Notes
+      API does not list it. Needs WebDAV access to shared files (ETag based
+      polling or notify_push) and the same line merge after a 412.
 - [ ] Full review with Codex: code and UX, Notes and Nextcloud API
       coverage, gaps versus notes-android and the iOS client, ideas from
       competing apps; results go into this file as items.
