@@ -25,15 +25,9 @@ references: [docs/research/review-2026-10-20.md](docs/research/review-2026-10-20
 
 - [ ] Shared text from another app goes to the account shown in the list.
       It carries no note id; ask which account when there are several.
-- [ ] Login and accounts like OwnTalk: onboarding screen, server address
-      check, QR login, accounts screen with switch and remove (revokes the
-      app password on the server).
-- [ ] Sign in again to an existing account without losing its drafts.
-      Today "add the account again" creates a new account and the unsent
-      notes stay on the broken one.
-- [ ] Login: say why it failed (unreachable, not Nextcloud, certificate,
-      Notes app missing); Cancel must also stop a browser that is about to
-      open.
+- [ ] Check QR login and "sign in again" on a real phone.
+      Both pass widget tests; there was no login QR code at hand and no
+      broken account to repair on the devices.
 - [ ] Sharing in the app: Share button in the editor (pick a user, list
       and remove shares), a "Shared with me" view, conflict screen for
       shared files. Server side and sync are done, see

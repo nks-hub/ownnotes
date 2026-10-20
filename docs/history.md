@@ -2,6 +2,14 @@
 
 Finished work with how it was verified. Newest first is not guaranteed; dates are exact.
 
+- 2026-10-20 Login and accounts like OwnTalk: onboarding screen, server
+  address check (path trimmed to the host), separate error reasons, Cancel
+  that also stops a browser about to open, QR login (camera + zxing2),
+  accounts screen with server display name, switch, add and remove (revokes
+  the app password on the server, clears the widget snapshot), sign in again
+  that keeps the account's notes and drafts. Login and removal verified on
+  Galaxy S21 against the Docker server; accounts screen on Galaxy S9.
+
 - 2026-10-20 Note list, editor and app lock rework, verified on Galaxy S9
   (candidate build, Docker server, 208 notes):
   - scrolling no longer stutters: rows use a short excerpt computed once;
