@@ -571,6 +571,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Combine both versions'**
   String get mergeBoth;
+
+  /// No description provided for @settingSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save the setting. It stays as it was.'**
+  String get settingSaveFailed;
+
+  /// No description provided for @lockUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'The lock could not be checked right now. Try again.'**
+  String get lockUnavailable;
+
+  /// No description provided for @lockDeviceRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'The screen lock of this phone was removed, so the app lock cannot work.'**
+  String get lockDeviceRemoved;
+
+  /// No description provided for @lockTurnOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn off app lock and continue'**
+  String get lockTurnOff;
 }
 
 class _AppLocalizationsDelegate

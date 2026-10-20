@@ -58,6 +58,7 @@ class _StartupState extends State<Startup> {
     return MaterialApp(
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
+      localeListResolutionCallback: resolveLocale,
       home: Builder(
         builder: (context) {
           final l = AppLocalizations.of(context)!;
@@ -80,6 +81,17 @@ class _StartupState extends State<Startup> {
   }
 }
 
+/// Picks the first preferred language the app ships, otherwise English.
+/// A language added to the ARB files is matched without changes here.
+Locale resolveLocale(List<Locale>? preferred, Iterable<Locale> supported) {
+  for (final locale in preferred ?? const <Locale>[]) {
+    for (final s in supported) {
+      if (s.languageCode == locale.languageCode) return s;
+    }
+  }
+  return const Locale('en');
+}
+
 class OwnNotesApp extends StatelessWidget {
   const OwnNotesApp({super.key, this.observers = const []});
 
@@ -92,6 +104,7 @@ class OwnNotesApp extends StatelessWidget {
     debugShowCheckedModeBanner: false,
     localizationsDelegates: AppLocalizations.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
+    localeListResolutionCallback: resolveLocale,
     theme: ThemeData(
       colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xff315b77)),
     ),
