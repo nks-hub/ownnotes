@@ -10,6 +10,7 @@ import '../l10n/app_localizations.dart';
 import 'accounts.dart';
 import 'lock.dart' show localAuthProvider;
 import 'login.dart' show BrandMark;
+import 'templates/templates_screen.dart';
 
 /// Languages the user can pick; null follows the system. Each is shown in
 /// its own language. German is listed ahead of its translation files.
@@ -117,6 +118,18 @@ class SettingsScreen extends ConsumerWidget {
                 value: settings.fontSize,
                 onChanged: (v) =>
                     controller.update(settings.copyWith(fontSize: v)),
+              ),
+              ListTile(
+                leading: const Icon(Icons.description_outlined),
+                title: Text(l.templatesManage),
+                subtitle: Text(l.templatesDeviceOnly),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => Navigator.of(context).push<void>(
+                  MaterialPageRoute(
+                    settings: const RouteSettings(name: '/templates'),
+                    builder: (_) => const TemplatesScreen(),
+                  ),
+                ),
               ),
               _Section(l.settingsPrivacy),
               SwitchListTile(
