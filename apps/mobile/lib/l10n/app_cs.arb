@@ -344,5 +344,263 @@
   "dailyNotePattern": "Vzor názvu (například yyyy-MM-dd)",
   "dailyNoteTemplate": "Šablona",
   "dailyNoteNoTemplate": "Bez šablony",
-  "dailyNotePreview": "Dnes: „{title}“ v kategorii {category}"
+  "dailyNotePreview": "Dnes: „{title}“ v kategorii {category}",
+  "categoriesMenu": "Kategorie",
+  "syncNow": "Synchronizovat hned",
+  "syncDetails": "Podrobnosti synchronizace",
+  "selectNotes": "Vybrat poznámky",
+  "sortAndFilter": "Řazení a filtry",
+  "accountSyncHint": "Podrobnosti synchronizace pro {account}",
+  "@accountSyncHint": {
+    "placeholders": {
+      "account": {
+        "type": "String"
+      }
+    }
+  },
+  "checkingForUpdates": "Kontrola aktualizací",
+  "syncSavedWaiting": "{count, plural, one{Uloženo v zařízení · čeká 1} few{Uloženo v zařízení · čekají {count}} other{Uloženo v zařízení · čeká {count}}}",
+  "@syncSavedWaiting": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncUploading": "{count, plural, one{Odesílá se 1 změna} few{Odesílají se {count} změny} other{Odesílá se {count} změn}}",
+  "@syncUploading": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncUpToDate": "Aktuální · zkontrolováno {time}",
+  "@syncUpToDate": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "syncOffline": "Offline · změny jsou uložené v zařízení",
+  "syncOfflineShort": "Offline",
+  "syncAuthFailure": "Přihlaste se znovu · místní poznámky zůstávají",
+  "syncSaveFailure": "Uložení v tomto zařízení se nepodařilo",
+  "needsAttention": "Vyžaduje pozornost",
+  "sharedWithMe": "Sdíleno se mnou",
+  "savedViews": "Uložená zobrazení",
+  "onThisDevice": "V tomto zařízení",
+  "saveView": "Uložit toto zobrazení",
+  "saveViewName": "Název zobrazení",
+  "deleteView": "Smazat uložené zobrazení",
+  "sheetUploads": "Odesílání",
+  "sheetDownloads": "Stahování",
+  "sheetDecisions": "Rozhodnutí",
+  "sheetDeletions": "Mazání",
+  "uploadsNone": "Nic nečeká na odeslání",
+  "downloadsNever": "Zatím nezkontrolováno",
+  "downloadsUnreadable": "{count, plural, one{1 poznámku nelze obnovit} few{{count} poznámky nelze obnovit} other{{count} poznámek nelze obnovit}}",
+  "@downloadsUnreadable": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "downloadsMissing": "{count, plural, one{1 poznámku server už nevypisuje} few{{count} poznámky server už nevypisuje} other{{count} poznámek server už nevypisuje}}",
+  "@downloadsMissing": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "decisionsNone": "Žádná poznámka nečeká na rozhodnutí",
+  "deletionsNone": "Žádné mazání nečeká",
+  "deletionsWaiting": "{count, plural, one{1 smazání čeká na server} few{{count} smazání čekají na server} other{{count} smazání čeká na server}}",
+  "@deletionsWaiting": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "deletionsFailed": "{count, plural, one{1 smazání selhalo} few{{count} smazání selhala} other{{count} smazání selhalo}}",
+  "@deletionsFailed": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "reviewItems": "Zkontrolovat",
+  "rowSavedWaiting": "Uloženo v zařízení · Čeká na odeslání",
+  "rowUploading": "Odesílají se změny",
+  "rowNeedsDecision": "Čeká na vaše rozhodnutí",
+  "rowUnavailable": "Tuto poznámku nelze obnovit",
+  "rowMissing": "Server ji už nevypisuje",
+  "rowSharedEdit": "Sdíleno · Lze upravovat",
+  "rowSharedView": "Sdíleno · Jen pro čtení",
+  "attachmentsCount": "{count, plural, one{1 příloha} few{{count} přílohy} other{{count} příloh}}",
+  "@attachmentsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "rowMenu": "Akce pro {title}",
+  "@rowMenu": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "openNote": "Otevřít",
+  "moveNote": "Přesunout",
+  "rowDeletionWaiting": "Smazání čeká",
+  "rowDeletionFailed": "Smazání selhalo · {reason}",
+  "@rowDeletionFailed": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "undoAction": "Zpět",
+  "saveCopy": "Uložit kopii",
+  "categoryCount": "{name}, {count, plural, one{1 poznámka} few{{count} poznámky} other{{count} poznámek}} včetně podkategorií",
+  "@categoryCount": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "expandCategory": "Rozbalit {name}",
+  "@expandCategory": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "collapseCategory": "Sbalit {name}",
+  "@collapseCategory": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "openSubtree": "Zobrazit {name} samostatně",
+  "@openSubtree": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "allCategoriesUp": "Všechny kategorie",
+  "createNote": "Poznámka",
+  "createChecklist": "Seznam úkolů",
+  "createTemplate": "Šablona",
+  "createDaily": "Denní poznámka",
+  "createWhere": "Do které kategorie poznámka patří?",
+  "createNoteAction": "Vytvořit poznámku",
+  "createHere": "Vytvořit zde",
+  "filterTasks": "Nedokončené úkoly",
+  "filterAttachments": "S přílohami",
+  "filterShared": "Sdílené",
+  "filterWaiting": "Ještě neodesláno",
+  "filterDecision": "Čeká na rozhodnutí",
+  "filterSharing": "Sdílení",
+  "filterSync": "Stav synchronizace",
+  "clearFilters": "Zrušit filtry",
+  "sortTitle": "Řazení",
+  "sortFavoritesFirst": "Nejdřív oblíbené",
+  "emptyFavoritesTitle": "Zatím žádné oblíbené",
+  "emptyFavoritesBody": "Označte poznámku hvězdičkou a najdete ji tady. Použijte nabídku poznámky nebo ji přejeďte.",
+  "emptySharedTitle": "Nic s vámi není sdíleno",
+  "emptySharedBody": "Poznámky, které s tímto účtem sdílejí ostatní, se zobrazí tady.",
+  "emptyAttentionTitle": "Nic nevyžaduje vaši pozornost",
+  "emptyAttentionBody": "Rozhodnutí, nezdařená mazání a poznámky, které nelze obnovit, se zobrazí tady.",
+  "emptyCategoryTitle": "Kategorie {category} je prázdná",
+  "@emptyCategoryTitle": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "downloadingTitle": "Stahují se vaše poznámky",
+  "downloadingBody": "{count, plural, one{Zatím stažena 1 poznámka} few{Zatím staženy {count} poznámky} other{Zatím staženo {count} poznámek}}",
+  "@downloadingBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "connectNextcloud": "Připojit Nextcloud",
+  "scanLoginQr": "Naskenovat přihlašovací QR kód",
+  "selectedCount": "{count, plural, one{vybrána 1} few{vybrány {count}} other{vybráno {count}}}",
+  "@selectedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "bulkFavorite": "Oblíbit",
+  "bulkUnfavorite": "Odebrat z oblíbených",
+  "bulkMove": "Přesunout",
+  "bulkExport": "Exportovat",
+  "bulkMixedMove": "Přesun není dostupný, protože některé vybrané poznámky jsou jen pro čtení, sdílené nebo mají přílohy.",
+  "bulkMixedDelete": "Smazání není dostupné, protože některé vybrané poznámky jsou jen pro čtení, sdílené nebo se právě odesílají.",
+  "bulkMixedFavorite": "Oblíbení není dostupné, protože některé vybrané poznámky jsou sdílené.",
+  "bulkDeleteConfirm": "{count, plural, one{Smazat 1 poznámku?} few{Smazat {count} poznámky?} other{Smazat {count} poznámek?}}",
+  "@bulkDeleteConfirm": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "bulkDeleteBody": "Poznámky se smažou i na serveru. Do provedení na serveru to můžete vrátit zpět.",
+  "notesDeleted": "{count, plural, one{Smazána 1 poznámka} few{Smazány {count} poznámky} other{Smazáno {count} poznámek}}",
+  "@notesDeleted": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "notesMoved": "{count, plural, one{Přesunuta 1 poznámka} few{Přesunuty {count} poznámky} other{Přesunuto {count} poznámek}}",
+  "@notesMoved": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "bulkFailed": "{count, plural, one{1 poznámku se nepodařilo změnit} few{{count} poznámky se nepodařilo změnit} other{{count} poznámek se nepodařilo změnit}}",
+  "@bulkFailed": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "moveTitle": "Přesunout do kategorie",
+  "moveNewCategory": "Nová kategorie",
+  "moveNewCategoryHint": "Název, podkategorie oddělte /",
+  "clearSelection": "Zrušit výběr",
+  "rowFavoriteOn": "Přidat do oblíbených",
+  "rowFavoriteOff": "Odebrat z oblíbených"
 }

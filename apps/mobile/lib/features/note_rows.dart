@@ -1,7 +1,10 @@
 import 'package:notes_store/notes_store.dart';
 import '../core/markdown/markdown_document.dart';
 
-enum NoteScope { all, favorites, uncategorised, category }
+/// Where in the notebook the list looks. [category] covers the category and
+/// its subcategories; [attention] is answered by the attention feed, not by
+/// the rows.
+enum NoteScope { all, favorites, uncategorised, shared, attention, category }
 
 /// A short plain-text preview of [content] for a list row. The first line is
 /// skipped when it only repeats [title]; Markdown markers are removed.
@@ -24,7 +27,7 @@ class NoteRow {
     this.excerpt,
     this.tasksDone,
     this.tasksTotal,
-    this.attachments,
+    this.attachmentCount,
     this.haystack,
   );
 
@@ -40,7 +43,7 @@ class NoteRow {
         previous.excerpt,
         previous.tasksDone,
         previous.tasksTotal,
-        previous.attachments,
+        previous.attachmentCount,
         previous.haystack,
       );
     }
@@ -55,7 +58,7 @@ class NoteRow {
       doc.excerpt(title),
       tasks.done,
       tasks.total,
-      doc.attachments.isNotEmpty,
+      doc.attachments.length,
       '${note.title}\n${note.content}\n${note.category}'.toLowerCase(),
     );
   }
@@ -67,15 +70,30 @@ class NoteRow {
   final String excerpt;
   final int tasksDone;
   final int tasksTotal;
-  final bool attachments;
+  final int attachmentCount;
 
   /// Lowercased title, content and category for search.
   final String haystack;
 
+  bool get attachments => attachmentCount > 0;
+  bool get hasOpenTasks => tasksTotal > tasksDone;
+  bool get isShared => note.kind == 'shared';
+
+  /// The server or this device cannot hand out a current copy of the text.
+  bool get unavailable =>
+      note.unreadable == true || note.syncState == 'unreadable';
+  bool get missing => note.missingSince != null;
+
+  /// Row of [accountId]'s attention feed that stays in the ordinary list.
+  bool get needsAttention =>
+      note.syncState == 'needsDecision' || unavailable || missing;
+
   bool inScope(NoteScope scope, String category) => switch (scope) {
     NoteScope.all => true,
     NoteScope.favorites => note.favorite,
-    NoteScope.uncategorised => note.category.isEmpty,
+    NoteScope.uncategorised => note.category.isEmpty && !isShared,
+    NoteScope.shared => isShared,
+    NoteScope.attention => needsAttention,
     NoteScope.category =>
       note.category == category || note.category.startsWith('$category/'),
   };

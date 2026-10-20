@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:nextcloudnotes/features/category_panel.dart';
+import 'package:nextcloudnotes/features/collection/editor_pane.dart';
+import 'package:nextcloudnotes/features/collection/notebook_actions.dart';
+import 'package:nextcloudnotes/features/search/search_filters.dart';
 import 'package:nextcloudnotes/features/note_rows.dart';
-import 'package:nextcloudnotes/features/note_tile.dart';
 import 'package:nextcloudnotes/l10n/app_localizations.dart';
 import 'package:notes_store/notes_store.dart';
 
@@ -131,68 +132,90 @@ void main() {
     });
   });
 
-  testWidgets('CategoryPanel expands and selects', (tester) async {
-    final tree = buildCategoryTree({'Work/Projects': 2});
-    var toggled = '';
-    NoteScope? selected;
-    String? selectedPath;
-    Widget panel(Set<String> expanded) => app(
-      CategoryPanel(
-        tree: tree,
-        total: 5,
-        favorites: 1,
-        uncategorised: 3,
-        scope: NoteScope.all,
-        category: '',
-        expanded: expanded,
-        onSelect: (s, c) {
-          selected = s;
-          selectedPath = c;
-        },
-        onToggle: (p) => toggled = p,
-      ),
-    );
-    await tester.pumpWidget(panel({}));
-    expect(find.text('All notes'), findsOneWidget);
-    expect(find.text('Uncategorised'), findsOneWidget);
-    expect(find.text('Projects'), findsNothing);
-    await tester.tap(find.byIcon(Icons.chevron_right));
-    expect(toggled, 'Work');
-    await tester.pumpWidget(panel({'Work'}));
-    await tester.tap(find.text('Projects'));
-    expect(selected, NoteScope.category);
-    expect(selectedPath, 'Work/Projects');
+  group('selectRows', () {
+    final rows = [
+      NoteRow.of(note(title: 'Alpha', content: '- [ ] a', favorite: true)),
+      NoteRow.of(note(title: 'beta', content: '- [x] b')),
+      NoteRow.of(note(title: 'Gamma', category: 'Work/Plans')),
+    ];
+
+    test('filters combine with the query', () {
+      expect(
+        selectRows(
+          rows,
+          scope: NoteScope.all,
+          filters: const NoteFilters(unfinishedTasks: true),
+        ).map((r) => r.title),
+        ['Alpha'],
+      );
+      expect(
+        selectRows(
+          rows,
+          scope: NoteScope.all,
+          query: 'WORK',
+        ).map((r) => r.title),
+        ['Gamma'],
+      );
+    });
+
+    test('title sort ignores case, favorites first keeps the order', () {
+      expect(
+        selectRows(
+          rows,
+          scope: NoteScope.all,
+          sort: SortMode.title,
+        ).map((r) => r.title),
+        ['Alpha', 'beta', 'Gamma'],
+      );
+      expect(
+        selectRows(
+          rows,
+          scope: NoteScope.all,
+          sort: SortMode.favoritesFirst,
+        ).map((r) => r.title),
+        ['Alpha', 'beta', 'Gamma'],
+      );
+    });
+
+    test('filters survive a round trip through JSON', () {
+      const f = NoteFilters(favorites: true, sync: SyncFilter.decision);
+      expect(NoteFilters.fromJson(f.toJson()), f);
+    });
   });
 
-  testWidgets('NoteTile shows progress, category and explicit state', (
-    tester,
-  ) async {
-    final row = NoteRow.of(
-      note(
-        title: 'Trip',
-        content: '# Trip\n- [x] a\n- [ ] b\n.attachments.',
-        category: 'Travel',
-        syncState: 'needsDecision',
-        favorite: true,
-      ),
-    );
-    await tester.pumpWidget(
-      app(NoteTile(row: row, showCategory: true, onTap: () {})),
-    );
-    expect(find.text('Trip'), findsOneWidget);
-    expect(find.text('1/2'), findsOneWidget);
-    expect(find.text('Travel'), findsOneWidget);
-    expect(find.text('Needs decision'), findsOneWidget);
-    expect(find.byIcon(Icons.cloud_upload_outlined), findsNothing);
-    expect(find.byIcon(Icons.star), findsOneWidget);
+  group('notebookLayout', () {
+    test('follows the width and gives way to large text', () {
+      expect(notebookLayout(411, 1), NotebookLayout.phone);
+      expect(notebookLayout(839, 1), NotebookLayout.phone);
+      expect(notebookLayout(840, 1), NotebookLayout.twoPane);
+      expect(notebookLayout(1280, 1), NotebookLayout.threePane);
+      expect(notebookLayout(1280, 1.5), NotebookLayout.twoPane);
+      expect(notebookLayout(1280, 2), NotebookLayout.phone);
+    });
   });
 
-  testWidgets('NoteTile of a clean note has no state label', (tester) async {
-    final row = NoteRow.of(note(content: 'text'));
-    await tester.pumpWidget(
-      app(NoteTile(row: row, showCategory: false, onTap: () {})),
-    );
-    expect(find.text('Waiting'), findsNothing);
-    expect(find.text('Just now'), findsOneWidget);
+  group('bulk permissions', () {
+    final plain = NoteRow.of(note());
+    final readonly = NoteRow.of(note().copyWith(readonly: true));
+    final shared = NoteRow.of(note().copyWith(kind: 'shared'));
+    final attached = NoteRow.of(note(content: '![a](.attachments.1/a.png)'));
+
+    test('a read-only note can only change its star', () {
+      expect(canFavorite(readonly.note), isTrue);
+      expect(canMove(readonly), isFalse);
+      expect(canDelete(readonly.note), isFalse);
+    });
+
+    test('a shared note allows none of them', () {
+      expect(canFavorite(shared.note), isFalse);
+      expect(canMove(shared), isFalse);
+      expect(canDelete(shared.note), isFalse);
+    });
+
+    test('a note with attachments cannot change category', () {
+      expect(canMove(attached), isFalse);
+      expect(canDelete(attached.note), isTrue);
+      expect(canMove(plain), isTrue);
+    });
   });
 }
