@@ -273,4 +273,25 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get mergeBoth => 'Combine both versions';
+
+  @override
+  String get editNote => 'Edit';
+
+  @override
+  String get fmtBold => 'Bold';
+
+  @override
+  String get fmtItalic => 'Italic';
+
+  @override
+  String get fmtHeading => 'Heading';
+
+  @override
+  String get fmtList => 'List';
+
+  @override
+  String get fmtChecklist => 'Checklist';
+
+  @override
+  String get fmtLink => 'Link';
 }

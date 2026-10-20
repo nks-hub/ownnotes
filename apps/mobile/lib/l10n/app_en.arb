@@ -49,7 +49,8 @@
       "count": {"type": "int"}
     }
   },
-  "importFailed": "Import failed. The file is not a Google Takeout zip with Keep notes.",
+  "importFailed": "Import failed. The file is not a Google Takeout zip with Keep notes."
+,
   "delete": "Delete",
   "deleteConfirm": "Delete this note? It is also deleted on the server.",
   "allCategories": "All",
@@ -98,5 +99,12 @@
   "remoteDeleted": "This note was deleted on the server meanwhile. The text on this phone is kept.",
   "uploadAgain": "Upload it to the server again",
   "deleteHere": "Delete on this phone too",
-  "mergeBoth": "Combine both versions"
+  "mergeBoth": "Combine both versions",
+  "editNote": "Edit",
+  "fmtBold": "Bold",
+  "fmtItalic": "Italic",
+  "fmtHeading": "Heading",
+  "fmtList": "List",
+  "fmtChecklist": "Checklist",
+  "fmtLink": "Link"
 }

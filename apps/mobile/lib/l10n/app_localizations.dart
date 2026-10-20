@@ -571,6 +571,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Combine both versions'**
   String get mergeBoth;
+
+  /// No description provided for @editNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get editNote;
+
+  /// No description provided for @fmtBold.
+  ///
+  /// In en, this message translates to:
+  /// **'Bold'**
+  String get fmtBold;
+
+  /// No description provided for @fmtItalic.
+  ///
+  /// In en, this message translates to:
+  /// **'Italic'**
+  String get fmtItalic;
+
+  /// No description provided for @fmtHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Heading'**
+  String get fmtHeading;
+
+  /// No description provided for @fmtList.
+  ///
+  /// In en, this message translates to:
+  /// **'List'**
+  String get fmtList;
+
+  /// No description provided for @fmtChecklist.
+  ///
+  /// In en, this message translates to:
+  /// **'Checklist'**
+  String get fmtChecklist;
+
+  /// No description provided for @fmtLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Link'**
+  String get fmtLink;
 }
 
 class _AppLocalizationsDelegate

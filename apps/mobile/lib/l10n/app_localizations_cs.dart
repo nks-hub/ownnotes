@@ -274,4 +274,25 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get mergeBoth => 'Spojit obě verze';
+
+  @override
+  String get editNote => 'Upravit';
+
+  @override
+  String get fmtBold => 'Tučně';
+
+  @override
+  String get fmtItalic => 'Kurzíva';
+
+  @override
+  String get fmtHeading => 'Nadpis';
+
+  @override
+  String get fmtList => 'Seznam';
+
+  @override
+  String get fmtChecklist => 'Úkoly';
+
+  @override
+  String get fmtLink => 'Odkaz';
 }

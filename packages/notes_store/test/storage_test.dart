@@ -107,6 +107,35 @@ void main() {
       expect(vault.data.length, 1);
     },
   );
+  test('saveConflict keeps the local text and waits for a decision', () async {
+    final a = await accounts.add(credentials);
+    await db.applyPull(a, 0, [remote(7, 'base')]);
+    final note = (await db.select(db.localNotes).get()).single;
+    final revision = await db.saveConflict(
+      accountId: a,
+      id: note.id,
+      revision: note.revision,
+      title: note.title,
+      content: 'local',
+      category: '',
+      favorite: false,
+    );
+    final saved = (await db.note(a, note.id))!;
+    expect(saved.revision, revision);
+    expect(saved.content, 'local');
+    expect(saved.syncState, 'needsDecision');
+    // Further typing keeps the decision instead of queueing an upload.
+    await db.saveDraft(
+      accountId: a,
+      id: note.id,
+      revision: revision,
+      title: note.title,
+      content: 'local 2',
+      category: '',
+      favorite: false,
+    );
+    expect((await db.note(a, note.id))!.syncState, 'needsDecision');
+  });
   test(
     'pull preserves dirty draft and rejects old read after mutation epoch',
     () async {
