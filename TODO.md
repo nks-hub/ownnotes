@@ -29,19 +29,13 @@ per-note remembered view mode, or honouring the server's `noteMode=preview`.
 Everyday features the original app has:
 
 - [ ] iOS: background sync (BGTaskScheduler) and a WidgetKit widget.
-      Android has both. The widget needs the App Group registered in the
-      Apple developer portal (see below); background tasks never run in the
-      simulator, so both need a signed build on an iPhone.
+      Android has both. The App Group is registered; background tasks never
+      run in the simulator, so both need a signed build on an iPhone.
 
 ### Earlier
 
-- [ ] Create the app **OwnNotes** (`com.nkshub.nextcloudnotes`) in Google Play Console (web only, owner login). Texts, icon and data safety answers: [docs/store/play-listing.md](docs/store/play-listing.md). Then upload with `tool/play_upload.py` (draft status until the first publish).
-- [ ] Privacy policy URL for the Play listing (Sentry and Rybbit telemetry).
 - [ ] Keep import: images and audio from Takeout are skipped until
       attachment upload exists (slice 10).
-- [ ] iOS App Group `group.com.nkshub.nextcloudnotes` and the ShareExtension
-      bundle id must be registered in the Apple developer portal before a
-      signed device/TestFlight build (simulator works without it).
 - [ ] Remaining delivery slices from
       [implementation plan](docs/architecture/implementation-plan.md) and
       gates in [status](docs/acceptance/status.md).
@@ -125,6 +119,11 @@ Everyday features the original app has:
     24 s after the network came back, no tap);
   - sort by title or last change, remembered (`63122a6`).
 
+- 2026-10-20 Store distribution: Google Play closed testing published
+  (versionCode 1, listing from [docs/store/play-listing.md](docs/store/play-listing.md),
+  privacy policy https://ownnotes.nks-hub.cz/p/soukromi); iOS build 1 in
+  TestFlight for internal testers and in beta review for the external group.
+  App Group and ShareExtension bundle id registered in the Apple portal.
 - 2026-10-19 Release identity: **OwnNotes**, `com.nkshub.nextcloudnotes` on Android and iOS, candidate builds via `--android-project-arg=candidate=true`; upload keystore and release signing without debug fallback; app icon (`tool/make_icons.py`); Play upload script (`tool/play_upload.py`, checked against the API: package not found until the app exists). Signed release APK verified on Galaxy S9: login, pull and a new note reached the server.
 - 2026-10-19 Preview shows images attached to the note (`.attachments.<id>/...`) through the Notes attachment API with the account credentials (`74aee59`); remote http images stay placeholders. Verified on Galaxy S9 with a real attachment on the Docker server.
 - 2026-10-19 Renaming a note or changing its category no longer ends as a
