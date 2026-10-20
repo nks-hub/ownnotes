@@ -98,6 +98,11 @@ references: [docs/research/review-2026-10-20.md](docs/research/review-2026-10-20
 - [ ] File versions and trash from Nextcloud (DAV), restore keeps the draft.
 - [ ] Bulk actions in the list (delete, move, favorite).
 - [ ] Keep the incremental-pull marker across restarts; use the list ETag.
+- [ ] Instant updates through notify_push when the server has it, instead
+      of asking every 4 s while a note is open.
+- [ ] Desktop builds (Windows, macOS) like OwnTalk.
+- [ ] Fast start: measure cold start to a cursor in a new note and keep it
+      under 1 s on the S9.
 
 ## Ideas
 
@@ -110,3 +115,11 @@ references: [docs/research/review-2026-10-20.md](docs/research/review-2026-10-20
 - [ ] Online search through Nextcloud unified search.
 - [ ] Notification when a conflict needs a decision.
 - [ ] Grid layout, word and character count.
+- [ ] Voice recording and a sketch as attachments.
+- [ ] `#tags` written in the note text as a filter next to categories.
+      Notes has no tags; they stay plain text, so other clients see them.
+- [ ] Text recognition in attached images and PDFs for search, on the
+      device (ML Kit, Apple Vision), never sent anywhere.
+- [ ] Summary and grammar check through the Nextcloud Assistant of the
+      user's own server, only when the server offers it.
+- [ ] Lock chosen categories separately with biometrics.
