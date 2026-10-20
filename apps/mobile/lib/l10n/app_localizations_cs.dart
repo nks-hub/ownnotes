@@ -742,4 +742,460 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get appLocked => 'OwnNotes je zamčené';
+
+  @override
+  String get categoriesMenu => 'Kategorie';
+
+  @override
+  String get moreOptions => 'Další možnosti';
+
+  @override
+  String get syncNow => 'Synchronizovat hned';
+
+  @override
+  String get syncDetails => 'Podrobnosti synchronizace';
+
+  @override
+  String get selectNotes => 'Vybrat poznámky';
+
+  @override
+  String get sortAndFilter => 'Řazení a filtry';
+
+  @override
+  String accountSyncHint(String account) {
+    return 'Podrobnosti synchronizace pro $account';
+  }
+
+  @override
+  String get checkingForUpdates => 'Kontrola aktualizací';
+
+  @override
+  String syncSavedWaiting(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Uloženo v zařízení · čeká $count',
+      few: 'Uloženo v zařízení · čekají $count',
+      one: 'Uloženo v zařízení · čeká 1',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String syncUploading(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Odesílá se $count změn',
+      few: 'Odesílají se $count změny',
+      one: 'Odesílá se 1 změna',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String syncUpToDate(String time) {
+    return 'Aktuální · zkontrolováno $time';
+  }
+
+  @override
+  String get syncOffline => 'Offline · změny jsou uložené v zařízení';
+
+  @override
+  String get syncOfflineShort => 'Offline';
+
+  @override
+  String get syncAuthFailure =>
+      'Přihlaste se znovu · místní poznámky zůstávají';
+
+  @override
+  String get syncSaveFailure => 'Uložení v tomto zařízení se nepodařilo';
+
+  @override
+  String get needsAttention => 'Vyžaduje pozornost';
+
+  @override
+  String get sharedWithMe => 'Sdíleno se mnou';
+
+  @override
+  String get savedViews => 'Uložená zobrazení';
+
+  @override
+  String get onThisDevice => 'V tomto zařízení';
+
+  @override
+  String get saveView => 'Uložit toto zobrazení';
+
+  @override
+  String get saveViewName => 'Název zobrazení';
+
+  @override
+  String get deleteView => 'Smazat uložené zobrazení';
+
+  @override
+  String get sheetUploads => 'Odesílání';
+
+  @override
+  String get sheetDownloads => 'Stahování';
+
+  @override
+  String get sheetDecisions => 'Rozhodnutí';
+
+  @override
+  String get sheetDeletions => 'Mazání';
+
+  @override
+  String get uploadsNone => 'Nic nečeká na odeslání';
+
+  @override
+  String get downloadsNever => 'Zatím nezkontrolováno';
+
+  @override
+  String downloadsUnreadable(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count poznámek nelze obnovit',
+      few: '$count poznámky nelze obnovit',
+      one: '1 poznámku nelze obnovit',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String downloadsMissing(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count poznámek server už nevypisuje',
+      few: '$count poznámky server už nevypisuje',
+      one: '1 poznámku server už nevypisuje',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get decisionsNone => 'Žádná poznámka nečeká na rozhodnutí';
+
+  @override
+  String get deletionsNone => 'Žádné mazání nečeká';
+
+  @override
+  String deletionsWaiting(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count smazání čeká na server',
+      few: '$count smazání čekají na server',
+      one: '1 smazání čeká na server',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String deletionsFailed(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count smazání selhalo',
+      few: '$count smazání selhala',
+      one: '1 smazání selhalo',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get reviewItems => 'Zkontrolovat';
+
+  @override
+  String get rowSavedWaiting => 'Uloženo v zařízení · Čeká na odeslání';
+
+  @override
+  String get rowUploading => 'Odesílají se změny';
+
+  @override
+  String get rowNeedsDecision => 'Čeká na vaše rozhodnutí';
+
+  @override
+  String get rowUnavailable => 'Tuto poznámku nelze obnovit';
+
+  @override
+  String get rowMissing => 'Server ji už nevypisuje';
+
+  @override
+  String get rowSharedEdit => 'Sdíleno · Lze upravovat';
+
+  @override
+  String get rowSharedView => 'Sdíleno · Jen pro čtení';
+
+  @override
+  String attachmentsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count příloh',
+      few: '$count přílohy',
+      one: '1 příloha',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String rowMenu(String title) {
+    return 'Akce pro $title';
+  }
+
+  @override
+  String get openNote => 'Otevřít';
+
+  @override
+  String get moveNote => 'Přesunout';
+
+  @override
+  String get rowDeletionWaiting => 'Smazání čeká';
+
+  @override
+  String rowDeletionFailed(String reason) {
+    return 'Smazání selhalo · $reason';
+  }
+
+  @override
+  String get undoAction => 'Zpět';
+
+  @override
+  String get saveCopy => 'Uložit kopii';
+
+  @override
+  String categoryCount(String name, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count poznámek',
+      few: '$count poznámky',
+      one: '1 poznámka',
+    );
+    return '$name, $_temp0 včetně podkategorií';
+  }
+
+  @override
+  String expandCategory(String name) {
+    return 'Rozbalit $name';
+  }
+
+  @override
+  String collapseCategory(String name) {
+    return 'Sbalit $name';
+  }
+
+  @override
+  String openSubtree(String name) {
+    return 'Zobrazit $name samostatně';
+  }
+
+  @override
+  String get allCategoriesUp => 'Všechny kategorie';
+
+  @override
+  String get createNote => 'Poznámka';
+
+  @override
+  String get createChecklist => 'Seznam úkolů';
+
+  @override
+  String get createTemplate => 'Šablona';
+
+  @override
+  String get createDaily => 'Denní poznámka';
+
+  @override
+  String get createWhere => 'Do které kategorie poznámka patří?';
+
+  @override
+  String get createNoteAction => 'Vytvořit poznámku';
+
+  @override
+  String get createHere => 'Vytvořit zde';
+
+  @override
+  String get filterTasks => 'Nedokončené úkoly';
+
+  @override
+  String get filterAttachments => 'S přílohami';
+
+  @override
+  String get filterShared => 'Sdílené';
+
+  @override
+  String get filterWaiting => 'Ještě neodesláno';
+
+  @override
+  String get filterDecision => 'Čeká na rozhodnutí';
+
+  @override
+  String get filterSharing => 'Sdílení';
+
+  @override
+  String get filterSync => 'Stav synchronizace';
+
+  @override
+  String get clearFilters => 'Zrušit filtry';
+
+  @override
+  String get sortTitle => 'Řazení';
+
+  @override
+  String get sortFavoritesFirst => 'Nejdřív oblíbené';
+
+  @override
+  String get emptyFavoritesTitle => 'Zatím žádné oblíbené';
+
+  @override
+  String get emptyFavoritesBody =>
+      'Označte poznámku hvězdičkou a najdete ji tady. Použijte nabídku poznámky nebo ji přejeďte.';
+
+  @override
+  String get emptySharedTitle => 'Nic s vámi není sdíleno';
+
+  @override
+  String get emptySharedBody =>
+      'Poznámky, které s tímto účtem sdílejí ostatní, se zobrazí tady.';
+
+  @override
+  String get emptyAttentionTitle => 'Nic nevyžaduje vaši pozornost';
+
+  @override
+  String get emptyAttentionBody =>
+      'Rozhodnutí, nezdařená mazání a poznámky, které nelze obnovit, se zobrazí tady.';
+
+  @override
+  String emptyCategoryTitle(String category) {
+    return 'Kategorie $category je prázdná';
+  }
+
+  @override
+  String get downloadingTitle => 'Stahují se vaše poznámky';
+
+  @override
+  String downloadingBody(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Zatím staženo $count poznámek',
+      few: 'Zatím staženy $count poznámky',
+      one: 'Zatím stažena 1 poznámka',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get connectNextcloud => 'Připojit Nextcloud';
+
+  @override
+  String get scanLoginQr => 'Naskenovat přihlašovací QR kód';
+
+  @override
+  String selectedCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'vybráno $count',
+      few: 'vybrány $count',
+      one: 'vybrána 1',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get bulkFavorite => 'Oblíbit';
+
+  @override
+  String get bulkUnfavorite => 'Odebrat z oblíbených';
+
+  @override
+  String get bulkMove => 'Přesunout';
+
+  @override
+  String get bulkExport => 'Exportovat';
+
+  @override
+  String get bulkMixedMove =>
+      'Přesun není dostupný, protože některé vybrané poznámky jsou jen pro čtení, sdílené nebo mají přílohy.';
+
+  @override
+  String get bulkMixedDelete =>
+      'Smazání není dostupné, protože některé vybrané poznámky jsou jen pro čtení, sdílené nebo se právě odesílají.';
+
+  @override
+  String get bulkMixedFavorite =>
+      'Oblíbení není dostupné, protože některé vybrané poznámky jsou sdílené.';
+
+  @override
+  String bulkDeleteConfirm(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Smazat $count poznámek?',
+      few: 'Smazat $count poznámky?',
+      one: 'Smazat 1 poznámku?',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get bulkDeleteBody =>
+      'Poznámky se smažou i na serveru. Do provedení na serveru to můžete vrátit zpět.';
+
+  @override
+  String notesDeleted(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Smazáno $count poznámek',
+      few: 'Smazány $count poznámky',
+      one: 'Smazána 1 poznámka',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String notesMoved(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Přesunuto $count poznámek',
+      few: 'Přesunuty $count poznámky',
+      one: 'Přesunuta 1 poznámka',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String bulkFailed(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count poznámek se nepodařilo změnit',
+      few: '$count poznámky se nepodařilo změnit',
+      one: '1 poznámku se nepodařilo změnit',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get moveTitle => 'Přesunout do kategorie';
+
+  @override
+  String get moveNewCategory => 'Nová kategorie';
+
+  @override
+  String get moveNewCategoryHint => 'Název, podkategorie oddělte /';
+
+  @override
+  String get clearSelection => 'Zrušit výběr';
+
+  @override
+  String get rowFavoriteOn => 'Přidat do oblíbených';
+
+  @override
+  String get rowFavoriteOff => 'Odebrat z oblíbených';
 }

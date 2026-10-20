@@ -734,4 +734,445 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get appLocked => 'OwnNotes is locked';
+
+  @override
+  String get categoriesMenu => 'Categories';
+
+  @override
+  String get moreOptions => 'More options';
+
+  @override
+  String get syncNow => 'Sync now';
+
+  @override
+  String get syncDetails => 'Sync details';
+
+  @override
+  String get selectNotes => 'Select notes';
+
+  @override
+  String get sortAndFilter => 'Sort and filter';
+
+  @override
+  String accountSyncHint(String account) {
+    return 'Sync details for $account';
+  }
+
+  @override
+  String get checkingForUpdates => 'Checking for updates';
+
+  @override
+  String syncSavedWaiting(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Saved on device · $count waiting',
+      one: 'Saved on device · 1 waiting',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String syncUploading(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Uploading $count changes',
+      one: 'Uploading 1 change',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String syncUpToDate(String time) {
+    return 'Up to date · checked $time';
+  }
+
+  @override
+  String get syncOffline => 'Offline · changes saved on device';
+
+  @override
+  String get syncOfflineShort => 'Offline';
+
+  @override
+  String get syncAuthFailure => 'Sign in again · local notes retained';
+
+  @override
+  String get syncSaveFailure => 'Could not save on this device';
+
+  @override
+  String get needsAttention => 'Needs attention';
+
+  @override
+  String get sharedWithMe => 'Shared with me';
+
+  @override
+  String get savedViews => 'Saved views';
+
+  @override
+  String get onThisDevice => 'On this device';
+
+  @override
+  String get saveView => 'Save this view';
+
+  @override
+  String get saveViewName => 'Name of the view';
+
+  @override
+  String get deleteView => 'Delete saved view';
+
+  @override
+  String get sheetUploads => 'Uploads';
+
+  @override
+  String get sheetDownloads => 'Downloads';
+
+  @override
+  String get sheetDecisions => 'Decisions';
+
+  @override
+  String get sheetDeletions => 'Deletions';
+
+  @override
+  String get uploadsNone => 'Nothing waiting to upload';
+
+  @override
+  String get downloadsNever => 'Not checked yet';
+
+  @override
+  String downloadsUnreadable(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count notes cannot be refreshed',
+      one: '1 note cannot be refreshed',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String downloadsMissing(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count notes are no longer listed by the server',
+      one: '1 note is no longer listed by the server',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get decisionsNone => 'No notes need a decision';
+
+  @override
+  String get deletionsNone => 'No deletions waiting';
+
+  @override
+  String deletionsWaiting(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count deletions waiting for the server',
+      one: '1 deletion waiting for the server',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String deletionsFailed(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count deletions failed',
+      one: '1 deletion failed',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get reviewItems => 'Review';
+
+  @override
+  String get rowSavedWaiting => 'Saved on device · Waiting to upload';
+
+  @override
+  String get rowUploading => 'Uploading changes';
+
+  @override
+  String get rowNeedsDecision => 'Needs your decision';
+
+  @override
+  String get rowUnavailable => 'Cannot refresh this note';
+
+  @override
+  String get rowMissing => 'No longer listed by the server';
+
+  @override
+  String get rowSharedEdit => 'Shared · Can edit';
+
+  @override
+  String get rowSharedView => 'Shared · View only';
+
+  @override
+  String attachmentsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count attachments',
+      one: '1 attachment',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String rowMenu(String title) {
+    return 'Actions for $title';
+  }
+
+  @override
+  String get openNote => 'Open';
+
+  @override
+  String get moveNote => 'Move';
+
+  @override
+  String get rowDeletionWaiting => 'Deletion waiting';
+
+  @override
+  String rowDeletionFailed(String reason) {
+    return 'Deletion failed · $reason';
+  }
+
+  @override
+  String get undoAction => 'Undo';
+
+  @override
+  String get saveCopy => 'Save a copy';
+
+  @override
+  String categoryCount(String name, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count notes',
+      one: '1 note',
+    );
+    return '$name, $_temp0 including subcategories';
+  }
+
+  @override
+  String expandCategory(String name) {
+    return 'Expand $name';
+  }
+
+  @override
+  String collapseCategory(String name) {
+    return 'Collapse $name';
+  }
+
+  @override
+  String openSubtree(String name) {
+    return 'Show $name on its own';
+  }
+
+  @override
+  String get allCategoriesUp => 'All categories';
+
+  @override
+  String get createNote => 'Note';
+
+  @override
+  String get createChecklist => 'Checklist';
+
+  @override
+  String get createTemplate => 'Template';
+
+  @override
+  String get createDaily => 'Daily note';
+
+  @override
+  String get createWhere => 'Which category should the note go to?';
+
+  @override
+  String get createNoteAction => 'Create note';
+
+  @override
+  String get createHere => 'Create here';
+
+  @override
+  String get filterTasks => 'Unfinished tasks';
+
+  @override
+  String get filterAttachments => 'With attachments';
+
+  @override
+  String get filterShared => 'Shared';
+
+  @override
+  String get filterWaiting => 'Not uploaded yet';
+
+  @override
+  String get filterDecision => 'Needs a decision';
+
+  @override
+  String get filterSharing => 'Sharing';
+
+  @override
+  String get filterSync => 'Sync state';
+
+  @override
+  String get clearFilters => 'Clear filters';
+
+  @override
+  String get sortTitle => 'Sort';
+
+  @override
+  String get sortFavoritesFirst => 'Favorites first';
+
+  @override
+  String get emptyFavoritesTitle => 'No favorites yet';
+
+  @override
+  String get emptyFavoritesBody =>
+      'Star a note to find it here. Use the note menu or swipe a note.';
+
+  @override
+  String get emptySharedTitle => 'Nothing shared with you';
+
+  @override
+  String get emptySharedBody =>
+      'Notes that other people share with this account appear here.';
+
+  @override
+  String get emptyAttentionTitle => 'Nothing needs your attention';
+
+  @override
+  String get emptyAttentionBody =>
+      'Decisions, failed deletions and notes that cannot be refreshed appear here.';
+
+  @override
+  String emptyCategoryTitle(String category) {
+    return '$category is empty';
+  }
+
+  @override
+  String get downloadingTitle => 'Downloading your notes';
+
+  @override
+  String downloadingBody(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count notes downloaded so far',
+      one: '1 note downloaded so far',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get connectNextcloud => 'Connect Nextcloud';
+
+  @override
+  String get scanLoginQr => 'Scan login QR code';
+
+  @override
+  String selectedCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count selected',
+      one: '1 selected',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get bulkFavorite => 'Favorite';
+
+  @override
+  String get bulkUnfavorite => 'Remove from favorites';
+
+  @override
+  String get bulkMove => 'Move';
+
+  @override
+  String get bulkExport => 'Export';
+
+  @override
+  String get bulkMixedMove =>
+      'Move is unavailable because some selected notes are read-only, shared or have attachments.';
+
+  @override
+  String get bulkMixedDelete =>
+      'Delete is unavailable because some selected notes are read-only, shared or being sent.';
+
+  @override
+  String get bulkMixedFavorite =>
+      'Favorite is unavailable because some selected notes are shared.';
+
+  @override
+  String bulkDeleteConfirm(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Delete $count notes?',
+      one: 'Delete 1 note?',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get bulkDeleteBody =>
+      'The notes are also deleted on the server. You can undo this until the server has carried it out.';
+
+  @override
+  String notesDeleted(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count notes deleted',
+      one: '1 note deleted',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String notesMoved(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count notes moved',
+      one: '1 note moved',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String bulkFailed(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count notes could not be changed',
+      one: '1 note could not be changed',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get moveTitle => 'Move to category';
+
+  @override
+  String get moveNewCategory => 'New category';
+
+  @override
+  String get moveNewCategoryHint => 'Name, use / for subcategories';
+
+  @override
+  String get clearSelection => 'Cancel selection';
+
+  @override
+  String get rowFavoriteOn => 'Add to favorites';
+
+  @override
+  String get rowFavoriteOff => 'Remove from favorites';
 }

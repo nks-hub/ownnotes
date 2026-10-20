@@ -749,6 +749,8 @@ void main() {
     await settle();
     await tester.tap(find.byTooltip('New note'));
     await settle();
+    await tester.tap(find.widgetWithText(ListTile, 'Note'));
+    await settle();
     await tester.pageBack();
     await settle();
 
@@ -805,6 +807,8 @@ void main() {
     );
     await settle();
     await tester.tap(find.byTooltip('New note'));
+    await settle();
+    await tester.tap(find.widgetWithText(ListTile, 'Note'));
     await settle();
     final text = find.widgetWithText(TextField, 'Markdown text');
     await tester.tap(text);
@@ -913,7 +917,9 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     await tester.pumpAndSettle();
   });
-  testWidgets('unsent notes show a count and the reason', (tester) async {
+  testWidgets('unsent notes show the offline row and a waiting line', (
+    tester,
+  ) async {
     final runtime = (await tester.runAsync(
       () async => AppRuntime(
         NotesDatabase(NativeDatabase.memory()),
@@ -952,8 +958,8 @@ void main() {
     await settle();
 
     expect(runtime.sync.problem(accountId), 'offline');
-    expect(find.text('Not sent yet: 1'), findsOneWidget);
-    expect(find.textContaining('No connection'), findsOneWidget);
+    expect(find.text('Offline · changes saved on device'), findsOneWidget);
+    expect(find.text('Saved on device · Waiting to upload'), findsOneWidget);
     expect(find.text('Written offline'), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
     await tester.pumpAndSettle();

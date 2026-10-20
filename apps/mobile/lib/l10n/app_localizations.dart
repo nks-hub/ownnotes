@@ -1357,6 +1357,618 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'OwnNotes is locked'**
   String get appLocked;
+
+  /// No description provided for @categoriesMenu.
+  ///
+  /// In en, this message translates to:
+  /// **'Categories'**
+  String get categoriesMenu;
+
+  /// No description provided for @moreOptions.
+  ///
+  /// In en, this message translates to:
+  /// **'More options'**
+  String get moreOptions;
+
+  /// No description provided for @syncNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync now'**
+  String get syncNow;
+
+  /// No description provided for @syncDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync details'**
+  String get syncDetails;
+
+  /// No description provided for @selectNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Select notes'**
+  String get selectNotes;
+
+  /// No description provided for @sortAndFilter.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort and filter'**
+  String get sortAndFilter;
+
+  /// No description provided for @accountSyncHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync details for {account}'**
+  String accountSyncHint(String account);
+
+  /// No description provided for @checkingForUpdates.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking for updates'**
+  String get checkingForUpdates;
+
+  /// No description provided for @syncSavedWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{Saved on device · 1 waiting} other{Saved on device · {count} waiting}}'**
+  String syncSavedWaiting(int count);
+
+  /// No description provided for @syncUploading.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{Uploading 1 change} other{Uploading {count} changes}}'**
+  String syncUploading(int count);
+
+  /// No description provided for @syncUpToDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Up to date · checked {time}'**
+  String syncUpToDate(String time);
+
+  /// No description provided for @syncOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline · changes saved on device'**
+  String get syncOffline;
+
+  /// No description provided for @syncOfflineShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline'**
+  String get syncOfflineShort;
+
+  /// No description provided for @syncAuthFailure.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in again · local notes retained'**
+  String get syncAuthFailure;
+
+  /// No description provided for @syncSaveFailure.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save on this device'**
+  String get syncSaveFailure;
+
+  /// No description provided for @needsAttention.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs attention'**
+  String get needsAttention;
+
+  /// No description provided for @sharedWithMe.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared with me'**
+  String get sharedWithMe;
+
+  /// No description provided for @savedViews.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved views'**
+  String get savedViews;
+
+  /// No description provided for @onThisDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'On this device'**
+  String get onThisDevice;
+
+  /// No description provided for @saveView.
+  ///
+  /// In en, this message translates to:
+  /// **'Save this view'**
+  String get saveView;
+
+  /// No description provided for @saveViewName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name of the view'**
+  String get saveViewName;
+
+  /// No description provided for @deleteView.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete saved view'**
+  String get deleteView;
+
+  /// No description provided for @sheetUploads.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploads'**
+  String get sheetUploads;
+
+  /// No description provided for @sheetDownloads.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloads'**
+  String get sheetDownloads;
+
+  /// No description provided for @sheetDecisions.
+  ///
+  /// In en, this message translates to:
+  /// **'Decisions'**
+  String get sheetDecisions;
+
+  /// No description provided for @sheetDeletions.
+  ///
+  /// In en, this message translates to:
+  /// **'Deletions'**
+  String get sheetDeletions;
+
+  /// No description provided for @uploadsNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing waiting to upload'**
+  String get uploadsNone;
+
+  /// No description provided for @downloadsNever.
+  ///
+  /// In en, this message translates to:
+  /// **'Not checked yet'**
+  String get downloadsNever;
+
+  /// No description provided for @downloadsUnreadable.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 note cannot be refreshed} other{{count} notes cannot be refreshed}}'**
+  String downloadsUnreadable(int count);
+
+  /// No description provided for @downloadsMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 note is no longer listed by the server} other{{count} notes are no longer listed by the server}}'**
+  String downloadsMissing(int count);
+
+  /// No description provided for @decisionsNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No notes need a decision'**
+  String get decisionsNone;
+
+  /// No description provided for @deletionsNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No deletions waiting'**
+  String get deletionsNone;
+
+  /// No description provided for @deletionsWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 deletion waiting for the server} other{{count} deletions waiting for the server}}'**
+  String deletionsWaiting(int count);
+
+  /// No description provided for @deletionsFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 deletion failed} other{{count} deletions failed}}'**
+  String deletionsFailed(int count);
+
+  /// No description provided for @reviewItems.
+  ///
+  /// In en, this message translates to:
+  /// **'Review'**
+  String get reviewItems;
+
+  /// No description provided for @rowSavedWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved on device · Waiting to upload'**
+  String get rowSavedWaiting;
+
+  /// No description provided for @rowUploading.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploading changes'**
+  String get rowUploading;
+
+  /// No description provided for @rowNeedsDecision.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs your decision'**
+  String get rowNeedsDecision;
+
+  /// No description provided for @rowUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot refresh this note'**
+  String get rowUnavailable;
+
+  /// No description provided for @rowMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'No longer listed by the server'**
+  String get rowMissing;
+
+  /// No description provided for @rowSharedEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared · Can edit'**
+  String get rowSharedEdit;
+
+  /// No description provided for @rowSharedView.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared · View only'**
+  String get rowSharedView;
+
+  /// No description provided for @attachmentsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 attachment} other{{count} attachments}}'**
+  String attachmentsCount(int count);
+
+  /// No description provided for @rowMenu.
+  ///
+  /// In en, this message translates to:
+  /// **'Actions for {title}'**
+  String rowMenu(String title);
+
+  /// No description provided for @openNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get openNote;
+
+  /// No description provided for @moveNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Move'**
+  String get moveNote;
+
+  /// No description provided for @rowDeletionWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Deletion waiting'**
+  String get rowDeletionWaiting;
+
+  /// No description provided for @rowDeletionFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Deletion failed · {reason}'**
+  String rowDeletionFailed(String reason);
+
+  /// No description provided for @undoAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo'**
+  String get undoAction;
+
+  /// No description provided for @saveCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Save a copy'**
+  String get saveCopy;
+
+  /// No description provided for @categoryCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}, {count, plural, one{1 note} other{{count} notes}} including subcategories'**
+  String categoryCount(String name, int count);
+
+  /// No description provided for @expandCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Expand {name}'**
+  String expandCategory(String name);
+
+  /// No description provided for @collapseCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Collapse {name}'**
+  String collapseCategory(String name);
+
+  /// No description provided for @openSubtree.
+  ///
+  /// In en, this message translates to:
+  /// **'Show {name} on its own'**
+  String openSubtree(String name);
+
+  /// No description provided for @allCategoriesUp.
+  ///
+  /// In en, this message translates to:
+  /// **'All categories'**
+  String get allCategoriesUp;
+
+  /// No description provided for @createNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Note'**
+  String get createNote;
+
+  /// No description provided for @createChecklist.
+  ///
+  /// In en, this message translates to:
+  /// **'Checklist'**
+  String get createChecklist;
+
+  /// No description provided for @createTemplate.
+  ///
+  /// In en, this message translates to:
+  /// **'Template'**
+  String get createTemplate;
+
+  /// No description provided for @createDaily.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily note'**
+  String get createDaily;
+
+  /// No description provided for @createWhere.
+  ///
+  /// In en, this message translates to:
+  /// **'Which category should the note go to?'**
+  String get createWhere;
+
+  /// No description provided for @createNoteAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Create note'**
+  String get createNoteAction;
+
+  /// No description provided for @createHere.
+  ///
+  /// In en, this message translates to:
+  /// **'Create here'**
+  String get createHere;
+
+  /// No description provided for @filterTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'Unfinished tasks'**
+  String get filterTasks;
+
+  /// No description provided for @filterAttachments.
+  ///
+  /// In en, this message translates to:
+  /// **'With attachments'**
+  String get filterAttachments;
+
+  /// No description provided for @filterShared.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared'**
+  String get filterShared;
+
+  /// No description provided for @filterWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Not uploaded yet'**
+  String get filterWaiting;
+
+  /// No description provided for @filterDecision.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs a decision'**
+  String get filterDecision;
+
+  /// No description provided for @filterSharing.
+  ///
+  /// In en, this message translates to:
+  /// **'Sharing'**
+  String get filterSharing;
+
+  /// No description provided for @filterSync.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync state'**
+  String get filterSync;
+
+  /// No description provided for @clearFilters.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear filters'**
+  String get clearFilters;
+
+  /// No description provided for @sortTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort'**
+  String get sortTitle;
+
+  /// No description provided for @sortFavoritesFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Favorites first'**
+  String get sortFavoritesFirst;
+
+  /// No description provided for @emptyFavoritesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No favorites yet'**
+  String get emptyFavoritesTitle;
+
+  /// No description provided for @emptyFavoritesBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Star a note to find it here. Use the note menu or swipe a note.'**
+  String get emptyFavoritesBody;
+
+  /// No description provided for @emptySharedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing shared with you'**
+  String get emptySharedTitle;
+
+  /// No description provided for @emptySharedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes that other people share with this account appear here.'**
+  String get emptySharedBody;
+
+  /// No description provided for @emptyAttentionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing needs your attention'**
+  String get emptyAttentionTitle;
+
+  /// No description provided for @emptyAttentionBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Decisions, failed deletions and notes that cannot be refreshed appear here.'**
+  String get emptyAttentionBody;
+
+  /// No description provided for @emptyCategoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{category} is empty'**
+  String emptyCategoryTitle(String category);
+
+  /// No description provided for @downloadingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading your notes'**
+  String get downloadingTitle;
+
+  /// No description provided for @downloadingBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 note downloaded so far} other{{count} notes downloaded so far}}'**
+  String downloadingBody(int count);
+
+  /// No description provided for @connectNextcloud.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect Nextcloud'**
+  String get connectNextcloud;
+
+  /// No description provided for @scanLoginQr.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan login QR code'**
+  String get scanLoginQr;
+
+  /// No description provided for @selectedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 selected} other{{count} selected}}'**
+  String selectedCount(int count);
+
+  /// No description provided for @bulkFavorite.
+  ///
+  /// In en, this message translates to:
+  /// **'Favorite'**
+  String get bulkFavorite;
+
+  /// No description provided for @bulkUnfavorite.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from favorites'**
+  String get bulkUnfavorite;
+
+  /// No description provided for @bulkMove.
+  ///
+  /// In en, this message translates to:
+  /// **'Move'**
+  String get bulkMove;
+
+  /// No description provided for @bulkExport.
+  ///
+  /// In en, this message translates to:
+  /// **'Export'**
+  String get bulkExport;
+
+  /// No description provided for @bulkMixedMove.
+  ///
+  /// In en, this message translates to:
+  /// **'Move is unavailable because some selected notes are read-only, shared or have attachments.'**
+  String get bulkMixedMove;
+
+  /// No description provided for @bulkMixedDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete is unavailable because some selected notes are read-only, shared or being sent.'**
+  String get bulkMixedDelete;
+
+  /// No description provided for @bulkMixedFavorite.
+  ///
+  /// In en, this message translates to:
+  /// **'Favorite is unavailable because some selected notes are shared.'**
+  String get bulkMixedFavorite;
+
+  /// No description provided for @bulkDeleteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{Delete 1 note?} other{Delete {count} notes?}}'**
+  String bulkDeleteConfirm(int count);
+
+  /// No description provided for @bulkDeleteBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The notes are also deleted on the server. You can undo this until the server has carried it out.'**
+  String get bulkDeleteBody;
+
+  /// No description provided for @notesDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 note deleted} other{{count} notes deleted}}'**
+  String notesDeleted(int count);
+
+  /// No description provided for @notesMoved.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 note moved} other{{count} notes moved}}'**
+  String notesMoved(int count);
+
+  /// No description provided for @bulkFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 note could not be changed} other{{count} notes could not be changed}}'**
+  String bulkFailed(int count);
+
+  /// No description provided for @moveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Move to category'**
+  String get moveTitle;
+
+  /// No description provided for @moveNewCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'New category'**
+  String get moveNewCategory;
+
+  /// No description provided for @moveNewCategoryHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Name, use / for subcategories'**
+  String get moveNewCategoryHint;
+
+  /// No description provided for @clearSelection.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel selection'**
+  String get clearSelection;
+
+  /// No description provided for @rowFavoriteOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to favorites'**
+  String get rowFavoriteOn;
+
+  /// No description provided for @rowFavoriteOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from favorites'**
+  String get rowFavoriteOff;
 }
 
 class _AppLocalizationsDelegate

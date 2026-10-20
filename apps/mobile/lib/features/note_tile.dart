@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:intl/intl.dart';
+import '../design/design.dart';
 import '../l10n/app_localizations.dart';
 import 'note_rows.dart';
 
@@ -23,143 +25,181 @@ String relativeTime(
   return DateFormat.yMMMd(locale).format(time);
 }
 
+/// The labeled state lines of a row in priority order: decision, then
+/// unavailable, then pending work, then sharing (spec 4.1). One line each,
+/// never a dense badge row.
+List<NoteStateLine> noteStateLines(AppLocalizations l, NoteRow row) {
+  final note = row.note;
+  return [
+    if (note.syncState == 'needsDecision')
+      NoteStateLine(
+        text: l.rowNeedsDecision,
+        icon: Icons.rule,
+        tone: OwnTone.decision,
+      ),
+    if (row.unavailable)
+      NoteStateLine(
+        text: l.rowUnavailable,
+        icon: Icons.sync_problem_outlined,
+        tone: OwnTone.error,
+      ),
+    if (row.missing)
+      NoteStateLine(
+        text: l.rowMissing,
+        icon: Icons.cloud_off_outlined,
+        tone: OwnTone.error,
+      ),
+    if (note.syncState == 'draft')
+      NoteStateLine(text: l.rowSavedWaiting, icon: Icons.schedule),
+    if (note.syncState == 'sending')
+      NoteStateLine(text: l.rowUploading, icon: Icons.cloud_upload_outlined),
+    if (row.isShared)
+      NoteStateLine(
+        text: note.readonly ? l.rowSharedView : l.rowSharedEdit,
+        icon: Icons.group_outlined,
+      ),
+  ];
+}
+
+/// One list row: the design frame plus a visible row menu (the alternative
+/// to swipe and long press) and, for an unavailable note, a Retry action.
 class NoteTile extends StatelessWidget {
   const NoteTile({
     super.key,
     required this.row,
     required this.showCategory,
     required this.onTap,
+    this.onLongPress,
+    this.onMenu,
+    this.onRetry,
+    this.selected = false,
+    this.customActions = const {},
   });
 
   final NoteRow row;
   final bool showCategory;
   final VoidCallback onTap;
+  final VoidCallback? onLongPress;
+
+  /// Opens the row menu; null hides the button, as in selection mode.
+  final VoidCallback? onMenu;
+  final VoidCallback? onRetry;
+  final bool selected;
+
+  /// Screen reader alternatives to the swipe gestures.
+  final Map<CustomSemanticsAction, VoidCallback> customActions;
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
+    final colors = context.own;
     final note = row.note;
-    final muted = TextStyle(color: scheme.onSurfaceVariant);
-    final state = switch (note.syncState) {
-      'draft' => (Icons.cloud_upload_outlined, l.stateWaiting),
-      'sending' => (Icons.sync, l.stateSending),
-      'needsDecision' => (Icons.warning_amber, l.stateNeedsDecision),
-      _ => null,
-    };
-    final stateColor = note.syncState == 'needsDecision'
-        ? scheme.error
-        : scheme.onSurfaceVariant;
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        InkWell(
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        row.title.isEmpty ? l.untitled : row.title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.titleMedium,
+    final title = row.title.isEmpty ? l.untitled : row.title;
+    final meta = [
+      relativeTime(
+        l,
+        DateTime.fromMillisecondsSinceEpoch(note.updatedAt),
+        DateTime.now(),
+        Localizations.localeOf(context).toString(),
+      ),
+      if (showCategory && note.category.isNotEmpty) note.category,
+      if (row.tasksTotal > 0) l.tasksDone(row.tasksDone, row.tasksTotal),
+      if (row.attachmentCount > 0) l.attachmentsCount(row.attachmentCount),
+    ];
+    final states = noteStateLines(l, row);
+    final label = [
+      title,
+      if (note.favorite) l.favorite,
+      if (row.excerpt.isNotEmpty) row.excerpt,
+      for (final s in states) s.text,
+      ...meta,
+    ].join('. ');
+    final frame = OwnNoteRowFrame(
+      title: title,
+      excerpt: row.excerpt,
+      meta: meta,
+      stateLines: states,
+      favorite: note.favorite,
+      favoriteLabel: l.favorite,
+      decision: note.syncState == 'needsDecision',
+      selected: selected,
+      semanticLabel: label,
+      onTap: onTap,
+      onLongPress: onLongPress,
+    );
+    // The menu column sits beside the frame, not inside it, so the frame
+    // keeps its own selection and divider drawing.
+    Widget tile = onMenu == null
+        ? frame
+        : Stack(
+            children: [
+              Padding(
+                padding: const EdgeInsetsDirectional.only(end: OwnShape.target),
+                child: frame,
+              ),
+              PositionedDirectional(
+                end: 0,
+                top: 0,
+                bottom: 0,
+                width: OwnShape.target,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: selected ? colors.selected : null,
+                    border: Border(bottom: BorderSide(color: colors.divider)),
+                  ),
+                  child: Align(
+                    alignment: Alignment.topCenter,
+                    child: Semantics(
+                      button: true,
+                      label: l.rowMenu(title),
+                      excludeSemantics: true,
+                      onTap: onMenu,
+                      // A plain ink target: a tooltip and an IconButton per
+                      // row cost visible frames while scrolling.
+                      child: InkResponse(
+                        onTap: onMenu,
+                        radius: OwnShape.target / 2,
+                        child: SizedBox.square(
+                          dimension: OwnShape.target,
+                          child: Icon(
+                            Icons.more_vert,
+                            color: colors.textSecondary,
+                          ),
+                        ),
                       ),
                     ),
-                    if (note.favorite)
-                      Padding(
-                        padding: const EdgeInsets.only(left: 8),
-                        child: Icon(
-                          Icons.star,
-                          size: 18,
-                          color: Colors.amber.shade700,
-                          semanticLabel: l.favorite,
-                        ),
-                      ),
-                  ],
-                ),
-                if (row.excerpt.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 2),
-                    child: Text(
-                      row.excerpt,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodyMedium?.merge(muted),
-                    ),
-                  ),
-                Padding(
-                  padding: const EdgeInsets.only(top: 6),
-                  child: Wrap(
-                    spacing: 12,
-                    runSpacing: 2,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [
-                      _Meta(
-                        text: relativeTime(
-                          l,
-                          DateTime.fromMillisecondsSinceEpoch(note.updatedAt),
-                          DateTime.now(),
-                          Localizations.localeOf(context).toString(),
-                        ),
-                      ),
-                      if (showCategory && note.category.isNotEmpty)
-                        _Meta(icon: Icons.folder_outlined, text: note.category),
-                      if (row.tasksTotal > 0)
-                        _Meta(
-                          icon: Icons.checklist,
-                          text: '${row.tasksDone}/${row.tasksTotal}',
-                          label: l.tasksDone(row.tasksDone, row.tasksTotal),
-                        ),
-                      if (row.attachments)
-                        _Meta(icon: Icons.attach_file, label: l.hasAttachments),
-                      if (state != null)
-                        _Meta(
-                          icon: state.$1,
-                          text: state.$2,
-                          color: stateColor,
-                        ),
-                    ],
                   ),
                 ),
-              ],
+              ),
+            ],
+          );
+    if (onRetry != null && row.unavailable) {
+      tile = Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          tile,
+          DecoratedBox(
+            decoration: BoxDecoration(
+              border: Border(bottom: BorderSide(color: colors.divider)),
+            ),
+            child: Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: OwnSpace.s),
+                child: OwnButton.text(
+                  label: l.retry,
+                  icon: Icons.refresh,
+                  onPressed: onRetry,
+                ),
+              ),
             ),
           ),
-        ),
-        const Divider(height: 1, indent: 16),
-      ],
-    );
-  }
-}
-
-class _Meta extends StatelessWidget {
-  const _Meta({this.icon, this.text, this.label, this.color});
-  final IconData? icon;
-  final String? text;
-  final String? label;
-  final Color? color;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final color = this.color ?? theme.colorScheme.onSurfaceVariant;
-    final style = theme.textTheme.labelMedium?.copyWith(color: color);
-    return Semantics(
-      label: label,
-      excludeSemantics: label != null,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (icon != null) Icon(icon, size: 14, color: color),
-          if (icon != null && text != null) const SizedBox(width: 4),
-          if (text != null) Flexible(child: Text(text!, style: style)),
         ],
-      ),
-    );
+      );
+    }
+    return customActions.isEmpty
+        ? tile
+        : Semantics(customSemanticsActions: customActions, child: tile);
   }
 }

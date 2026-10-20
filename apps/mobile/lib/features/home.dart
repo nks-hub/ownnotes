@@ -2,63 +2,114 @@ import 'dart:async';
 import 'dart:io';
 import 'package:archive/archive_io.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:home_widget/home_widget.dart';
+import 'package:intl/intl.dart';
 import 'package:notes_store/notes_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../data/background.dart';
+import '../data/export.dart';
 import '../data/keep_import.dart';
 import '../data/notes_widget.dart';
 import '../data/runtime.dart';
 import '../data/settings.dart';
+import '../design/design.dart';
 import '../l10n/app_localizations.dart';
-import 'category_panel.dart';
 import 'accounts.dart';
+import 'category_panel.dart';
+import 'collection/attention_view.dart';
+import 'collection/editor_pane.dart';
+import 'collection/note_list.dart';
+import 'collection/notebook_actions.dart';
+import 'collection/providers.dart';
+import 'collection/saved_views.dart';
+import 'collection/shared_text.dart';
+import 'collection/sheets.dart';
+import 'collection/status_area.dart';
 import 'editor.dart';
 import 'login.dart';
 import 'note_rows.dart';
-import 'note_tile.dart';
 import 'recovery.dart';
+import 'search/filter_row.dart';
+import 'search/search_filters.dart';
 import 'settings.dart';
 
+/// Creates a note from a template or the daily note in [category] of
+/// [accountId]; supplied by the writing package. Without it both create an
+/// ordinary note.
+typedef CreateNoteHook =
+    Future<void> Function(
+      BuildContext context,
+      String accountId,
+      String category,
+    );
+
 class HomeScreen extends ConsumerStatefulWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({super.key, this.onCreateTemplate, this.onCreateDailyNote});
+
+  final CreateNoteHook? onCreateTemplate;
+  final CreateNoteHook? onCreateDailyNote;
+
   @override
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   String? _shown;
+  String? _loadedFor;
   NoteScope _scope = NoteScope.all;
   String _category = '';
-  String _search = '';
+  String _subtree = '';
+  String? _viewId;
+  NoteFilters _filters = NoteFilters.none;
+  SortMode _sort = SortMode.modified;
+  String _query = '';
   bool _searching = false;
   final _searchField = TextEditingController();
-  Timer? _debounce;
-  final _expanded = <String>{};
+  final _searchFocus = FocusNode();
+  final _homeFocus = FocusNode();
+  final _selected = <String>{};
+  final _expandedBy = <String, Set<String>>{};
+  final _viewsBy = <String, List<SavedView>>{};
+  final _scroll = ScrollController();
+  final _pane = EditorPaneController();
   final _scaffold = GlobalKey<ScaffoldState>();
-  bool _bannerHidden = false;
-  String? _bannerKey;
+  Timer? _debounce;
+  Timer? _checkTimer;
+  Timer? _retry;
   _Index? _index;
   Object? _visibleKey;
   List<NoteRow> _visible = const [];
+  NotebookLayout _layout = NotebookLayout.phone;
   bool _busy = false;
+  bool _checking = false;
   String? _again;
-  bool _byTitle = false;
   StreamSubscription<Uri?>? _widgetClicks;
-  Timer? _retry;
   final _autoSynced = <String>{};
   late final AppLifecycleListener _lifecycle;
 
-  static const _share = MethodChannel('com.nkshub.nextcloudnotes/share');
-  static const _sortKey = 'sortByTitle';
+  static const _sortKey = 'sortMode';
+  static const _oldSortKey = 'sortByTitle';
+  static const _viewStore = SavedViewStore();
+
+  Set<String> get _expanded =>
+      _expandedBy.putIfAbsent(_shown ?? '', () => <String>{});
+  List<SavedView> get _views => _viewsBy[_shown] ?? const [];
+  NotebookActions get _actions =>
+      NotebookActions(ref.read(runtimeProvider).database);
 
   @override
   void initState() {
     super.initState();
     _loadSort();
+    _pane.addListener(_paneChanged);
+    _pane.onClosed = (id) {
+      final account = _shown;
+      if (account != null && mounted) _sync(account, quiet: true);
+    };
     _lifecycle = AppLifecycleListener(
       onHide: () {
         _retry?.cancel();
@@ -72,10 +123,32 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         _takeShared();
       },
     );
-    _share.setMethodCallHandler((_) => _takeShared());
+    shareChannel.setMethodCallHandler((_) => _takeShared());
     if (Platform.isAndroid) {
       _widgetClicks = HomeWidget.widgetClicked.listen(_openLink);
     }
+  }
+
+  void _paneChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _checkTimer?.cancel();
+    _retry?.cancel();
+    _searchField.dispose();
+    _searchFocus.dispose();
+    _homeFocus.dispose();
+    _scroll.dispose();
+    _pane
+      ..removeListener(_paneChanged)
+      ..dispose();
+    shareChannel.setMethodCallHandler(null);
+    _widgetClicks?.cancel();
+    _lifecycle.dispose();
+    super.dispose();
   }
 
   /// Links from the home-screen widget and the launcher shortcut:
@@ -104,121 +177,95 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     if (note == null || !mounted) return;
     if (note.accountId != accountId) {
       ref.read(selectedAccountIdProvider.notifier).state = note.accountId;
-      setState(() => _scope = NoteScope.all);
+      _go(NoteScope.all);
     }
     await _edit(note);
   }
 
-  @override
-  void dispose() {
-    _debounce?.cancel();
-    _searchField.dispose();
-    _share.setMethodCallHandler(null);
-    _widgetClicks?.cancel();
-    _retry?.cancel();
-    _lifecycle.dispose();
-    super.dispose();
-  }
-
-  /// Text shared from another app (Google Keep, Samsung Notes, ...) becomes a
-  /// new note of the shown account. Without an account it waits on the
-  /// platform side until one exists.
   Future<void> _takeShared() async {
     final accountId = _shown;
-    if (accountId == null) return;
-    final Map<String, String>? shared;
-    try {
-      shared = await _share.invokeMapMethod<String, String>('takeShared');
-    } on MissingPluginException {
-      return; // Only Android and iOS register the share target.
-    }
+    if (accountId == null || !mounted) return;
+    final shared = await fetchSharedText();
     if (shared == null || !mounted) return;
-    final text = shared['text'] ?? '';
     // An open editor saved its text when the app went to the background.
     Navigator.of(context).popUntil((route) => route.isFirst);
-    final db = ref.read(runtimeProvider).database;
-    final recent = (await ref.read(notesProvider(accountId).future))
-        .where(
-          (n) =>
-              !n.readonly && (n.syncState == 'clean' || n.syncState == 'draft'),
-        )
-        .take(8)
-        .toList();
-    if (!mounted) return;
-    final l = AppLocalizations.of(context)!;
-    // Dismissing the dialog still keeps the text, as a new note.
-    final target = recent.isEmpty
-        ? null
-        : await showDialog<LocalNote>(
-            context: context,
-            builder: (context) => SimpleDialog(
-              title: Text(l.shareTo),
-              children: [
-                SimpleDialogOption(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: Text(l.newNote),
-                ),
-                for (final note in recent)
-                  SimpleDialogOption(
-                    onPressed: () => Navigator.of(context).pop(note),
-                    child: Text(
-                      _shownTitle(note, l),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-              ],
-            ),
-          );
-    if (target == null) {
-      await _create(
-        accountId,
-        title: _titleOr(shared['title'] ?? '', text),
-        content: text,
-      );
-      return;
-    }
-    try {
-      final current = (await db.note(accountId, target.id))!;
-      await db.saveDraft(
-        accountId: accountId,
-        id: current.id,
-        revision: current.revision,
-        title: current.title,
-        content: current.content.isEmpty
-            ? text
-            : '${current.content.trimRight()}\n\n$text',
-        category: current.category,
-        favorite: current.favorite,
-      );
-      final updated = await db.note(accountId, current.id);
-      if (mounted && updated != null) await _edit(updated);
-    } catch (_) {
-      // The note changed meanwhile; the text is not lost, it becomes a note.
-      await _create(accountId, content: text);
-    }
+    await takeSharedText(
+      context: context,
+      db: ref.read(runtimeProvider).database,
+      accountId: accountId,
+      shared: shared,
+      recent: () => ref.read(notesProvider(accountId).future),
+      create: ({required title, required content}) =>
+          _create(accountId, title: title, content: content),
+      edit: _edit,
+    );
   }
-
-  static String _titleOr(String title, String text) =>
-      title.trim().isNotEmpty ? title : titleFromContent(text);
 
   Future<void> _loadSort() async {
     try {
-      final byTitle = await SharedPreferencesAsync().getBool(_sortKey);
-      if (mounted && byTitle != null) setState(() => _byTitle = byTitle);
+      final prefs = SharedPreferencesAsync();
+      final stored = await prefs.getString(_sortKey);
+      final mode = SortMode.values.where((s) => s.name == stored).firstOrNull;
+      final legacy = mode == null ? await prefs.getBool(_oldSortKey) : null;
+      if (!mounted) return;
+      if (mode != null) setState(() => _sort = mode);
+      if (legacy == true) setState(() => _sort = SortMode.title);
     } catch (_) {
       // Preferences are a convenience; the default order still works.
     }
   }
 
-  void _toggleSort() {
-    setState(() => _byTitle = !_byTitle);
-    SharedPreferencesAsync().setBool(_sortKey, _byTitle).ignore();
+  void _setSort(SortMode mode) {
+    setState(() => _sort = mode);
+    SharedPreferencesAsync().setString(_sortKey, mode.name).ignore();
+  }
+
+  /// Resets what belongs to one account and loads its device preferences.
+  void _switchAccount(String id) {
+    _loadedFor = id;
+    _scope = NoteScope.all;
+    _category = '';
+    _subtree = '';
+    _viewId = null;
+    _filters = NoteFilters.none;
+    _query = '';
+    _searching = false;
+    _searchField.clear();
+    _selected.clear();
+    _index = null;
+    if (_pane.isOpen) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _pane.close());
+    }
+    _viewStore.load(id).then((views) {
+      if (mounted) setState(() => _viewsBy[id] = views);
+    });
+    SharedPreferencesAsync()
+        .getStringList('categoryExpanded.$id')
+        .then((v) {
+          if (mounted && v != null) setState(() => _expandedBy[id] = v.toSet());
+        })
+        .catchError((Object _) {});
+  }
+
+  void _toggleExpanded(String path) {
+    final id = _shown;
+    setState(
+      () => _expanded.contains(path)
+          ? _expanded.remove(path)
+          : _expanded.add(path),
+    );
+    if (id != null) {
+      SharedPreferencesAsync()
+          .setStringList('categoryExpanded.$id', _expanded.toList())
+          .ignore();
+    }
   }
 
   /// Quiet runs are automatic (start, resume, after editing); offline is
   /// normal there, so only a manual sync reports failure. A failed run is
   /// retried while the app stays in front, so notes upload once the
-  /// network is back.
+  /// network is back. A manual run shows its "Checking" row only when it
+  /// lasts longer than [explicitSyncRowDelay].
   Future<void> _sync(String accountId, {bool quiet = false}) async {
     if (_busy) {
       // The running pass may have started before the latest local edit.
@@ -226,6 +273,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       return;
     }
     _retry?.cancel();
+    if (!quiet) {
+      _checkTimer?.cancel();
+      _checkTimer = Timer(explicitSyncRowDelay, () {
+        if (mounted) setState(() => _checking = true);
+      });
+    }
     setState(() => _busy = true);
     try {
       do {
@@ -235,13 +288,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       } while (_again != null && mounted);
     } catch (_) {
       if (mounted && !quiet) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context)!.syncFailed)),
-        );
+        showOwnSnackBar(context, AppLocalizations.of(context)!.syncFailed);
       }
     } finally {
+      _checkTimer?.cancel();
       if (mounted) {
-        setState(() => _busy = false);
+        setState(() {
+          _busy = false;
+          _checking = false;
+        });
         if (ref.read(runtimeProvider).sync.problem(accountId) != null) {
           _retry = Timer(
             const Duration(seconds: 30),
@@ -253,14 +308,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Future<void> _edit(LocalNote note) async {
+    final decision = note.syncState == 'needsDecision';
+    final name = decision ? '/recovery' : '/note';
+    Widget page() =>
+        decision ? RecoveryScreen(note: note) : EditorScreen(note: note);
+    if (_layout != NotebookLayout.phone || _pane.isOpen) {
+      await _pane.open(note.id, name, (_) => page());
+      return;
+    }
     await Navigator.of(context).push<void>(
       MaterialPageRoute(
-        settings: RouteSettings(
-          name: note.syncState == 'needsDecision' ? '/recovery' : '/note',
-        ),
-        builder: (_) => note.syncState == 'needsDecision'
-            ? RecoveryScreen(note: note)
-            : EditorScreen(note: note),
+        settings: RouteSettings(name: name),
+        builder: (_) => page(),
       ),
     );
     if (mounted) await _sync(note.accountId, quiet: true);
@@ -268,13 +327,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   Future<void> _importKeep(String accountId) async {
     final l = AppLocalizations.of(context)!;
-    final messenger = ScaffoldMessenger.of(context);
     final picked = await FilePicker.pickFile(
       type: FileType.custom,
       allowedExtensions: ['zip'],
     );
     final path = picked?.path;
-    if (path == null) return;
+    if (path == null || !mounted) return;
     try {
       final input = InputFileStream(path);
       final List<KeepNote> notes;
@@ -288,17 +346,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       for (final note in notes) {
         await db.createDraft(
           accountId,
-          title: _titleOr(note.title, note.content),
+          title: titleOr(note.title, note.content),
           content: note.content,
           category: note.category,
         );
       }
-      messenger.showSnackBar(
-        SnackBar(content: Text(l.importDone(notes.length))),
-      );
+      if (!mounted) return;
+      showOwnSnackBar(context, l.importDone(notes.length));
       await _sync(accountId, quiet: true);
     } catch (_) {
-      messenger.showSnackBar(SnackBar(content: Text(l.importFailed)));
+      if (mounted) showOwnSnackBar(context, l.importFailed);
     }
   }
 
@@ -307,25 +364,406 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     String title = '',
     String content = '',
     String category = '',
+    bool favorite = false,
   }) async {
     try {
       final db = ref.read(runtimeProvider).database;
-      final id = await db.createDraft(
+      final id = await _actions.create(
         accountId,
         title: title,
         content: content,
         category: category,
+        favorite: favorite,
       );
       final note = await db.note(accountId, id);
       if (mounted && note != null) await _edit(note);
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context)!.saveFailed)),
-        );
+        showOwnSnackBar(context, AppLocalizations.of(context)!.saveFailed);
       }
     }
   }
+
+  /// Where a note created from the current scope goes (spec 4.2); null when
+  /// the user dismissed the question of an ambiguous saved view.
+  Future<({String category, bool favorite})?> _destination() async {
+    final view = _views.where((v) => v.id == _viewId).firstOrNull;
+    if (view != null) {
+      final c = view.createCategory;
+      if (c != null) return (category: c, favorite: false);
+      final l = AppLocalizations.of(context)!;
+      final asked = await showCategoryChooser(
+        context,
+        tree: _index?.tree ?? const [],
+        title: l.createWhere,
+      );
+      return asked == null ? null : (category: asked, favorite: false);
+    }
+    return switch (_scope) {
+      NoteScope.category => (category: _category, favorite: false),
+      NoteScope.favorites => (category: '', favorite: true),
+      _ => (category: '', favorite: false),
+    };
+  }
+
+  Future<void> _createKind(String accountId, NewKind kind) async {
+    final dest = await _destination();
+    if (dest == null || !mounted) return;
+    switch (kind) {
+      case NewKind.note:
+        await _create(
+          accountId,
+          category: dest.category,
+          favorite: dest.favorite,
+        );
+      case NewKind.checklist:
+        await _create(
+          accountId,
+          content: '- [ ] ',
+          category: dest.category,
+          favorite: dest.favorite,
+        );
+      case NewKind.template:
+        final hook = widget.onCreateTemplate;
+        if (hook != null) {
+          await hook(context, accountId, dest.category);
+        } else {
+          await _create(
+            accountId,
+            category: dest.category,
+            favorite: dest.favorite,
+          );
+        }
+      case NewKind.daily:
+        final hook = widget.onCreateDailyNote;
+        if (hook != null) {
+          await hook(context, accountId, dest.category);
+        } else {
+          await _create(
+            accountId,
+            title: DateFormat('yyyy-MM-dd').format(DateTime.now()),
+            category: dest.category,
+            favorite: dest.favorite,
+          );
+        }
+    }
+  }
+
+  Future<void> _newMenu(String accountId) async {
+    final kind = await showNewNoteMenu(context);
+    if (kind != null && mounted) await _createKind(accountId, kind);
+  }
+
+  // Navigation within the notebook ---------------------------------------
+
+  void _go(
+    NoteScope scope, {
+    String category = '',
+    String? viewId,
+    NoteFilters filters = NoteFilters.none,
+    String query = '',
+  }) {
+    setState(() {
+      _scope = scope;
+      _category = category;
+      _viewId = viewId;
+      _filters = filters;
+      _query = query.trim();
+      _selected.clear();
+      if (query.isNotEmpty) {
+        _searching = true;
+        _searchField.text = query;
+      } else if (_searching && viewId == null) {
+        _searchField.clear();
+      }
+    });
+    _scrollTop();
+    final drawer = _scaffold.currentState;
+    if (drawer != null && drawer.isDrawerOpen) drawer.closeDrawer();
+  }
+
+  void _scrollTop() {
+    if (_scroll.hasClients) _scroll.jumpTo(0);
+  }
+
+  void _onSearch(String value) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 250), () {
+      if (!mounted) return;
+      setState(() {
+        _query = value.trim();
+        _viewId = null;
+      });
+      _scrollTop();
+    });
+    // The clear button follows the text at once, the filter a moment later.
+    setState(() {});
+  }
+
+  void _openSearch() {
+    setState(() => _searching = true);
+    // The shortcut focus node holds focus, so the field asks for it itself.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _searchFocus.requestFocus();
+    });
+  }
+
+  void _closeSearch() {
+    _debounce?.cancel();
+    _searchField.clear();
+    setState(() {
+      _searching = false;
+      _query = '';
+      if (_viewId == null) _filters = NoteFilters.none;
+    });
+    _homeFocus.requestFocus();
+  }
+
+  void _setFilters(NoteFilters filters) {
+    setState(() {
+      _filters = filters;
+      _viewId = null;
+    });
+    _scrollTop();
+  }
+
+  void _escape() {
+    if (_selected.isNotEmpty) {
+      setState(_selected.clear);
+    } else if (_searching) {
+      _closeSearch();
+    }
+  }
+
+  // Saved views ------------------------------------------------------------
+
+  Future<void> _saveView() async {
+    final accountId = _shown;
+    if (accountId == null) return;
+    final l = AppLocalizations.of(context)!;
+    final name = await showNameDialog(
+      context,
+      title: l.saveView,
+      hint: l.saveViewName,
+    );
+    if (name == null || !mounted) return;
+    final view = SavedView(
+      id: DateTime.now().microsecondsSinceEpoch.toString(),
+      name: name,
+      scope: _scope,
+      category: _category,
+      filters: _filters,
+      query: _query,
+    );
+    final views = [..._views, view];
+    setState(() {
+      _viewsBy[accountId] = views;
+      _viewId = view.id;
+    });
+    await _viewStore.save(accountId, views);
+  }
+
+  Future<void> _deleteView(SavedView view) async {
+    final accountId = _shown;
+    if (accountId == null) return;
+    final views = [..._views]..removeWhere((v) => v.id == view.id);
+    setState(() {
+      _viewsBy[accountId] = views;
+      if (_viewId == view.id) _viewId = null;
+    });
+    await _viewStore.save(accountId, views);
+  }
+
+  // Row and bulk actions ---------------------------------------------------
+
+  void _toggleSelect(NoteRow row) {
+    setState(() {
+      if (!_selected.remove(row.note.id)) _selected.add(row.note.id);
+    });
+    if (_selected.length == 1) HapticFeedback.selectionClick();
+  }
+
+  List<NoteRow> get _selectedRows => [
+    for (final r in _index?.rows ?? const <NoteRow>[])
+      if (_selected.contains(r.note.id)) r,
+  ];
+
+  Future<void> _rowMenu(NoteRow row, {Set<RowAction>? only}) async {
+    final action = await showRowMenu(
+      context,
+      row,
+      canMove: canMove(row),
+      canDelete: canDelete(row.note),
+      canFavorite: canFavorite(row.note),
+      only: only,
+    );
+    if (action == null || !mounted) return;
+    switch (action) {
+      case RowAction.open:
+        await _edit(row.note);
+      case RowAction.favorite:
+        await _favorite([row]);
+      case RowAction.move:
+        await _move([row]);
+      case RowAction.export:
+        await _export([row]);
+      case RowAction.select:
+        _toggleSelect(row);
+      case RowAction.delete:
+        await _delete([row], confirm: false);
+    }
+  }
+
+  Future<void> _favorite(List<NoteRow> rows) async {
+    final l = AppLocalizations.of(context)!;
+    if (!rows.every((r) => canFavorite(r.note))) {
+      showOwnSnackBar(context, l.bulkMixedFavorite);
+      return;
+    }
+    final value = !rows.every((r) => r.note.favorite);
+    final failed = await _actions.setFavorite([
+      for (final r in rows) r.note,
+    ], value);
+    if (!mounted) return;
+    setState(_selected.clear);
+    if (failed.isNotEmpty) {
+      showOwnSnackBar(context, l.bulkFailed(failed.length));
+    }
+  }
+
+  Future<void> _move(List<NoteRow> rows) async {
+    final l = AppLocalizations.of(context)!;
+    final category = await showCategoryChooser(
+      context,
+      tree: _index?.tree ?? const [],
+      title: l.moveTitle,
+      current: rows.length == 1 ? rows.single.note.category : null,
+    );
+    if (category == null || !mounted) return;
+    final failed = await _actions.move([
+      for (final r in rows) r.note,
+    ], category);
+    if (!mounted) return;
+    setState(_selected.clear);
+    showOwnSnackBar(
+      context,
+      failed.isEmpty ? l.notesMoved(rows.length) : l.bulkFailed(failed.length),
+    );
+  }
+
+  Future<void> _export(List<NoteRow> rows) async {
+    final l = AppLocalizations.of(context)!;
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final notes = [for (final r in rows) r.note];
+      final saved = await FilePicker.saveFile(
+        fileName: 'ownnotes-export.zip',
+        bytes: exportNotes(notes),
+        mimeType: 'application/zip',
+      );
+      if (saved != null) {
+        messenger.showSnackBar(
+          SnackBar(content: Text(l.exportDone(notes.length))),
+        );
+      }
+    } catch (_) {
+      messenger.showSnackBar(SnackBar(content: Text(l.exportFailed)));
+    }
+    if (mounted) setState(_selected.clear);
+  }
+
+  Future<void> _delete(List<NoteRow> rows, {required bool confirm}) async {
+    final l = AppLocalizations.of(context)!;
+    if (confirm) {
+      final ok = await showDialog<bool>(
+        context: context,
+        builder: (dialog) => AlertDialog(
+          title: Text(l.bulkDeleteConfirm(rows.length)),
+          content: Text(l.bulkDeleteBody),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialog).pop(false),
+              child: Text(l.cancel),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(dialog).pop(true),
+              child: Text(l.delete),
+            ),
+          ],
+        ),
+      );
+      if (ok != true || !mounted) return;
+    }
+    final open = _pane.openId;
+    if (open != null && rows.any((r) => r.note.id == open)) {
+      if (!await _pane.close()) return;
+    }
+    final result = await _actions.delete([for (final r in rows) r.note]);
+    if (!mounted) return;
+    setState(_selected.clear);
+    final deleted = result.deleted;
+    if (deleted.isEmpty) {
+      showOwnSnackBar(context, l.bulkFailed(result.failed.length));
+      return;
+    }
+    showOwnSnackBar(
+      context,
+      result.failed.isEmpty
+          ? l.notesDeleted(deleted.length)
+          : '${l.notesDeleted(deleted.length)} · '
+                '${l.bulkFailed(result.failed.length)}',
+      actionLabel: l.undoAction,
+      onAction: () => _actions.restore(deleted),
+    );
+  }
+
+  // Attention actions --------------------------------------------------------
+
+  AttentionActions _attentionActions(String accountId) {
+    final runtime = ref.read(runtimeProvider);
+    Future<void> open(AttentionItem item) async {
+      final note =
+          item.note ??
+          (item.noteId == null
+              ? null
+              : await runtime.database.note(accountId, item.noteId!));
+      if (note != null && mounted) await _edit(note);
+    }
+
+    return AttentionActions(
+      onResolve: open,
+      onOpen: open,
+      onRetryDeletion: (item) async {
+        final id = item.noteId;
+        if (id == null) return;
+        try {
+          await runtime.sync.retryDeletion(accountId, id);
+        } catch (_) {
+          // The row keeps its failure state and reason.
+        }
+      },
+      onUndoDeletion: (item) async {
+        final id = item.noteId;
+        if (id != null) await runtime.database.undoDelete(accountId, id);
+      },
+      onRetryNote: (_) => _sync(accountId),
+      onSaveCopy: (item) async {
+        final note = item.note;
+        if (note == null) return;
+        await _actions.create(
+          accountId,
+          title: note.title,
+          content: note.content,
+          category: note.category,
+        );
+        if (mounted) {
+          showOwnSnackBar(context, AppLocalizations.of(context)!.saved);
+        }
+      },
+    );
+  }
+
+  // Build --------------------------------------------------------------------
 
   @override
   Widget build(BuildContext context) {
@@ -334,9 +772,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     // The widget hides titles while the app lock is on.
     final locked = ref.watch(settingsProvider.select((s) => s.lock));
     return accounts.when(
-      loading: () =>
-          const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (_, _) => Scaffold(body: Center(child: Text(l.loadFailed))),
+      loading: () => Scaffold(body: _ListSkeleton(label: l.checkingForUpdates)),
+      error: (_, _) => Scaffold(
+        body: OwnStateView.error(
+          title: l.loadFailed,
+          actions: [
+            OwnButton.primary(
+              label: l.retry,
+              onPressed: () => ref.invalidate(accountsProvider),
+            ),
+          ],
+        ),
+      ),
       data: (accounts) {
         final account =
             accounts
@@ -344,21 +791,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 .firstOrNull ??
             accounts.firstOrNull;
         _shown = account?.id;
-        if (account == null) {
-          return Scaffold(
-            appBar: AppBar(
-              title: Text(l.appTitle),
-              actions: [
-                IconButton(
-                  tooltip: l.addAccount,
-                  onPressed: _addAccount,
-                  icon: const Icon(Icons.person_add_outlined),
-                ),
-              ],
-            ),
-            body: _EmptyText(l.noAccounts),
-          );
-        }
+        if (account == null) return _noAccount(l);
+        if (_loadedFor != account.id) _switchAccount(account.id);
         if (_autoSynced.add(account.id)) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             _sync(account.id, quiet: true);
@@ -373,6 +807,35 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
+  Widget _noAccount(AppLocalizations l) => Scaffold(
+    appBar: AppBar(
+      title: Text(l.appTitle),
+      actions: [
+        IconButton(
+          tooltip: l.addAccount,
+          onPressed: _addAccount,
+          icon: const Icon(Icons.person_add_outlined),
+        ),
+      ],
+    ),
+    body: OwnStateView(
+      icon: Icons.cloud_outlined,
+      title: l.noAccounts,
+      actions: [
+        OwnButton.primary(
+          label: l.connectNextcloud,
+          icon: Icons.login,
+          onPressed: _addAccount,
+        ),
+        OwnButton.secondary(
+          label: l.scanLoginQr,
+          icon: Icons.qr_code_scanner,
+          onPressed: _addAccount,
+        ),
+      ],
+    ),
+  );
+
   Widget _screen(
     Account account,
     List<Account> accounts,
@@ -381,31 +844,26 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   ) {
     final notesAsync = ref.watch(notesProvider(account.id));
     final notes = notesAsync.valueOrNull;
+    final status = ref.watch(syncStatusProvider(account.id)).valueOrNull;
+    final attention =
+        ref.watch(attentionProvider(account.id)).valueOrNull ?? const [];
     final index = notes == null
         ? null
         : _indexFor(account.id, notes, locked, l);
-    final wide = MediaQuery.sizeOf(context).width >= 840;
+    final media = MediaQuery.of(context);
+    _layout = notebookLayout(media.size.width, media.textScaler.scale(16) / 16);
     var scope = _scope;
     if (index != null &&
         scope == NoteScope.category &&
+        _viewId == null &&
         !index.paths.contains(_category)) {
       scope = NoteScope.all;
     }
     final rows = index == null
         ? const <NoteRow>[]
-        : _visibleRows(index, scope, _category, l);
-
-    final problem = account.state == 'reauthRequired'
-        ? 'auth'
-        : ref.read(runtimeProvider).sync.problem(account.id);
-    final unsent = index?.unsent ?? 0;
-    final conflicts = index?.conflicts ?? 0;
-    final hasStatus = problem != null || unsent > 0 || conflicts > 0;
-    final bannerKey = '${account.id}|$problem|${unsent > 0}|${conflicts > 0}';
-    if (_bannerKey != bannerKey) {
-      _bannerKey = bannerKey;
-      _bannerHidden = false;
-    }
+        : _visibleRows(index, scope, l);
+    final selecting = _selected.isNotEmpty;
+    final inlineNav = _layout == NotebookLayout.threePane;
 
     final panel = index == null
         ? null
@@ -414,223 +872,553 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             total: index.rows.length,
             favorites: index.favorites,
             uncategorised: index.uncategorised,
+            shared: index.shared,
+            attention: attention.length,
             scope: scope,
             category: _category,
             expanded: _expanded,
-            onSelect: (s, c) {
-              setState(() {
-                _scope = s;
-                _category = c;
-              });
-              if (!wide) _scaffold.currentState?.closeDrawer();
-            },
-            onToggle: (path) => setState(
-              () => _expanded.contains(path)
-                  ? _expanded.remove(path)
-                  : _expanded.add(path),
+            savedViews: _views,
+            activeViewId: _viewId,
+            subtree: _subtree,
+            onSubtree: (path) => setState(() => _subtree = path),
+            onSelect: (s, c) => _go(s, category: c),
+            onToggle: _toggleExpanded,
+            onSelectView: (v) => _go(
+              v.scope,
+              category: v.category,
+              viewId: v.id,
+              filters: v.filters,
+              query: v.query,
             ),
+            onDeleteView: _deleteView,
+            onSettings: () {
+              _scaffold.currentState?.closeDrawer();
+              _openSettings(account);
+            },
           );
 
-    final title = switch (scope) {
-      NoteScope.all => l.appTitle,
-      NoteScope.favorites => l.favorites,
-      NoteScope.uncategorised => l.uncategorised,
-      NoteScope.category => _category,
-    };
-    final createCategory = scope == NoteScope.category ? _category : '';
-
-    final Widget content;
-    if (index == null) {
-      content = notesAsync.hasError
-          ? Center(child: Text(l.loadFailed))
-          : const Center(child: CircularProgressIndicator());
-    } else {
-      content = Column(
-        children: [
-          if (_busy) const LinearProgressIndicator(),
-          if (hasStatus && !_busy && !_bannerHidden)
-            _StatusBanner(
-              critical: problem == 'auth' || conflicts > 0,
-              lines: [
-                if (conflicts > 0) l.conflictsCount(conflicts),
-                if (unsent > 0) l.unsent(unsent),
-                if (problem != null) _reason(problem, l),
-              ],
-              actions: [
-                if (conflicts > 0 && index.firstConflict != null)
-                  TextButton(
-                    onPressed: () => _edit(index.firstConflict!),
-                    child: Text(l.resolveNow),
-                  ),
-                if (problem == 'auth')
-                  TextButton(
-                    onPressed: _addAccount,
-                    child: Text(l.signInAgain),
-                  ),
-                if (problem != 'auth' && (problem != null || unsent > 0))
-                  TextButton(
-                    onPressed: () => _sync(account.id),
-                    child: Text(l.retry),
-                  ),
-              ],
-            ),
-          Expanded(
-            child: RefreshIndicator(
-              onRefresh: () => _sync(account.id),
-              child: rows.isEmpty
-                  ? ListView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      children: [
-                        _emptyState(index, account.id, createCategory, l),
-                      ],
-                    )
-                  : ListView.builder(
-                      key: ValueKey('$scope|$_category|$_search|$_byTitle'),
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      itemCount: rows.length,
-                      itemBuilder: (context, i) => NoteTile(
-                        key: ValueKey(rows[i].note.id),
-                        row: rows[i],
-                        showCategory: scope == NoteScope.all,
-                        onTap: () => _edit(rows[i].note),
-                      ),
-                    ),
-            ),
+    final content = _content(
+      account,
+      index,
+      notesAsync,
+      rows,
+      scope,
+      attention,
+      status,
+      l,
+    );
+    final list = Column(
+      children: [
+        if (status != null && !(_searching && media.viewInsets.bottom > 0))
+          NotebookStatusArea(
+            status: status,
+            reauthRequired: account.state == 'reauthRequired',
+            saveFailures: attention
+                .where((a) => a.kind == AttentionKind.saveFailure)
+                .length,
+            syncing: _busy,
+            showChecking: _checking,
+            downloaded: index?.rows.length ?? 0,
+            attentionShown: scope == NoteScope.attention,
+            onSyncNow: () => _sync(account.id),
+            onSignIn: () => _reauthenticate(account),
+            onOpenAttention: () => _go(NoteScope.attention),
           ),
+        if (_searching)
+          FilterRow(
+            filters: _filters,
+            onChanged: _setFilters,
+            scopeLabel: scope == NoteScope.all || _viewId != null
+                ? null
+                : _scopeTitle(scope, l),
+            onClearScope: () => _go(NoteScope.all),
+          ),
+        if (selecting) _bulkNotice(l),
+        Expanded(child: content),
+      ],
+    );
+
+    final Widget body;
+    if (_layout == NotebookLayout.phone) {
+      body = _pane.isOpen
+          ? EditorPane(controller: _pane)
+          : Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1000),
+                child: list,
+              ),
+            );
+    } else {
+      body = Row(
+        children: [
+          if (inlineNav && panel != null) ...[
+            SizedBox(width: navigationPaneWidth, child: panel),
+            const VerticalDivider(width: 1),
+          ],
+          SizedBox(width: listPaneWidth, child: list),
+          const VerticalDivider(width: 1),
+          Expanded(child: EditorPane(controller: _pane)),
         ],
       );
     }
-    final centered = Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 1000),
-        child: content,
-      ),
-    );
+    final editorOnly = _layout == NotebookLayout.phone && _pane.isOpen;
 
+    final primary =
+        defaultTargetPlatform == TargetPlatform.iOS ||
+        defaultTargetPlatform == TargetPlatform.macOS;
+    SingleActivator key(LogicalKeyboardKey k, {bool shift = false}) =>
+        SingleActivator(k, control: !primary, meta: primary, shift: shift);
     return PopScope(
-      canPop: !_searching,
+      canPop: !_searching && !selecting,
       onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) _closeSearch();
+        if (didPop || _pane.isOpen) return;
+        _escape();
       },
-      child: Scaffold(
-        key: _scaffold,
-        drawer: wide || panel == null ? null : Drawer(child: panel),
-        appBar: AppBar(
-          automaticallyImplyLeading: !_searching,
-          titleSpacing: 0,
-          leading: _searching
-              ? IconButton(
-                  tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-                  onPressed: _closeSearch,
-                  icon: const BackButtonIcon(),
-                )
-              : null,
-          title: _searching
-              ? TextField(
-                  controller: _searchField,
-                  autofocus: true,
-                  textInputAction: TextInputAction.search,
-                  decoration: InputDecoration(
-                    hintText: l.search,
-                    border: InputBorder.none,
+      child: CallbackShortcuts(
+        bindings: {
+          key(LogicalKeyboardKey.keyN): () =>
+              _createKind(account.id, NewKind.note),
+          key(LogicalKeyboardKey.keyN, shift: true): () =>
+              _createKind(account.id, NewKind.checklist),
+          key(LogicalKeyboardKey.keyF): _openSearch,
+          key(LogicalKeyboardKey.keyF, shift: true): _openSearch,
+          const SingleActivator(LogicalKeyboardKey.escape): _escape,
+        },
+        child: Focus(
+          focusNode: _homeFocus,
+          autofocus: true,
+          child: Scaffold(
+            key: _scaffold,
+            drawer: inlineNav || panel == null || editorOnly
+                ? null
+                : Drawer(child: panel),
+            appBar: editorOnly
+                ? null
+                : _appBar(
+                    account,
+                    accounts,
+                    status,
+                    attention,
+                    scope,
+                    l,
+                    inlineNav,
                   ),
-                  onChanged: _onSearch,
-                )
-              : Text(title, overflow: TextOverflow.ellipsis),
-          actions: _searching
-              ? [
-                  if (_searchField.text.isNotEmpty)
-                    IconButton(
-                      tooltip: l.clearSearch,
-                      onPressed: () {
-                        _searchField.clear();
-                        _onSearch('');
-                      },
-                      icon: const Icon(Icons.close),
-                    ),
-                ]
-              : [
-                  IconButton(
-                    tooltip: l.search,
-                    onPressed: () => setState(() => _searching = true),
-                    icon: const Icon(Icons.search),
+            floatingActionButton: selecting || editorOnly
+                ? null
+                : FloatingActionButton(
+                    tooltip: l.newNote,
+                    onPressed: () => _newMenu(account.id),
+                    child: const Icon(Icons.add),
                   ),
-                  IconButton(
-                    tooltip: l.sync,
-                    onPressed: _busy ? null : () => _sync(account.id),
-                    icon: const Icon(Icons.sync),
-                  ),
-                  if (hasStatus)
-                    IconButton(
-                      tooltip: l.syncStatus,
-                      onPressed: () =>
-                          setState(() => _bannerHidden = !_bannerHidden),
-                      icon: Icon(
-                        problem == 'auth' || conflicts > 0
-                            ? Icons.error_outline
-                            : Icons.cloud_off_outlined,
-                        color: problem == 'auth' || conflicts > 0
-                            ? Theme.of(context).colorScheme.error
-                            : null,
-                      ),
-                    ),
-                  _accountButton(account, l),
-                  PopupMenuButton<String>(
-                    onSelected: (value) => switch (value) {
-                      'settings' => Navigator.of(context).push<void>(
-                        MaterialPageRoute(
-                          settings: const RouteSettings(name: '/settings'),
-                          builder: (_) => SettingsScreen(account: account),
-                        ),
-                      ),
-                      'sort' => _toggleSort(),
-                      _ => _importKeep(account.id),
-                    },
-                    itemBuilder: (_) => [
-                      PopupMenuItem(value: 'settings', child: Text(l.settings)),
-                      PopupMenuItem(
-                        value: 'sort',
-                        child: Text(
-                          _byTitle ? l.sortByModified : l.sortByTitle,
-                        ),
-                      ),
-                      PopupMenuItem(value: 'import', child: Text(l.importKeep)),
-                    ],
-                  ),
-                ],
+            body: body,
+          ),
         ),
-        floatingActionButton: FloatingActionButton(
-          tooltip: l.newNote,
-          onPressed: () => _create(account.id, category: createCategory),
-          child: const Icon(Icons.add),
-        ),
-        body: wide && panel != null
-            ? Row(
-                children: [
-                  SizedBox(width: 280, child: panel),
-                  const VerticalDivider(width: 1),
-                  Expanded(child: centered),
-                ],
-              )
-            : centered,
       ),
     );
   }
 
+  Widget _content(
+    Account account,
+    _Index? index,
+    AsyncValue<List<LocalNote>> notesAsync,
+    List<NoteRow> rows,
+    NoteScope scope,
+    List<AttentionItem> attention,
+    AccountSyncStatus? status,
+    AppLocalizations l,
+  ) {
+    if (index == null) {
+      if (notesAsync.hasError) {
+        return OwnStateView.error(
+          title: l.loadFailed,
+          actions: [
+            OwnButton.primary(
+              label: l.retry,
+              icon: Icons.refresh,
+              onPressed: () => ref.invalidate(notesProvider(account.id)),
+            ),
+          ],
+        );
+      }
+      return _ListSkeleton(label: l.checkingForUpdates);
+    }
+    if (scope == NoteScope.attention) {
+      return AttentionList(
+        items: attention,
+        actions: _attentionActions(account.id),
+        controller: _scroll,
+      );
+    }
+    if (rows.isEmpty) {
+      return RefreshIndicator(
+        onRefresh: () => _sync(account.id),
+        child: LayoutBuilder(
+          builder: (context, box) => ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            children: [
+              SizedBox(
+                height: box.maxHeight,
+                child: _emptyState(index, account.id, scope, status, l),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    return RefreshIndicator(
+      onRefresh: () => _sync(account.id),
+      child: NoteListView(
+        rows: rows,
+        showCategory: scope == NoteScope.all || _viewId != null,
+        selected: _selected,
+        openId: _pane.openId,
+        controller: _scroll,
+        actions: NoteListActions(
+          onOpen: (r) => _edit(r.note),
+          onToggleSelect: _toggleSelect,
+          onMenu: _rowMenu,
+          onFavorite: (r) => _favorite([r]),
+          onMoreSwipe: (r) =>
+              _rowMenu(r, only: {RowAction.move, RowAction.delete}),
+          onRetry: (_) => _sync(account.id),
+        ),
+      ),
+    );
+  }
+
+  Widget _emptyState(
+    _Index index,
+    String accountId,
+    NoteScope scope,
+    AccountSyncStatus? status,
+    AppLocalizations l,
+  ) {
+    Widget create(
+      String label, {
+      String category = '',
+      bool favorite = false,
+    }) => OwnButton.primary(
+      label: label,
+      icon: Icons.add,
+      onPressed: () =>
+          _create(accountId, category: category, favorite: favorite),
+    );
+    if (index.rows.isEmpty) {
+      if (_busy && status?.lastCheckedAt == null) {
+        return OwnStateView(
+          icon: Icons.cloud_download_outlined,
+          title: l.downloadingTitle,
+        );
+      }
+      return OwnStateView(
+        icon: Icons.note_add_outlined,
+        title: l.noNotes,
+        actions: [create(l.createNoteAction)],
+      );
+    }
+    if (_query.isNotEmpty || !_filters.isEmpty) {
+      return OwnStateView(
+        icon: Icons.search_off,
+        title: l.noMatches,
+        message: _query.isEmpty ? null : '“$_query”',
+        actions: [
+          if (!_filters.isEmpty)
+            OwnButton.primary(
+              label: l.clearFilters,
+              onPressed: () => _setFilters(NoteFilters.none),
+            ),
+          if (_query.isNotEmpty)
+            OwnButton.secondary(label: l.clearSearch, onPressed: _clearQuery),
+        ],
+      );
+    }
+    return switch (scope) {
+      NoteScope.favorites => OwnStateView(
+        icon: Icons.star_outline,
+        title: l.emptyFavoritesTitle,
+        message: l.emptyFavoritesBody,
+      ),
+      NoteScope.shared => OwnStateView(
+        icon: Icons.group_outlined,
+        title: l.emptySharedTitle,
+        message: l.emptySharedBody,
+      ),
+      NoteScope.category => OwnStateView(
+        icon: Icons.folder_outlined,
+        title: l.emptyCategoryTitle(_category),
+        actions: [create(l.createHere, category: _category)],
+      ),
+      _ => OwnStateView(
+        icon: Icons.folder_outlined,
+        title: l.noNotesHere,
+        actions: [create(l.newNoteHere)],
+      ),
+    };
+  }
+
+  void _clearQuery() {
+    _debounce?.cancel();
+    _searchField.clear();
+    setState(() => _query = '');
+  }
+
+  Widget _bulkNotice(AppLocalizations l) {
+    final rows = _selectedRows;
+    final notes = [
+      if (!rows.every((r) => canFavorite(r.note))) l.bulkMixedFavorite,
+      if (!rows.every(canMove)) l.bulkMixedMove,
+      if (!rows.every((r) => canDelete(r.note))) l.bulkMixedDelete,
+    ];
+    if (notes.isEmpty) return const SizedBox.shrink();
+    final colors = context.own;
+    return Semantics(
+      container: true,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: OwnSpace.phoneInset,
+          vertical: OwnSpace.s,
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(Icons.info_outline, size: 18, color: colors.info),
+            const SizedBox(width: OwnSpace.s),
+            Expanded(
+              child: Text(
+                notes.join(' '),
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _scopeTitle(NoteScope scope, AppLocalizations l) => switch (scope) {
+    NoteScope.all => l.allNotes,
+    NoteScope.favorites => l.favorites,
+    NoteScope.uncategorised => l.uncategorised,
+    NoteScope.shared => l.sharedWithMe,
+    NoteScope.attention => l.needsAttention,
+    NoteScope.category => _category,
+  };
+
+  AppBar _appBar(
+    Account account,
+    List<Account> accounts,
+    AccountSyncStatus? status,
+    List<AttentionItem> attention,
+    NoteScope scope,
+    AppLocalizations l,
+    bool inlineNav,
+  ) {
+    if (_selected.isNotEmpty) return _selectionBar(l);
+    if (_searching) return _searchBar(account, scope, l);
+    final view = _views.where((v) => v.id == _viewId).firstOrNull;
+    final title = view?.name ?? _scopeTitle(scope, l);
+    final name = _accountLabel(account, accounts);
+    final offline = status?.problem == 'offline' && status!.pendingUploads == 0;
+    return AppBar(
+      automaticallyImplyLeading: false,
+      toolbarHeight: 64,
+      titleSpacing: inlineNav ? OwnSpace.l : 0,
+      leading: inlineNav
+          ? null
+          : IconButton(
+              tooltip: l.categoriesMenu,
+              onPressed: () => _scaffold.currentState?.openDrawer(),
+              icon: const Icon(Icons.menu),
+            ),
+      title: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
+          AccountSubtitle(
+            name: name,
+            busy: _busy,
+            offline: offline,
+            attention:
+                status != null &&
+                (status.needsAttention > 0 ||
+                    account.state == 'reauthRequired'),
+            onTap: () => showSyncDetails(
+              context,
+              accountId: account.id,
+              onSyncNow: () => _sync(account.id),
+              onOpenAttention: () => _go(NoteScope.attention),
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        IconButton(
+          tooltip: l.search,
+          onPressed: _openSearch,
+          icon: const Icon(Icons.search),
+        ),
+        _accountButton(account, l),
+        PopupMenuButton<String>(
+          tooltip: l.moreOptions,
+          icon: const Icon(Icons.more_vert),
+          onSelected: (value) => switch (value) {
+            'sync' => _sync(account.id),
+            'select' => setState(() => _selectFirst()),
+            'sort' => _sortSheet(),
+            'settings' => _openSettings(account),
+            _ => _importKeep(account.id),
+          },
+          itemBuilder: (_) => [
+            _menuItem('sync', Icons.sync, l.syncNow),
+            _menuItem('select', Icons.checklist_rtl, l.selectNotes),
+            _menuItem('sort', Icons.tune, l.sortAndFilter),
+            _menuItem('settings', Icons.settings_outlined, l.settings),
+            _menuItem('import', Icons.upload_file_outlined, l.importKeep),
+          ],
+        ),
+      ],
+    );
+  }
+
+  PopupMenuItem<String> _menuItem(String value, IconData icon, String label) =>
+      PopupMenuItem(
+        value: value,
+        child: Row(
+          children: [
+            Icon(icon),
+            const SizedBox(width: OwnSpace.m),
+            Expanded(child: Text(label)),
+          ],
+        ),
+      );
+
+  /// "Select notes" from the menu enters selection mode on the first row.
+  void _selectFirst() {
+    final first = _visible.firstOrNull;
+    if (first != null) _selected.add(first.note.id);
+  }
+
+  AppBar _searchBar(Account account, NoteScope scope, AppLocalizations l) =>
+      AppBar(
+        automaticallyImplyLeading: false,
+        titleSpacing: 0,
+        leading: IconButton(
+          tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+          onPressed: _closeSearch,
+          icon: const BackButtonIcon(),
+        ),
+        title: TextField(
+          controller: _searchField,
+          focusNode: _searchFocus,
+          textInputAction: TextInputAction.search,
+          decoration: InputDecoration(
+            hintText: l.search,
+            filled: false,
+            border: InputBorder.none,
+            enabledBorder: InputBorder.none,
+            focusedBorder: InputBorder.none,
+          ),
+          onChanged: _onSearch,
+        ),
+        actions: [
+          if (_searchField.text.isNotEmpty)
+            IconButton(
+              tooltip: l.clearSearch,
+              onPressed: _clearQuery,
+              icon: const Icon(Icons.close),
+            ),
+          IconButton(
+            tooltip: l.sortAndFilter,
+            onPressed: _sortSheet,
+            icon: const Icon(Icons.tune),
+          ),
+        ],
+      );
+
+  AppBar _selectionBar(AppLocalizations l) {
+    final rows = _selectedRows;
+    final allFavorite = rows.isNotEmpty && rows.every((r) => r.note.favorite);
+    final favoriteOk = rows.every((r) => canFavorite(r.note));
+    final moveOk = rows.every(canMove);
+    final deleteOk = rows.every((r) => canDelete(r.note));
+    return AppBar(
+      automaticallyImplyLeading: false,
+      leading: IconButton(
+        tooltip: l.clearSelection,
+        onPressed: () => setState(_selected.clear),
+        icon: const Icon(Icons.close),
+      ),
+      title: Text(l.selectedCount(rows.length)),
+      actions: [
+        IconButton(
+          tooltip: allFavorite ? l.bulkUnfavorite : l.bulkFavorite,
+          onPressed: favoriteOk ? () => _favorite(rows) : null,
+          icon: Icon(allFavorite ? Icons.star : Icons.star_outline),
+        ),
+        IconButton(
+          tooltip: l.bulkMove,
+          onPressed: moveOk ? () => _move(rows) : null,
+          icon: const Icon(Icons.drive_file_move_outlined),
+        ),
+        IconButton(
+          tooltip: l.bulkExport,
+          onPressed: () => _export(rows),
+          icon: const Icon(Icons.ios_share),
+        ),
+        IconButton(
+          tooltip: l.delete,
+          onPressed: deleteOk ? () => _delete(rows, confirm: true) : null,
+          icon: const Icon(Icons.delete_outline),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _sortSheet() => showSortFilterSheet(
+    context,
+    sort: _sort,
+    filters: _filters,
+    onChanged: (sort, filters) {
+      _setSort(sort);
+      _setFilters(filters);
+    },
+    onSaveView: _saveView,
+  );
+
+  void _openSettings(Account account) => Navigator.of(context).push<void>(
+    MaterialPageRoute(
+      settings: const RouteSettings(name: '/settings'),
+      builder: (_) => SettingsScreen(account: account),
+    ),
+  );
+
+  String _accountLabel(Account account, List<Account> accounts) {
+    final name =
+        ref.watch(accountDisplayNameProvider(account)).valueOrNull ??
+        account.loginName;
+    final clash = accounts.any(
+      (a) => a.id != account.id && a.loginName == account.loginName,
+    );
+    return clash ? '$name · ${Uri.parse(account.server).host}' : name;
+  }
+
   Widget _accountButton(Account account, AppLocalizations l) {
-    final name = account.loginName;
+    final name =
+        ref.watch(accountDisplayNameProvider(account)).valueOrNull ??
+        account.loginName;
     return IconButton(
       tooltip: l.switchAccount,
       onPressed: _busy
           ? null
-          : () => showAccountSwitcher(context, currentId: account.id),
-      icon: CircleAvatar(
-        radius: 14,
-        child: Text(
-          name.isEmpty
-              ? '?'
-              : String.fromCharCode(name.runes.first).toUpperCase(),
-        ),
+          : () => showAccountSwitcher(
+              context,
+              currentId: account.id,
+              beforeSwitch: _pane.close,
+            ),
+      icon: SizedBox.square(
+        dimension: 32,
+        child: AccountAvatar(account: account, name: name),
       ),
     );
   }
@@ -642,45 +1430,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     ),
   );
 
-  void _onSearch(String value) {
-    _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 250), () {
-      if (mounted) setState(() => _search = value.trim().toLowerCase());
-    });
-    // The clear button follows the text at once, the filter a moment later.
-    setState(() {});
-  }
-
-  void _closeSearch() {
-    _debounce?.cancel();
-    _searchField.clear();
-    setState(() {
-      _searching = false;
-      _search = '';
-    });
-  }
-
-  Widget _emptyState(
-    _Index index,
-    String accountId,
-    String category,
-    AppLocalizations l,
-  ) {
-    if (index.rows.isEmpty) return _EmptyText(l.noNotes);
-    if (_search.isNotEmpty) {
-      return _EmptyText(
-        l.noMatches,
-        action: TextButton(onPressed: _closeSearch, child: Text(l.clearSearch)),
-      );
-    }
-    return _EmptyText(
-      l.noNotesHere,
-      action: FilledButton.tonal(
-        onPressed: () => _create(accountId, category: category),
-        child: Text(l.newNoteHere),
-      ),
-    );
-  }
+  void _reauthenticate(Account account) => Navigator.of(context).push<void>(
+    MaterialPageRoute(
+      settings: const RouteSettings(name: '/login'),
+      builder: (_) => LoginScreen(reauthenticate: account),
+    ),
+  );
 
   /// Rows are rebuilt only when the notes list changes, not on every build;
   /// that is also the one place the home-screen widget gets its data.
@@ -703,23 +1458,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final counts = <String, int>{};
     var favorites = 0;
     var uncategorised = 0;
-    var unsent = 0;
-    var conflicts = 0;
-    LocalNote? firstConflict;
+    var shared = 0;
     for (final n in notes) {
-      if (n.category.isEmpty) {
+      if (n.kind == 'shared') {
+        shared++;
+      } else if (n.category.isEmpty) {
         uncategorised++;
       } else {
         counts.update(n.category, (v) => v + 1, ifAbsent: () => 1);
       }
       if (n.favorite) favorites++;
-      switch (n.syncState) {
-        case 'draft' || 'sending':
-          unsent++;
-        case 'needsDecision':
-          conflicts++;
-          firstConflict ??= n;
-      }
     }
     final tree = buildCategoryTree(counts);
     final paths = <String>{};
@@ -741,54 +1489,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       paths: paths,
       favorites: favorites,
       uncategorised: uncategorised,
-      unsent: unsent,
-      conflicts: conflicts,
-      firstConflict: firstConflict,
+      shared: shared,
     );
   }
 
   List<NoteRow> _visibleRows(
     _Index index,
     NoteScope scope,
-    String category,
     AppLocalizations l,
   ) {
-    final key = (index, scope, category, _search, _byTitle);
+    final key = (index, scope, _category, _filters, _query, _sort);
     if (_visibleKey == key) return _visible;
-    final rows = [
-      for (final r in index.rows)
-        if (r.inScope(scope, category) &&
-            (_search.isEmpty || r.haystack.contains(_search)))
-          r,
-    ];
-    if (_byTitle) {
-      final untitled = l.untitled.toLowerCase();
-      final keys = {
-        for (final r in rows)
-          r: r.title.isEmpty ? untitled : r.title.toLowerCase(),
-      };
-      rows.sort((a, b) => keys[a]!.compareTo(keys[b]!));
-    }
     _visibleKey = key;
-    return _visible = rows;
+    return _visible = selectRows(
+      index.rows,
+      scope: scope,
+      category: _category,
+      filters: _filters,
+      query: _query,
+      sort: _sort,
+      untitled: l.untitled,
+    );
   }
-
-  /// A note not uploaded yet shows the name the server will give it.
-  static String _shownTitle(LocalNote n, AppLocalizations l) {
-    final title = n.title.trim().isEmpty
-        ? titleFromContent(n.content)
-        : n.title;
-    return title.isEmpty ? l.untitled : title;
-  }
-
-  static String _reason(String problem, AppLocalizations l) =>
-      switch (problem) {
-        'offline' => l.reasonOffline,
-        'auth' => l.reasonAuth,
-        'locked' => l.reasonLocked,
-        'storage_full' => l.reasonStorageFull,
-        _ => l.reasonServer,
-      };
 }
 
 /// Everything derived from one list of notes, kept between builds.
@@ -802,9 +1524,7 @@ class _Index {
     required this.paths,
     required this.favorites,
     required this.uncategorised,
-    required this.unsent,
-    required this.conflicts,
-    required this.firstConflict,
+    required this.shared,
   });
   final List<LocalNote> notes;
   final String accountId;
@@ -814,66 +1534,50 @@ class _Index {
   final Set<String> paths;
   final int favorites;
   final int uncategorised;
-  final int unsent;
-  final int conflicts;
-  final LocalNote? firstConflict;
+  final int shared;
 }
 
-class _StatusBanner extends StatelessWidget {
-  const _StatusBanner({
-    required this.lines,
-    required this.actions,
-    required this.critical,
-  });
-  final List<String> lines;
-  final List<Widget> actions;
-  final bool critical;
+/// Placeholder rows while no cached content exists. Static, so reduced
+/// motion has nothing to switch off.
+class _ListSkeleton extends StatelessWidget {
+  const _ListSkeleton({required this.label});
+  final String label;
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final color = critical
-        ? scheme.onErrorContainer
-        : scheme.onSecondaryContainer;
+    final colors = context.own;
+    Widget bar(double width, double height) => Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        color: colors.raised,
+        borderRadius: BorderRadius.circular(OwnShape.compactRadius),
+      ),
+    );
     return Semantics(
+      label: label,
       liveRegion: true,
-      child: Material(
-        color: critical ? scheme.errorContainer : scheme.secondaryContainer,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 8, 4),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              for (final line in lines)
-                Text(line, style: TextStyle(color: color)),
-              if (actions.isNotEmpty)
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: Wrap(children: actions),
+      child: ExcludeSemantics(
+        child: ListView(
+          physics: const NeverScrollableScrollPhysics(),
+          children: [
+            for (var i = 0; i < 6; i++)
+              Padding(
+                padding: const EdgeInsets.all(OwnSpace.phoneInset),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    bar(180, 16),
+                    const SizedBox(height: OwnSpace.s),
+                    bar(280, 12),
+                    const SizedBox(height: OwnSpace.xs),
+                    bar(120, 12),
+                  ],
                 ),
-            ],
-          ),
+              ),
+          ],
         ),
       ),
     );
   }
-}
-
-class _EmptyText extends StatelessWidget {
-  const _EmptyText(this.text, {this.action});
-  final String text;
-  final Widget? action;
-  @override
-  Widget build(BuildContext context) => Center(
-    child: Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(text, textAlign: TextAlign.center),
-          if (action != null) ...[const SizedBox(height: 12), action!],
-        ],
-      ),
-    ),
-  );
 }

@@ -309,5 +309,264 @@
     }
   },
   "scanEnterAddress": "Enter server address",
-  "appLocked": "OwnNotes is locked"
+  "appLocked": "OwnNotes is locked",
+  "categoriesMenu": "Categories",
+  "moreOptions": "More options",
+  "syncNow": "Sync now",
+  "syncDetails": "Sync details",
+  "selectNotes": "Select notes",
+  "sortAndFilter": "Sort and filter",
+  "accountSyncHint": "Sync details for {account}",
+  "@accountSyncHint": {
+    "placeholders": {
+      "account": {
+        "type": "String"
+      }
+    }
+  },
+  "checkingForUpdates": "Checking for updates",
+  "syncSavedWaiting": "{count, plural, one{Saved on device · 1 waiting} other{Saved on device · {count} waiting}}",
+  "@syncSavedWaiting": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncUploading": "{count, plural, one{Uploading 1 change} other{Uploading {count} changes}}",
+  "@syncUploading": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncUpToDate": "Up to date · checked {time}",
+  "@syncUpToDate": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "syncOffline": "Offline · changes saved on device",
+  "syncOfflineShort": "Offline",
+  "syncAuthFailure": "Sign in again · local notes retained",
+  "syncSaveFailure": "Could not save on this device",
+  "needsAttention": "Needs attention",
+  "sharedWithMe": "Shared with me",
+  "savedViews": "Saved views",
+  "onThisDevice": "On this device",
+  "saveView": "Save this view",
+  "saveViewName": "Name of the view",
+  "deleteView": "Delete saved view",
+  "sheetUploads": "Uploads",
+  "sheetDownloads": "Downloads",
+  "sheetDecisions": "Decisions",
+  "sheetDeletions": "Deletions",
+  "uploadsNone": "Nothing waiting to upload",
+  "downloadsNever": "Not checked yet",
+  "downloadsUnreadable": "{count, plural, one{1 note cannot be refreshed} other{{count} notes cannot be refreshed}}",
+  "@downloadsUnreadable": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "downloadsMissing": "{count, plural, one{1 note is no longer listed by the server} other{{count} notes are no longer listed by the server}}",
+  "@downloadsMissing": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "decisionsNone": "No notes need a decision",
+  "deletionsNone": "No deletions waiting",
+  "deletionsWaiting": "{count, plural, one{1 deletion waiting for the server} other{{count} deletions waiting for the server}}",
+  "@deletionsWaiting": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "deletionsFailed": "{count, plural, one{1 deletion failed} other{{count} deletions failed}}",
+  "@deletionsFailed": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "reviewItems": "Review",
+  "rowSavedWaiting": "Saved on device · Waiting to upload",
+  "rowUploading": "Uploading changes",
+  "rowNeedsDecision": "Needs your decision",
+  "rowUnavailable": "Cannot refresh this note",
+  "rowMissing": "No longer listed by the server",
+  "rowSharedEdit": "Shared · Can edit",
+  "rowSharedView": "Shared · View only",
+  "attachmentsCount": "{count, plural, one{1 attachment} other{{count} attachments}}",
+  "@attachmentsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "rowMenu": "Actions for {title}",
+  "@rowMenu": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "openNote": "Open",
+  "moveNote": "Move",
+  "rowDeletionWaiting": "Deletion waiting",
+  "rowDeletionFailed": "Deletion failed · {reason}",
+  "@rowDeletionFailed": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "undoAction": "Undo",
+  "saveCopy": "Save a copy",
+  "categoryCount": "{name}, {count, plural, one{1 note} other{{count} notes}} including subcategories",
+  "@categoryCount": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "expandCategory": "Expand {name}",
+  "@expandCategory": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "collapseCategory": "Collapse {name}",
+  "@collapseCategory": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "openSubtree": "Show {name} on its own",
+  "@openSubtree": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "allCategoriesUp": "All categories",
+  "createNote": "Note",
+  "createChecklist": "Checklist",
+  "createTemplate": "Template",
+  "createDaily": "Daily note",
+  "createWhere": "Which category should the note go to?",
+  "createNoteAction": "Create note",
+  "createHere": "Create here",
+  "filterTasks": "Unfinished tasks",
+  "filterAttachments": "With attachments",
+  "filterShared": "Shared",
+  "filterWaiting": "Not uploaded yet",
+  "filterDecision": "Needs a decision",
+  "filterSharing": "Sharing",
+  "filterSync": "Sync state",
+  "clearFilters": "Clear filters",
+  "sortTitle": "Sort",
+  "sortFavoritesFirst": "Favorites first",
+  "emptyFavoritesTitle": "No favorites yet",
+  "emptyFavoritesBody": "Star a note to find it here. Use the note menu or swipe a note.",
+  "emptySharedTitle": "Nothing shared with you",
+  "emptySharedBody": "Notes that other people share with this account appear here.",
+  "emptyAttentionTitle": "Nothing needs your attention",
+  "emptyAttentionBody": "Decisions, failed deletions and notes that cannot be refreshed appear here.",
+  "emptyCategoryTitle": "{category} is empty",
+  "@emptyCategoryTitle": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "downloadingTitle": "Downloading your notes",
+  "downloadingBody": "{count, plural, one{1 note downloaded so far} other{{count} notes downloaded so far}}",
+  "@downloadingBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "connectNextcloud": "Connect Nextcloud",
+  "scanLoginQr": "Scan login QR code",
+  "selectedCount": "{count, plural, one{1 selected} other{{count} selected}}",
+  "@selectedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "bulkFavorite": "Favorite",
+  "bulkUnfavorite": "Remove from favorites",
+  "bulkMove": "Move",
+  "bulkExport": "Export",
+  "bulkMixedMove": "Move is unavailable because some selected notes are read-only, shared or have attachments.",
+  "bulkMixedDelete": "Delete is unavailable because some selected notes are read-only, shared or being sent.",
+  "bulkMixedFavorite": "Favorite is unavailable because some selected notes are shared.",
+  "bulkDeleteConfirm": "{count, plural, one{Delete 1 note?} other{Delete {count} notes?}}",
+  "@bulkDeleteConfirm": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "bulkDeleteBody": "The notes are also deleted on the server. You can undo this until the server has carried it out.",
+  "notesDeleted": "{count, plural, one{1 note deleted} other{{count} notes deleted}}",
+  "@notesDeleted": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "notesMoved": "{count, plural, one{1 note moved} other{{count} notes moved}}",
+  "@notesMoved": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "bulkFailed": "{count, plural, one{1 note could not be changed} other{{count} notes could not be changed}}",
+  "@bulkFailed": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "moveTitle": "Move to category",
+  "moveNewCategory": "New category",
+  "moveNewCategoryHint": "Name, use / for subcategories",
+  "clearSelection": "Cancel selection",
+  "rowFavoriteOn": "Add to favorites",
+  "rowFavoriteOff": "Remove from favorites"
 }
