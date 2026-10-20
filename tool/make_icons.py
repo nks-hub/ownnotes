@@ -5,12 +5,13 @@
 
 Each existing icon file is overwritten at its current pixel size, so the
 Android mipmaps and the iOS asset catalogue stay exactly as Flutter laid
-them out. Also writes apps/mobile/assets/brand/play-store-icon.png (512 px).
+them out. Also writes apps/mobile/assets/brand/play-store-icon.png (512 px)
+and docs/store/feature-graphic.png (1024 × 500).
 """
 
 import pathlib
 
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 
 ROOT = pathlib.Path(__file__).resolve().parents[1] / "apps/mobile"
 BRAND = (49, 91, 119)  # the app's seed colour, 0xff315b77
@@ -57,4 +58,13 @@ for png in (ROOT / "android/app/src/main/res").glob("mipmap-*/ic_launcher.png"):
 store = ROOT / "assets/brand/play-store-icon.png"
 store.parent.mkdir(parents=True, exist_ok=True)
 ios.resize((512, 512), Image.LANCZOS).convert("RGB").save(store, optimize=True)
+
+# Play feature graphic: the icon on the brand colour with the app name.
+banner = Image.new("RGB", (1024, 500), BRAND)
+banner.paste(android.resize((300, 300), Image.LANCZOS), (110, 100),
+             android.resize((300, 300), Image.LANCZOS))
+draw = ImageDraw.Draw(banner)
+draw.text((450, 250), "OwnNotes", fill="white", anchor="lm",
+          font=ImageFont.truetype("arialbd.ttf", 96))
+banner.save(ROOT.parent.parent / "docs/store/feature-graphic.png", optimize=True)
 print("icons written")
