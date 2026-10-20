@@ -973,6 +973,222 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'That login belongs to another server or user. Sign in as the same account to keep its notes.'**
   String get reauthMismatch;
+
+  /// No description provided for @settingsAppearance.
+  ///
+  /// In en, this message translates to:
+  /// **'Appearance'**
+  String get settingsAppearance;
+
+  /// No description provided for @settingsWriting.
+  ///
+  /// In en, this message translates to:
+  /// **'Writing'**
+  String get settingsWriting;
+
+  /// No description provided for @settingsPrivacy.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy'**
+  String get settingsPrivacy;
+
+  /// No description provided for @settingsSync.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync and storage'**
+  String get settingsSync;
+
+  /// No description provided for @settingsTransfer.
+  ///
+  /// In en, this message translates to:
+  /// **'Import and export'**
+  String get settingsTransfer;
+
+  /// No description provided for @settingsAbout.
+  ///
+  /// In en, this message translates to:
+  /// **'About'**
+  String get settingsAbout;
+
+  /// No description provided for @settingsDeviceOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'These settings apply to this device only.'**
+  String get settingsDeviceOnly;
+
+  /// No description provided for @theme.
+  ///
+  /// In en, this message translates to:
+  /// **'Theme'**
+  String get theme;
+
+  /// No description provided for @themeSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'System'**
+  String get themeSystem;
+
+  /// No description provided for @themeLight.
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get themeLight;
+
+  /// No description provided for @themeDark.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark'**
+  String get themeDark;
+
+  /// No description provided for @language.
+  ///
+  /// In en, this message translates to:
+  /// **'Language'**
+  String get language;
+
+  /// No description provided for @languageSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'System'**
+  String get languageSystem;
+
+  /// No description provided for @exportMarkdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Export Markdown'**
+  String get exportMarkdown;
+
+  /// No description provided for @exportMarkdownHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes as Markdown files in a ZIP. Attachments and recovery copies are not included.'**
+  String get exportMarkdownHint;
+
+  /// No description provided for @widgetPolicyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Home-screen widgets'**
+  String get widgetPolicyTitle;
+
+  /// No description provided for @widgetPolicyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'With app lock on, widgets hide note content, even while the app is unlocked.'**
+  String get widgetPolicyBody;
+
+  /// No description provided for @storageNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 note on this device} other{{count} notes on this device}}'**
+  String storageNotes(int count);
+
+  /// No description provided for @storageUnsent.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{Everything is sent to the server} one{1 note not sent yet} other{{count} notes not sent yet}}'**
+  String storageUnsent(int count);
+
+  /// No description provided for @syncHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes sync when you open the app. The system decides when background sync runs.'**
+  String get syncHint;
+
+  /// No description provided for @exportUnsent.
+  ///
+  /// In en, this message translates to:
+  /// **'Export unsent notes'**
+  String get exportUnsent;
+
+  /// No description provided for @removeFromDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from this device'**
+  String get removeFromDevice;
+
+  /// No description provided for @accountDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Account details'**
+  String get accountDetails;
+
+  /// No description provided for @accountUserLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'User'**
+  String get accountUserLabel;
+
+  /// No description provided for @accountServerLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Server'**
+  String get accountServerLabel;
+
+  /// No description provided for @accountStatusLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get accountStatusLabel;
+
+  /// No description provided for @accountSignedIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Signed in'**
+  String get accountSignedIn;
+
+  /// No description provided for @accountsManage.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage accounts'**
+  String get accountsManage;
+
+  /// No description provided for @accountSwitchBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save on this device, so the account was not switched.'**
+  String get accountSwitchBlocked;
+
+  /// No description provided for @removeLocalNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Only this device is affected. Notes on the server are not deleted.'**
+  String get removeLocalNote;
+
+  /// No description provided for @loginCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign-in cancelled. Nothing was saved.'**
+  String get loginCancelled;
+
+  /// No description provided for @reauthExplain.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in as this account to keep its notes and unsent changes.'**
+  String get reauthExplain;
+
+  /// No description provided for @scanConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in with this code?'**
+  String get scanConfirmTitle;
+
+  /// No description provided for @scanConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{user} on {host}'**
+  String scanConfirmBody(String user, String host);
+
+  /// No description provided for @scanEnterAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter server address'**
+  String get scanEnterAddress;
+
+  /// No description provided for @appLocked.
+  ///
+  /// In en, this message translates to:
+  /// **'OwnNotes is locked'**
+  String get appLocked;
 }
 
 class _AppLocalizationsDelegate

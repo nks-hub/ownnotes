@@ -29,6 +29,7 @@ enum _Problem {
   timeout,
   notesMissing,
   identityMismatch,
+  cancelled,
   failed,
 }
 
@@ -88,7 +89,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   void _cancel() {
     _attempt++;
     _session?.cancel();
-    _back();
+    _back(problem: _Problem.cancelled);
   }
 
   @override
@@ -278,8 +279,35 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         // Nothing secret was scanned: an address the user did not have to type.
         await _connect(_shown(server));
       case QrLoginCredentials():
-        await _commitScanned(payload);
+        // The code carries a secret, so name server and user before using it.
+        if (await _confirmScanned(payload) && mounted) {
+          await _commitScanned(payload);
+        }
     }
+  }
+
+  Future<bool> _confirmScanned(QrLoginCredentials payload) async {
+    final l = AppLocalizations.of(context)!;
+    return await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text(l.scanConfirmTitle),
+            content: Text(
+              l.scanConfirmBody(payload.loginName, payload.server.uri.host),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: Text(l.cancel),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: Text(l.connect),
+              ),
+            ],
+          ),
+        ) ??
+        false;
   }
 
   Future<void> _commitScanned(QrLoginCredentials payload) async {
@@ -331,6 +359,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     _Problem.timeout => l.serverTimeout,
     _Problem.notesMissing => l.notesAppMissing,
     _Problem.identityMismatch => l.reauthMismatch,
+    _Problem.cancelled => l.loginCancelled,
     _Problem.failed => l.loginFailed,
   };
 
@@ -360,8 +389,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     controller: _url,
                     focus: _focus,
                     busy: _busy,
-                    locked: widget.reauthenticate != null,
+                    account: widget.reauthenticate,
                     message: _message(l),
+                    fieldError: const {
+                      _Problem.empty,
+                      _Problem.insecure,
+                      _Problem.invalid,
+                    }.contains(_problem),
+                    info: _problem == _Problem.cancelled,
                     onCancel: _cancel,
                     onConnect: _connect,
                     onScan: _canScan ? _scan : null,
@@ -373,14 +408,172 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 }
 
+/// Wide windows put the introduction beside the form.
+const _wideLoginWidth = 840.0;
+
 class _Entry extends StatelessWidget {
   const _Entry({
     super.key,
     required this.controller,
     required this.focus,
     required this.busy,
+    required this.account,
+    required this.message,
+    required this.fieldError,
+    required this.info,
+    required this.onCancel,
+    required this.onConnect,
+    required this.onScan,
+  });
+  final TextEditingController controller;
+  final FocusNode focus;
+  final bool busy;
+
+  /// The account being signed in again; its server and user are fixed.
+  final Account? account;
+  final String? message;
+
+  /// Shows [message] under the address field instead of in a banner.
+  final bool fieldError;
+
+  /// Shows [message] as a neutral notice, not a failure.
+  final bool info;
+  final VoidCallback onCancel;
+  final VoidCallback onConnect;
+  final VoidCallback? onScan;
+
+  @override
+  Widget build(BuildContext context) {
+    final intro = _Intro(account: account);
+    final form = _Form(
+      controller: controller,
+      focus: focus,
+      busy: busy,
+      locked: account != null,
+      message: message,
+      fieldError: fieldError,
+      info: info,
+      onCancel: onCancel,
+      onConnect: onConnect,
+      onScan: onScan,
+    );
+    if (MediaQuery.sizeOf(context).width >= _wideLoginWidth) {
+      return Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 960),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: intro),
+                const SizedBox(width: 48),
+                SizedBox(width: 440, child: form),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 520),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [intro, const SizedBox(height: 24), form],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Brand, title and the two reasons to use the app; for a repair it names the
+/// account that has to be signed in again.
+class _Intro extends StatelessWidget {
+  const _Intro({required this.account});
+  final Account? account;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final account = this.account;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Align(alignment: Alignment.centerLeft, child: BrandMark()),
+        const SizedBox(height: 20),
+        if (account != null) ...[
+          Semantics(
+            header: true,
+            child: Text(
+              account.loginName,
+              style: _welcomeStyle(theme),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            Uri.parse(account.server).host,
+            style: theme.textTheme.titleMedium,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            l.reauthExplain,
+            style: theme.textTheme.bodyLarge?.copyWith(
+              color: scheme.onSurfaceVariant,
+            ),
+          ),
+        ] else ...[
+          Semantics(
+            header: true,
+            child: Text(l.onboardingTitle, style: _welcomeStyle(theme)),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            l.onboardingBody,
+            style: theme.textTheme.bodyLarge?.copyWith(
+              color: scheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 24),
+          _FeatureLine(
+            icon: Icons.hub_outlined,
+            title: l.multiAccountTitle,
+            body: l.multiAccountBody,
+          ),
+          const SizedBox(height: 16),
+          _FeatureLine(
+            icon: Icons.shield_outlined,
+            title: l.secureLoginTitle,
+            body: l.secureLoginBody,
+          ),
+        ],
+      ],
+    );
+  }
+
+  static TextStyle? _welcomeStyle(ThemeData theme) => theme
+      .textTheme
+      .headlineMedium
+      ?.copyWith(fontSize: 30, height: 38 / 30, fontWeight: FontWeight.w600);
+}
+
+class _Form extends StatelessWidget {
+  const _Form({
+    required this.controller,
+    required this.focus,
+    required this.busy,
     required this.locked,
     required this.message,
+    required this.fieldError,
+    required this.info,
     required this.onCancel,
     required this.onConnect,
     required this.onScan,
@@ -390,6 +583,8 @@ class _Entry extends StatelessWidget {
   final bool busy;
   final bool locked;
   final String? message;
+  final bool fieldError;
+  final bool info;
   final VoidCallback onCancel;
   final VoidCallback onConnect;
   final VoidCallback? onScan;
@@ -397,133 +592,105 @@ class _Entry extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    return Center(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 520),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Align(alignment: Alignment.centerLeft, child: BrandMark()),
-              const SizedBox(height: 20),
-              Text(l.onboardingTitle, style: theme.textTheme.headlineMedium),
-              const SizedBox(height: 10),
-              Text(
-                l.onboardingBody,
-                style: theme.textTheme.bodyLarge?.copyWith(
-                  color: scheme.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: 22),
-              _FeatureLine(
-                icon: Icons.hub_outlined,
-                title: l.multiAccountTitle,
-                body: l.multiAccountBody,
-              ),
-              const SizedBox(height: 14),
-              _FeatureLine(
-                icon: Icons.shield_outlined,
-                title: l.secureLoginTitle,
-                body: l.secureLoginBody,
-              ),
-              const SizedBox(height: 22),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      TextField(
-                        controller: controller,
-                        focusNode: focus,
-                        enabled: !busy && !locked,
-                        keyboardType: TextInputType.url,
-                        textInputAction: TextInputAction.go,
-                        onSubmitted: (_) => onConnect(),
-                        autofillHints: const [AutofillHints.url],
-                        autocorrect: false,
-                        enableSuggestions: false,
-                        decoration: InputDecoration(
-                          labelText: l.serverUrl,
-                          hintText: 'https://cloud.example.com',
-                          prefixIcon: const Icon(Icons.language_rounded),
-                        ),
-                      ),
-                      if (message != null) ...[
-                        const SizedBox(height: 14),
-                        Semantics(
-                          liveRegion: true,
-                          child: Container(
-                            padding: const EdgeInsets.all(14),
-                            decoration: BoxDecoration(
-                              color: scheme.errorContainer,
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Icon(
-                                  Icons.error_outline_rounded,
-                                  color: scheme.onErrorContainer,
-                                ),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: Text(
-                                    message!,
-                                    style: TextStyle(
-                                      color: scheme.onErrorContainer,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                      const SizedBox(height: 18),
-                      FilledButton.icon(
-                        onPressed: busy ? null : onConnect,
-                        icon: busy
-                            ? const SizedBox.square(
-                                dimension: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2.4,
-                                ),
-                              )
-                            : const Icon(Icons.arrow_forward_rounded),
-                        label: Text(busy ? l.checkingServer : l.connect),
-                      ),
-                      if (busy) ...[
-                        const SizedBox(height: 8),
-                        OutlinedButton.icon(
-                          onPressed: onCancel,
-                          icon: const Icon(Icons.close_rounded),
-                          label: Text(l.cancel),
-                        ),
-                      ] else if (onScan != null) ...[
-                        const SizedBox(height: 8),
-                        OutlinedButton.icon(
-                          onPressed: onScan,
-                          icon: const Icon(Icons.qr_code_scanner_rounded),
-                          label: Text(l.scanLoginCode),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
-            ],
+    final scheme = Theme.of(context).colorScheme;
+    const tall = Size.fromHeight(48);
+    final banner = message != null && !fieldError;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        TextField(
+          controller: controller,
+          focusNode: focus,
+          enabled: !busy && !locked,
+          keyboardType: TextInputType.url,
+          textInputAction: TextInputAction.go,
+          onSubmitted: (_) => onConnect(),
+          autofillHints: const [AutofillHints.url],
+          autocorrect: false,
+          enableSuggestions: false,
+          decoration: InputDecoration(
+            labelText: l.serverUrl,
+            hintText: 'https://cloud.example.com',
+            prefixIcon: const Icon(Icons.language_rounded),
+            errorText: fieldError ? message : null,
+            errorMaxLines: 4,
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
           ),
         ),
-      ),
+        if (banner) ...[
+          const SizedBox(height: 12),
+          Semantics(
+            liveRegion: true,
+            child: Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: info ? scheme.secondaryContainer : scheme.errorContainer,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ExcludeSemantics(
+                    child: Icon(
+                      info
+                          ? Icons.info_outline_rounded
+                          : Icons.error_outline_rounded,
+                      color: info
+                          ? scheme.onSecondaryContainer
+                          : scheme.onErrorContainer,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      message!,
+                      style: TextStyle(
+                        color: info
+                            ? scheme.onSecondaryContainer
+                            : scheme.onErrorContainer,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+        const SizedBox(height: 16),
+        FilledButton.icon(
+          style: FilledButton.styleFrom(minimumSize: tall),
+          onPressed: busy ? null : onConnect,
+          icon: busy
+              ? const SizedBox.square(
+                  dimension: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2.4),
+                )
+              : const Icon(Icons.arrow_forward_rounded),
+          label: Text(busy ? l.checkingServer : l.connect),
+        ),
+        if (busy) ...[
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(minimumSize: tall),
+            onPressed: onCancel,
+            icon: const Icon(Icons.close_rounded),
+            label: Text(l.cancel),
+          ),
+        ] else if (onScan != null) ...[
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(minimumSize: tall),
+            onPressed: onScan,
+            icon: const Icon(Icons.qr_code_scanner_rounded),
+            label: Text(l.scanLoginCode),
+          ),
+        ],
+      ],
     );
   }
 }
 
+/// Browser handoff: waiting for the approval, then saving the account.
 class _Waiting extends StatelessWidget {
   const _Waiting({
     super.key,
@@ -541,48 +708,49 @@ class _Waiting extends StatelessWidget {
     final theme = Theme.of(context);
     return Center(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 520),
-          child: Card(
-            child: Padding(
-              padding: const EdgeInsets.all(28),
-              child: Column(
-                children: [
-                  const BrandMark(size: 64),
-                  const SizedBox(height: 28),
-                  const CircularProgressIndicator(),
-                  const SizedBox(height: 24),
-                  Text(
-                    saving ? l.savingAccount : l.waitingForLogin,
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.headlineSmall,
-                  ),
-                  if (!saving) ...[
-                    const SizedBox(height: 10),
-                    Text(
-                      l.waitingForLoginBody,
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      host,
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.labelLarge,
-                    ),
-                    const SizedBox(height: 24),
-                    OutlinedButton.icon(
-                      onPressed: onCancel,
-                      icon: const Icon(Icons.close_rounded),
-                      label: Text(l.cancel),
-                    ),
-                  ],
-                ],
+          child: Column(
+            children: [
+              const BrandMark(size: 64),
+              const SizedBox(height: 24),
+              const CircularProgressIndicator(),
+              const SizedBox(height: 24),
+              Semantics(
+                liveRegion: true,
+                child: Text(
+                  saving ? l.savingAccount : l.waitingForLogin,
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.headlineSmall,
+                ),
               ),
-            ),
+              if (!saving) ...[
+                const SizedBox(height: 10),
+                Text(
+                  l.waitingForLoginBody,
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  host,
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.labelLarge,
+                ),
+                const SizedBox(height: 24),
+                OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(160, 48),
+                  ),
+                  onPressed: onCancel,
+                  icon: const Icon(Icons.close_rounded),
+                  label: Text(l.cancel),
+                ),
+              ],
+            ],
           ),
         ),
       ),

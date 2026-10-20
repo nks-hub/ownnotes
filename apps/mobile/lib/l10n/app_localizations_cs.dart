@@ -514,4 +514,140 @@ class AppLocalizationsCs extends AppLocalizations {
   @override
   String get reauthMismatch =>
       'Toto přihlášení patří jinému serveru nebo uživateli. Přihlas se stejným účtem, aby poznámky zůstaly.';
+
+  @override
+  String get settingsAppearance => 'Vzhled';
+
+  @override
+  String get settingsWriting => 'Psaní';
+
+  @override
+  String get settingsPrivacy => 'Soukromí';
+
+  @override
+  String get settingsSync => 'Synchronizace a úložiště';
+
+  @override
+  String get settingsTransfer => 'Import a export';
+
+  @override
+  String get settingsAbout => 'O aplikaci';
+
+  @override
+  String get settingsDeviceOnly =>
+      'Tato nastavení platí jen pro toto zařízení.';
+
+  @override
+  String get theme => 'Motiv';
+
+  @override
+  String get themeSystem => 'Systémový';
+
+  @override
+  String get themeLight => 'Světlý';
+
+  @override
+  String get themeDark => 'Tmavý';
+
+  @override
+  String get language => 'Jazyk';
+
+  @override
+  String get languageSystem => 'Systémový';
+
+  @override
+  String get exportMarkdown => 'Exportovat Markdown';
+
+  @override
+  String get exportMarkdownHint =>
+      'Poznámky jako soubory Markdown v ZIPu. Přílohy a záchranné kopie se neexportují.';
+
+  @override
+  String get widgetPolicyTitle => 'Widgety na ploše';
+
+  @override
+  String get widgetPolicyBody =>
+      'Při zapnutém zámku aplikace widgety skrývají obsah poznámek, i když je aplikace odemčená.';
+
+  @override
+  String storageNotes(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count poznámek v tomto zařízení',
+      few: '$count poznámky v tomto zařízení',
+      one: '1 poznámka v tomto zařízení',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String storageUnsent(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count poznámek ještě není odeslaných',
+      few: '$count poznámky ještě nejsou odeslané',
+      one: '1 poznámka ještě není odeslaná',
+      zero: 'Vše je odesláno na server',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get syncHint =>
+      'Poznámky se synchronizují při otevření aplikace. Kdy poběží synchronizace na pozadí, rozhoduje systém.';
+
+  @override
+  String get exportUnsent => 'Exportovat neodeslané poznámky';
+
+  @override
+  String get removeFromDevice => 'Odebrat z tohoto zařízení';
+
+  @override
+  String get accountDetails => 'Podrobnosti účtu';
+
+  @override
+  String get accountUserLabel => 'Uživatel';
+
+  @override
+  String get accountServerLabel => 'Server';
+
+  @override
+  String get accountStatusLabel => 'Stav';
+
+  @override
+  String get accountSignedIn => 'Přihlášen';
+
+  @override
+  String get accountsManage => 'Spravovat účty';
+
+  @override
+  String get accountSwitchBlocked =>
+      'Nepodařilo se uložit na zařízení, účet se proto nepřepnul.';
+
+  @override
+  String get removeLocalNote =>
+      'Týká se to jen tohoto zařízení. Poznámky na serveru se nemažou.';
+
+  @override
+  String get loginCancelled => 'Přihlášení bylo zrušeno. Nic se neuložilo.';
+
+  @override
+  String get reauthExplain =>
+      'Přihlas se jako stejný účet, aby zůstaly jeho poznámky a neodeslané změny.';
+
+  @override
+  String get scanConfirmTitle => 'Přihlásit se tímto kódem?';
+
+  @override
+  String scanConfirmBody(String user, String host) {
+    return '$user na $host';
+  }
+
+  @override
+  String get scanEnterAddress => 'Zadat adresu serveru';
+
+  @override
+  String get appLocked => 'OwnNotes je zamčené';
 }
