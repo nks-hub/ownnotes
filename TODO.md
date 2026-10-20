@@ -16,6 +16,13 @@ references: [docs/research/review-2026-10-20.md](docs/research/review-2026-10-20
 
 ## Now
 
+- [ ] Complete review and redesign of the app and the widgets from scratch,
+      worked out together with Codex. The current look is not a constraint;
+      the rules above (Nextcloud compatibility, raw Markdown editor) are.
+      Covers every screen (onboarding, list, categories, editor, preview,
+      conflicts, settings, accounts), Android and iOS widgets, light/dark,
+      tablet, accessibility, cs/en/de text lengths.
+
 - [ ] Note list stutters while scrolling.
       Each row lays out the whole note content for a two-line subtitle.
 - [ ] Compact list header like OwnTalk: account switcher and search in the
