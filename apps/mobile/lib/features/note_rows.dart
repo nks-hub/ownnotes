@@ -1,64 +1,18 @@
 import 'package:notes_store/notes_store.dart';
+import '../core/markdown/markdown_document.dart';
 
 enum NoteScope { all, favorites, uncategorised, category }
 
-final _lineMarkers = RegExp(
-  r'^\s*(?:#{1,6}\s+|>+\s*|[-*+]\s+(?:\[[ xX]\]\s+)?|\d+[.)]\s+)',
-);
-final _images = RegExp(r'!\[[^\]]*\]\([^)]*\)');
-final _links = RegExp(r'\[([^\]]*)\]\([^)]*\)');
-final _emphasis = RegExp(r'\*\*|__|`|~~');
-final _space = RegExp(r'\s+');
-final _rule = RegExp(r'^[-*_=\s]+$');
-final _task = RegExp(r'^\s*[-*+]\s+\[([ xX])\]', multiLine: true);
-
-String _plainLine(String line) => line
-    .replaceFirst(_lineMarkers, '')
-    .replaceAll(_images, '')
-    .replaceAllMapped(_links, (m) => m[1]!)
-    .replaceAll(_emphasis, '')
-    .replaceAll(_space, ' ')
-    .trim();
-
 /// A short plain-text preview of [content] for a list row. The first line is
 /// skipped when it only repeats [title]; Markdown markers are removed.
-String noteExcerpt(String title, String content, {int maxLength = 160}) {
-  final wanted = title.trim().toLowerCase();
-  final buffer = StringBuffer();
-  var first = true;
-  var start = 0;
-  while (start < content.length && buffer.length < maxLength) {
-    var end = content.indexOf('\n', start);
-    if (end < 0) end = content.length;
-    // One endless line must not cost more than the preview needs.
-    final cut = end - start > maxLength * 4 ? start + maxLength * 4 : end;
-    final line = _plainLine(content.substring(start, cut));
-    start = end + 1;
-    if (line.isEmpty || _rule.hasMatch(line)) continue;
-    if (first) {
-      first = false;
-      if (line.toLowerCase() == wanted) continue;
-    }
-    if (buffer.isNotEmpty) buffer.write(' ');
-    buffer.write(line);
-  }
-  final text = buffer.toString();
-  if (text.length <= maxLength) return text;
-  var length = maxLength;
-  // Do not split a surrogate pair (emoji).
-  if ((text.codeUnitAt(length - 1) & 0xFC00) == 0xD800) length--;
-  return text.substring(0, length).trimRight();
-}
+String noteExcerpt(String title, String content, {int maxLength = 160}) =>
+    markdownExcerpt(content, title, maxLength: maxLength);
 
-/// Checked and total Markdown task items (`- [ ]`, `- [x]`) in [content].
+/// Checked and total Markdown task items (`- [ ]`, `- [x]`) in [content];
+/// items in code are not counted, items in block quotes are.
 ({int done, int total}) taskProgress(String content) {
-  var done = 0;
-  var total = 0;
-  for (final m in _task.allMatches(content)) {
-    total++;
-    if (m[1] != ' ') done++;
-  }
-  return (done: done, total: total);
+  final summary = MarkdownDocument.parse(content).taskSummary;
+  return (done: summary.done, total: summary.total);
 }
 
 /// A note with everything the list needs, computed once per note revision
@@ -93,14 +47,15 @@ class NoteRow {
     final title = note.title.trim().isEmpty
         ? titleFromContent(note.content)
         : note.title;
-    final tasks = taskProgress(note.content);
+    final doc = MarkdownDocument.parse(note.content);
+    final tasks = doc.taskSummary;
     return NoteRow._(
       note,
       title,
-      noteExcerpt(title, note.content),
+      doc.excerpt(title),
       tasks.done,
       tasks.total,
-      note.content.contains('.attachments.'),
+      doc.attachments.isNotEmpty,
       '${note.title}\n${note.content}\n${note.category}'.toLowerCase(),
     );
   }

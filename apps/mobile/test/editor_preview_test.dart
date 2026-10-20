@@ -8,6 +8,7 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:notes_protocol/notes_protocol.dart';
 import 'package:notes_store/notes_store.dart';
+import 'package:nextcloudnotes/core/markdown/live_styling.dart';
 import 'package:nextcloudnotes/data/runtime.dart';
 import 'package:nextcloudnotes/features/editor.dart';
 import 'package:nextcloudnotes/main.dart';
@@ -125,14 +126,14 @@ void main() {
     );
     expect(spans.map((s) => s.text).join(), text);
     TextSpan span(String t) => spans.firstWhere((s) => s.text == t);
-    expect(span('Head').style!.fontWeight, FontWeight.bold);
+    expect(span('Head').style!.fontWeight, FontWeight.w600);
     expect(span('Head').style!.fontSize, greaterThan(16));
     expect(span('##').style!.color, Colors.grey);
     expect(span('b').style!.fontWeight, FontWeight.bold);
-    expect(span('c').style!.fontFamily, 'monospace');
+    expect(span('c').style!.fontFamily, monoFontFamily);
     expect(span('[x]').style!.color, Colors.blue);
     expect(span('done').style!.decoration, TextDecoration.lineThrough);
-    expect(span('**no**').style!.fontFamily, 'monospace');
+    expect(span('**no**').style!.fontFamily, monoFontFamily);
   });
 
   test('source offset follows the tapped word', () {
