@@ -337,6 +337,11 @@ void main() {
     final first = NotesDatabase(NativeDatabase(file));
     await first.customStatement('ALTER TABLE local_notes DROP COLUMN kind');
     await first.customStatement('ALTER TABLE local_notes DROP COLUMN dav_path');
+    await first.customStatement('DROP TABLE sync_statuses');
+    await first.customStatement('DROP TABLE recovery_copies');
+    for (final c in ['delete_error', 'unreadable', 'missing_since']) {
+      await first.customStatement('ALTER TABLE local_notes DROP COLUMN $c');
+    }
     await first.customStatement('PRAGMA user_version = 2');
     await first.close();
     final upgraded = NotesDatabase(NativeDatabase(file));

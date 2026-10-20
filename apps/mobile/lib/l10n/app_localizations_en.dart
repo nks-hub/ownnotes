@@ -509,4 +509,96 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get reauthMismatch =>
       'That login belongs to another server or user. Sign in as the same account to keep its notes.';
+
+  @override
+  String get recTitle => 'Compare versions';
+
+  @override
+  String get recTabDevice => 'Device';
+
+  @override
+  String get recTabServer => 'Server';
+
+  @override
+  String get recTabResult => 'Result';
+
+  @override
+  String get recUseResult => 'Use result';
+
+  @override
+  String get recKeepSeparate => 'Keep as separate note';
+
+  @override
+  String get recUseServer => 'Use server version';
+
+  @override
+  String get recLeave => 'Leave unresolved';
+
+  @override
+  String get recFillDevice => 'Put device text in Result';
+
+  @override
+  String get recFillServer => 'Put server text in Result';
+
+  @override
+  String get recFillBoth => 'Put both in Result';
+
+  @override
+  String get recResultReplaced => 'Result replaced';
+
+  @override
+  String get recUndo => 'Undo';
+
+  @override
+  String get recReasonConflict =>
+      'Both this phone and the server changed this note.';
+
+  @override
+  String get recReasonUnknown =>
+      'The outcome of the last upload is unknown. Compare the versions before you choose.';
+
+  @override
+  String get recReasonReadonly =>
+      'The server no longer lets you edit this note. Your text is kept; save it as your own note.';
+
+  @override
+  String get recReasonMove =>
+      'A note with attachments cannot change its category here. Keep the category from the server, or save your text as a separate note.';
+
+  @override
+  String get recReasonGeneric => 'This note needs your decision.';
+
+  @override
+  String recChangeCounter(int number, int total) {
+    return 'Change $number of $total';
+  }
+
+  @override
+  String get recNoChanges => 'Device and server text are the same.';
+
+  @override
+  String get recPrevChange => 'Previous change';
+
+  @override
+  String get recNextChange => 'Next change';
+
+  @override
+  String get recServerChanged =>
+      'The server version changed again. The comparison now shows the newer version; your Result is kept. Review it and decide again.';
+
+  @override
+  String get recKept =>
+      'Both versions stay saved on this phone until you remove them.';
+
+  @override
+  String get recSaveAsNew => 'Save as new note';
+
+  @override
+  String get recKeepCategory => 'Use result, keep server category';
+
+  @override
+  String get recReadFailed => 'Could not read the server version.';
+
+  @override
+  String get recKeepRecovery => 'Keep in recovery';
 }

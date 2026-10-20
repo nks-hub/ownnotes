@@ -211,5 +211,43 @@
   "serverCertificate": "The server certificate could not be verified. Check the address, or fix the certificate on the server.",
   "serverTimeout": "The server took too long to answer. Try again.",
   "notesAppMissing": "The Notes app is not available on this server. Install or enable Nextcloud Notes first.",
-  "reauthMismatch": "That login belongs to another server or user. Sign in as the same account to keep its notes."
+  "reauthMismatch": "That login belongs to another server or user. Sign in as the same account to keep its notes.",
+  "recTitle": "Compare versions",
+  "recTabDevice": "Device",
+  "recTabServer": "Server",
+  "recTabResult": "Result",
+  "recUseResult": "Use result",
+  "recKeepSeparate": "Keep as separate note",
+  "recUseServer": "Use server version",
+  "recLeave": "Leave unresolved",
+  "recFillDevice": "Put device text in Result",
+  "recFillServer": "Put server text in Result",
+  "recFillBoth": "Put both in Result",
+  "recResultReplaced": "Result replaced",
+  "recUndo": "Undo",
+  "recReasonConflict": "Both this phone and the server changed this note.",
+  "recReasonUnknown": "The outcome of the last upload is unknown. Compare the versions before you choose.",
+  "recReasonReadonly": "The server no longer lets you edit this note. Your text is kept; save it as your own note.",
+  "recReasonMove": "A note with attachments cannot change its category here. Keep the category from the server, or save your text as a separate note.",
+  "recReasonGeneric": "This note needs your decision.",
+  "recChangeCounter": "Change {number} of {total}",
+  "@recChangeCounter": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "recNoChanges": "Device and server text are the same.",
+  "recPrevChange": "Previous change",
+  "recNextChange": "Next change",
+  "recServerChanged": "The server version changed again. The comparison now shows the newer version; your Result is kept. Review it and decide again.",
+  "recKept": "Both versions stay saved on this phone until you remove them.",
+  "recSaveAsNew": "Save as new note",
+  "recKeepCategory": "Use result, keep server category",
+  "recReadFailed": "Could not read the server version.",
+  "recKeepRecovery": "Keep in recovery"
 }

@@ -690,9 +690,10 @@ void main() {
     await settle();
     await tester.tap(find.text('Gone'));
     await settle();
-    await tester.tap(find.text('Compare server version'));
-    await settle();
+    // The comparison reads the server version by itself.
     expect(find.textContaining('deleted on the server'), findsOneWidget);
+    expect(find.text('Save as new note'), findsOneWidget);
+    expect(find.text('Keep in recovery'), findsOneWidget);
     await tester.tap(find.text('Delete on this phone too'));
     await settle();
     await settle();

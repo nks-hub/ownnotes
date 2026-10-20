@@ -455,6 +455,11 @@ void main() {
       await first.customStatement(
         'ALTER TABLE local_notes DROP COLUMN dav_path',
       );
+      await first.customStatement('DROP TABLE sync_statuses');
+      await first.customStatement('DROP TABLE recovery_copies');
+      for (final c in ['delete_error', 'unreadable', 'missing_since']) {
+        await first.customStatement('ALTER TABLE local_notes DROP COLUMN $c');
+      }
       await first.customStatement('PRAGMA user_version = 1');
       await first.close();
       final upgraded = NotesDatabase(NativeDatabase(file));
@@ -626,7 +631,7 @@ void main() {
         favorite: false,
       );
       await db.markDeleted('a', id);
-      await db.census('a', await db.readEpoch('a'), {});
+      await db.census('a', await db.readEpoch('a'), {999});
       expect(await db.note('a', gone), isNull);
       expect((await db.note('a', edited.id))!.content, 'kept');
     });

@@ -973,6 +973,174 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'That login belongs to another server or user. Sign in as the same account to keep its notes.'**
   String get reauthMismatch;
+
+  /// No description provided for @recTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare versions'**
+  String get recTitle;
+
+  /// No description provided for @recTabDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Device'**
+  String get recTabDevice;
+
+  /// No description provided for @recTabServer.
+  ///
+  /// In en, this message translates to:
+  /// **'Server'**
+  String get recTabServer;
+
+  /// No description provided for @recTabResult.
+  ///
+  /// In en, this message translates to:
+  /// **'Result'**
+  String get recTabResult;
+
+  /// No description provided for @recUseResult.
+  ///
+  /// In en, this message translates to:
+  /// **'Use result'**
+  String get recUseResult;
+
+  /// No description provided for @recKeepSeparate.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep as separate note'**
+  String get recKeepSeparate;
+
+  /// No description provided for @recUseServer.
+  ///
+  /// In en, this message translates to:
+  /// **'Use server version'**
+  String get recUseServer;
+
+  /// No description provided for @recLeave.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave unresolved'**
+  String get recLeave;
+
+  /// No description provided for @recFillDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Put device text in Result'**
+  String get recFillDevice;
+
+  /// No description provided for @recFillServer.
+  ///
+  /// In en, this message translates to:
+  /// **'Put server text in Result'**
+  String get recFillServer;
+
+  /// No description provided for @recFillBoth.
+  ///
+  /// In en, this message translates to:
+  /// **'Put both in Result'**
+  String get recFillBoth;
+
+  /// No description provided for @recResultReplaced.
+  ///
+  /// In en, this message translates to:
+  /// **'Result replaced'**
+  String get recResultReplaced;
+
+  /// No description provided for @recUndo.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo'**
+  String get recUndo;
+
+  /// No description provided for @recReasonConflict.
+  ///
+  /// In en, this message translates to:
+  /// **'Both this phone and the server changed this note.'**
+  String get recReasonConflict;
+
+  /// No description provided for @recReasonUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'The outcome of the last upload is unknown. Compare the versions before you choose.'**
+  String get recReasonUnknown;
+
+  /// No description provided for @recReasonReadonly.
+  ///
+  /// In en, this message translates to:
+  /// **'The server no longer lets you edit this note. Your text is kept; save it as your own note.'**
+  String get recReasonReadonly;
+
+  /// No description provided for @recReasonMove.
+  ///
+  /// In en, this message translates to:
+  /// **'A note with attachments cannot change its category here. Keep the category from the server, or save your text as a separate note.'**
+  String get recReasonMove;
+
+  /// No description provided for @recReasonGeneric.
+  ///
+  /// In en, this message translates to:
+  /// **'This note needs your decision.'**
+  String get recReasonGeneric;
+
+  /// No description provided for @recChangeCounter.
+  ///
+  /// In en, this message translates to:
+  /// **'Change {number} of {total}'**
+  String recChangeCounter(int number, int total);
+
+  /// No description provided for @recNoChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Device and server text are the same.'**
+  String get recNoChanges;
+
+  /// No description provided for @recPrevChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous change'**
+  String get recPrevChange;
+
+  /// No description provided for @recNextChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Next change'**
+  String get recNextChange;
+
+  /// No description provided for @recServerChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'The server version changed again. The comparison now shows the newer version; your Result is kept. Review it and decide again.'**
+  String get recServerChanged;
+
+  /// No description provided for @recKept.
+  ///
+  /// In en, this message translates to:
+  /// **'Both versions stay saved on this phone until you remove them.'**
+  String get recKept;
+
+  /// No description provided for @recSaveAsNew.
+  ///
+  /// In en, this message translates to:
+  /// **'Save as new note'**
+  String get recSaveAsNew;
+
+  /// No description provided for @recKeepCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Use result, keep server category'**
+  String get recKeepCategory;
+
+  /// No description provided for @recReadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not read the server version.'**
+  String get recReadFailed;
+
+  /// No description provided for @recKeepRecovery.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep in recovery'**
+  String get recKeepRecovery;
 }
 
 class _AppLocalizationsDelegate
