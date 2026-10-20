@@ -80,8 +80,11 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
   /// n-th task item in the raw text. A tick edits that one character.
   Widget _checkbox(bool value) {
     final index = _boxes++;
+    // Shrunk to the text line, otherwise the 48 px tap target sits below it.
     return Checkbox(
       value: value,
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      visualDensity: VisualDensity.compact,
       onChanged: widget.note.readonly
           ? null
           : (_) {
