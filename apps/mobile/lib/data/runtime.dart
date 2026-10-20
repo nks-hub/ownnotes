@@ -31,10 +31,24 @@ final class SecureVault implements CredentialVault {
 }
 
 final class AppRuntime {
-  AppRuntime(this.database, this.vault, {http.Client Function()? transport})
-    : _transport = transport ?? http.Client.new {
+  /// [serverChecks] adds the Notes settings check before each pull and the
+  /// shared-with-me listing; tests with a fake server leave them off.
+  AppRuntime(
+    this.database,
+    this.vault, {
+    http.Client Function()? transport,
+    bool serverChecks = false,
+  }) : _transport = transport ?? http.Client.new {
     accounts = AccountRepository(database, vault);
-    sync = SyncCoordinator(database, clientFor);
+    sync = SyncCoordinator(
+      database,
+      clientFor,
+      sharingFor: serverChecks ? sharingFor : null,
+      scopeFor: serverChecks
+          ? (account) async => (await clientFor(account)).scope()
+          : null,
+    );
+    attention = AttentionFeed(database);
   }
 
   /// The app and the background worker may run in one process; sharing the
@@ -47,17 +61,30 @@ final class AppRuntime {
       ),
     ),
     const SecureVault(),
+    serverChecks: true,
   );
   final NotesDatabase database;
   final CredentialVault vault;
   late final AccountRepository accounts;
   late final SyncCoordinator sync;
+  late final AttentionFeed attention;
   final http.Client Function() _transport;
   final _clients = <String, http.Client>{};
   Future<NotesClient> clientFor(Account account) async {
     final password = await vault.read(account.credentialRef);
     if (password == null) throw StateError('reauth_required');
     return NotesClient(
+      base: ServerBase.parse(account.server),
+      transport: _clients.putIfAbsent(account.id, _transport),
+      loginName: account.loginName,
+      appPassword: password,
+    );
+  }
+
+  Future<SharingClient> sharingFor(Account account) async {
+    final password = await vault.read(account.credentialRef);
+    if (password == null) throw StateError('reauth_required');
+    return SharingClient(
       base: ServerBase.parse(account.server),
       transport: _clients.putIfAbsent(account.id, _transport),
       loginName: account.loginName,

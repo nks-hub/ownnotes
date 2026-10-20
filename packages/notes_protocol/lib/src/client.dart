@@ -193,6 +193,20 @@ final class NotesClient {
     }
   }
 
+  /// The account's Notes folder and file suffix as `notesPath|fileSuffix`;
+  /// a change means the server lists a different set of files.
+  Future<String> scope() async {
+    final response = await _request('GET', ['settings']);
+    _expectOk(response, mutation: false);
+    final body = _json(response);
+    if (body is! Map<String, Object?> ||
+        body['notesPath'] is! String ||
+        body['fileSuffix'] is! String) {
+      throw const NotesProtocolException('invalid_settings');
+    }
+    return '${body['notesPath']}|${body['fileSuffix']}';
+  }
+
   /// An image attached to a note, by the relative path the Markdown uses
   /// (e.g. `.attachments.42/photo.png`).
   Future<List<int>> attachment(int id, String path) async {

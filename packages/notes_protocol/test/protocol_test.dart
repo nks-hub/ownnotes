@@ -40,6 +40,18 @@ NotesClient client(
 );
 
 void main() {
+  test('scope joins the Notes folder and file suffix', () async {
+    final api = client((request) async {
+      expect(
+        request.url.path,
+        '/nextcloud/index.php/apps/notes/api/v1/settings',
+      );
+      return jsonResponse({'notesPath': 'Notes', 'fileSuffix': '.md'});
+    });
+    expect(await api.scope(), 'Notes|.md');
+    final broken = client((_) async => jsonResponse({'notesPath': 'Notes'}));
+    await expectLater(broken.scope(), throwsA(isA<NotesProtocolException>()));
+  });
   group('server boundary', () {
     test('keeps a Unicode subdirectory, IPv6 and port', () {
       final base = ServerBase.parse('https://[::1]:8443/poznámky/');
