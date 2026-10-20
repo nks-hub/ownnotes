@@ -11,6 +11,8 @@ import 'package:notes_store/notes_store.dart';
 import 'package:nextcloudnotes/data/runtime.dart';
 import 'package:nextcloudnotes/features/editor.dart';
 import 'package:nextcloudnotes/main.dart';
+import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
+import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 
 class _Vault implements CredentialVault {
   final entries = <String, String>{};
@@ -108,6 +110,11 @@ Future<LocalNote> currentRow(AppRuntime runtime) async {
 }
 
 void main() {
+  // Unreadable preferences keep the app lock closed; tests need a store.
+  setUpAll(() {
+    SharedPreferencesAsyncPlatform.instance =
+        InMemorySharedPreferencesAsync.empty();
+  });
   test('highlighter styles headings, bold, code and tasks', () {
     const text = '## Head\n**b** and `c`\n- [x] done\n```\n**no**\n```';
     final spans = markdownSpans(
