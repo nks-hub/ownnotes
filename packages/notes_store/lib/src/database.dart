@@ -48,7 +48,7 @@ class LocalNotes extends Table {
 
   /// The server could not hand out this note's text on the last pull; the
   /// stored copy may be stale.
-  BoolColumn get unreadable => boolean().withDefault(const Constant(false))();
+  BoolColumn get unreadable => boolean().nullable()();
 
   /// When a pull stopped listing the note although the sync scope may have
   /// changed. The row is kept until the owner decides.
@@ -369,23 +369,22 @@ class NotesDatabase extends _$NotesDatabase {
   /// note is not waiting for deletion any more. A request already on its way
   /// can still win; the note then ends as a server-deleted decision at its
   /// next upload and keeps its text.
-  Future<bool> undoDelete(String accountId, String id) =>
-      transaction(() async {
-        final current = await note(accountId, id);
-        if (current == null || current.syncState != 'deleting') return false;
-        await (update(localNotes)..where((n) => n.id.equals(id))).write(
-          LocalNotesCompanion(
-            syncState: const Value('draft'),
-            deleteError: const Value(null),
-            revision: Value(current.revision + 1),
-            updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
-          ),
-        );
-        await (delete(
-          recoveryCopies,
-        )..where((c) => c.noteId.equals(id) & c.kind.equals('deleted'))).go();
-        return true;
-      });
+  Future<bool> undoDelete(String accountId, String id) => transaction(() async {
+    final current = await note(accountId, id);
+    if (current == null || current.syncState != 'deleting') return false;
+    await (update(localNotes)..where((n) => n.id.equals(id))).write(
+      LocalNotesCompanion(
+        syncState: const Value('draft'),
+        deleteError: const Value(null),
+        revision: Value(current.revision + 1),
+        updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
+      ),
+    );
+    await (delete(
+      recoveryCopies,
+    )..where((c) => c.noteId.equals(id) & c.kind.equals('deleted'))).go();
+    return true;
+  });
 
   /// Stores the note's text (or the given one) as a recovery copy, once per
   /// distinct text and kind. Returns the copy's id.

@@ -112,22 +112,25 @@ void main() {
       );
     });
 
-    test('the stream follows decisions, deletions and unreadable notes', () async {
-      final events = <AccountSyncStatus>[];
-      final sub = db.watchSyncStatus('a').listen(events.add);
-      addTearDown(sub.cancel);
-      await pumpEventQueue();
-      expect(events.last.needsAttention, 0);
-      final note = await synced(5);
-      await db.markDeleted('a', note.id);
-      await pumpEventQueue();
-      expect(events.last.pendingDeletions, 1);
-      expect(events.last.failedDeletions, 0);
-      await db.applyPull('a', 0, [const UnreadableNote(6)]);
-      await pumpEventQueue();
-      expect(events.last.unreadable, 1);
-      expect(events.last.needsAttention, 1);
-    });
+    test(
+      'the stream follows decisions, deletions and unreadable notes',
+      () async {
+        final events = <AccountSyncStatus>[];
+        final sub = db.watchSyncStatus('a').listen(events.add);
+        addTearDown(sub.cancel);
+        await pumpEventQueue();
+        expect(events.last.needsAttention, 0);
+        final note = await synced(5);
+        await db.markDeleted('a', note.id);
+        await pumpEventQueue();
+        expect(events.last.pendingDeletions, 1);
+        expect(events.last.failedDeletions, 0);
+        await db.applyPull('a', 0, [const UnreadableNote(6)]);
+        await pumpEventQueue();
+        expect(events.last.unreadable, 1);
+        expect(events.last.needsAttention, 1);
+      },
+    );
   });
 
   group('deletions stay visible', () {
@@ -200,60 +203,75 @@ void main() {
   });
 
   group('unreadable notes', () {
-    test('an existing copy is kept and marked, new ones get a placeholder', () async {
-      final known = await synced(7, content: 'old text');
-      await db.applyPull('a', 0, [const UnreadableNote(7), const UnreadableNote(8)]);
-      final marked = (await db.note('a', known.id))!;
-      expect(marked.unreadable, isTrue);
-      expect(marked.content, 'old text');
-      final placeholder = await (db.select(
-        db.localNotes,
-      )..where((n) => n.remoteId.equals(8))).getSingle();
-      expect(placeholder.syncState, 'unreadable');
-      // The placeholder cannot be edited, which would upload an empty text.
-      await expectLater(
-        db.saveDraft(
-          accountId: 'a',
-          id: placeholder.id,
-          revision: placeholder.revision,
-          title: '',
-          content: 'x',
-          category: '',
-          favorite: false,
-        ),
-        throwsStateError,
-      );
-      final items = await AttentionFeed(db).watch('a').first;
-      expect(items.map((i) => i.kind), everyElement(AttentionKind.unreadable));
-      expect(items, hasLength(2));
-    });
-
-    test('the next readable pull clears the marker, a full pull is forced', () async {
-      await synced(7, content: 'old text');
-      var readable = false;
-      var pruned = <String?>[];
-      final sync = coordinator((r) async {
-        pruned.add(r.url.queryParameters['pruneBefore']);
-        return json(
-          readable
-              ? [remote(7, content: 'new text', etag: 'etag2')]
-              : [
-                  {'id': 7, 'error': true},
-                ],
+    test(
+      'an existing copy is kept and marked, new ones get a placeholder',
+      () async {
+        final known = await synced(7, content: 'old text');
+        await db.applyPull('a', 0, [
+          const UnreadableNote(7),
+          const UnreadableNote(8),
+        ]);
+        final marked = (await db.note('a', known.id))!;
+        expect(marked.unreadable, isTrue);
+        expect(marked.content, 'old text');
+        final placeholder = await (db.select(
+          db.localNotes,
+        )..where((n) => n.remoteId.equals(8))).getSingle();
+        expect(placeholder.syncState, 'unreadable');
+        // The placeholder cannot be edited, which would upload an empty text.
+        await expectLater(
+          db.saveDraft(
+            accountId: 'a',
+            id: placeholder.id,
+            revision: placeholder.revision,
+            title: '',
+            content: 'x',
+            category: '',
+            favorite: false,
+          ),
+          throwsStateError,
         );
-      });
-      await sync.sync('a');
-      expect((await db.syncStatus('a')).unreadable, 1);
-      readable = true;
-      await sync.sync('a');
-      final row = await (db.select(db.localNotes)).getSingle();
-      expect(row.unreadable, isFalse);
-      expect(row.content, 'new text');
-      expect(pruned.where((p) => p != null), isEmpty);
-    });
+        final items = await AttentionFeed(db).watch('a').first;
+        expect(
+          items.map((i) => i.kind),
+          everyElement(AttentionKind.unreadable),
+        );
+        expect(items, hasLength(2));
+      },
+    );
+
+    test(
+      'the next readable pull clears the marker, a full pull is forced',
+      () async {
+        await synced(7, content: 'old text');
+        var readable = false;
+        var pruned = <String?>[];
+        final sync = coordinator((r) async {
+          pruned.add(r.url.queryParameters['pruneBefore']);
+          return json(
+            readable
+                ? [remote(7, content: 'new text', etag: 'etag2')]
+                : [
+                    {'id': 7, 'error': true},
+                  ],
+          );
+        });
+        await sync.sync('a');
+        expect((await db.syncStatus('a')).unreadable, 1);
+        readable = true;
+        await sync.sync('a');
+        final row = await (db.select(db.localNotes)).getSingle();
+        expect(row.unreadable, isFalse);
+        expect(row.content, 'new text');
+        expect(pruned.where((p) => p != null), isEmpty);
+      },
+    );
 
     test('a placeholder goes when the note is gone from the server', () async {
-      await db.applyPull('a', 0, [const UnreadableNote(8), parseNote(remote(1))]);
+      await db.applyPull('a', 0, [
+        const UnreadableNote(8),
+        parseNote(remote(1)),
+      ]);
       await db.census('a', 0, {1});
       final rows = await db.select(db.localNotes).get();
       expect(rows.map((r) => r.remoteId), [1]);
@@ -295,42 +313,48 @@ void main() {
     test('an empty listing does not wipe the offline copy', () async {
       await synced(1);
       expect(await db.census('a', 0, {}), 1);
-      expect((await db.select(db.localNotes).get()).single.missingSince, isNotNull);
+      expect(
+        (await db.select(db.localNotes).get()).single.missingSince,
+        isNotNull,
+      );
     });
 
-    test('through the coordinator: scope read, kept, then owner decides', () async {
-      await synced(1, content: 'mine');
-      var folder = '/Notes';
-      var listing = <Map<String, Object>>[remote(1, content: 'mine')];
-      final sync = coordinator(
-        (r) async => json(listing),
-        scope: (_) async => folder,
-      );
-      await sync.sync('a');
-      folder = '/Archive';
-      listing = [remote(2)];
-      await sync.sync('a');
-      final kept = await (db.select(
-        db.localNotes,
-      )..where((n) => n.remoteId.equals(1))).getSingle();
-      expect(kept.missingSince, isNotNull);
-      expect(kept.content, 'mine');
-      final recovery = NoteRecovery(db);
-      await recovery.keepMissingAsNew(kept);
-      final detached = (await db.note('a', kept.id))!;
-      expect(detached.remoteId, isNull);
-      expect(detached.syncState, 'draft');
-      expect(detached.missingSince, isNull);
-      // A second missing note can be removed; its copy remains.
-      final other = await synced(9, content: 'other');
-      await db.census('a', await db.readEpoch('a'), {2}, scope: '/Elsewhere');
-      await recovery.removeMissing((await db.note('a', other.id))!);
-      expect(await db.note('a', other.id), isNull);
-      final kinds = (await db.select(db.recoveryCopies).get()).map(
-        (c) => c.content,
-      );
-      expect(kinds, contains('other'));
-    });
+    test(
+      'through the coordinator: scope read, kept, then owner decides',
+      () async {
+        await synced(1, content: 'mine');
+        var folder = '/Notes';
+        var listing = <Map<String, Object>>[remote(1, content: 'mine')];
+        final sync = coordinator(
+          (r) async => json(listing),
+          scope: (_) async => folder,
+        );
+        await sync.sync('a');
+        folder = '/Archive';
+        listing = [remote(2)];
+        await sync.sync('a');
+        final kept = await (db.select(
+          db.localNotes,
+        )..where((n) => n.remoteId.equals(1))).getSingle();
+        expect(kept.missingSince, isNotNull);
+        expect(kept.content, 'mine');
+        final recovery = NoteRecovery(db);
+        await recovery.keepMissingAsNew(kept);
+        final detached = (await db.note('a', kept.id))!;
+        expect(detached.remoteId, isNull);
+        expect(detached.syncState, 'draft');
+        expect(detached.missingSince, isNull);
+        // A second missing note can be removed; its copy remains.
+        final other = await synced(9, content: 'other');
+        await db.census('a', await db.readEpoch('a'), {2}, scope: '/Elsewhere');
+        await recovery.removeMissing((await db.note('a', other.id))!);
+        expect(await db.note('a', other.id), isNull);
+        final kinds = (await db.select(db.recoveryCopies).get()).map(
+          (c) => c.content,
+        );
+        expect(kinds, contains('other'));
+      },
+    );
   });
 
   group('conflict resolution', () {
@@ -396,9 +420,9 @@ void main() {
     test('a stale server revision applies nothing', () async {
       final (note, server) = await conflict();
       final recovery = NoteRecovery(db);
-      final newer = parseNote(
-        remote(7, content: 'server again', etag: 'etag3'),
-      ) as RemoteNote;
+      final newer =
+          parseNote(remote(7, content: 'server again', etag: 'etag3'))
+              as RemoteNote;
       final outcome = await recovery.resolve(
         expected: note,
         inspected: server,
@@ -505,8 +529,9 @@ void main() {
       expect(stuck.syncState, 'needsDecision');
       final recovery = NoteRecovery(db);
       expect(await recovery.reason(stuck), 'move_integrity_required');
-      final server = parseNote(remote(7, content: 'img ![](.attachments.7/a.png)'))
-          as RemoteNote;
+      final server =
+          parseNote(remote(7, content: 'img ![](.attachments.7/a.png)'))
+              as RemoteNote;
       final outcome = await recovery.resolve(
         expected: stuck,
         inspected: server,
@@ -522,53 +547,56 @@ void main() {
   });
 
   group('crash and retry', () {
-    test('a write interrupted by a crash becomes a decision, nothing replays', () async {
-      final note = await synced(3, content: 'base');
-      await db.saveDraft(
-        accountId: 'a',
-        id: note.id,
-        revision: note.revision,
-        title: note.title,
-        content: 'edited',
-        category: '',
-        favorite: false,
-      );
-      var puts = 0;
-      Future<http.Response> handle(http.Request r) async {
-        if (r.method == 'PUT') puts++;
-        return json([remote(3)]);
-      }
+    test(
+      'a write interrupted by a crash becomes a decision, nothing replays',
+      () async {
+        final note = await synced(3, content: 'base');
+        await db.saveDraft(
+          accountId: 'a',
+          id: note.id,
+          revision: note.revision,
+          title: note.title,
+          content: 'edited',
+          category: '',
+          favorite: false,
+        );
+        var puts = 0;
+        Future<http.Response> handle(http.Request r) async {
+          if (r.method == 'PUT') puts++;
+          return json([remote(3)]);
+        }
 
-      // The first process died after it stored the operation as sending.
-      await db.transaction(() async {
-        await db
-            .into(db.operations)
-            .insert(
-              OperationsCompanion.insert(
-                id: 'crashed',
-                accountId: 'a',
-                noteId: note.id,
-                revision: note.revision + 1,
-                kind: 'update',
-                payload: '{}',
-                state: const Value('sending'),
-              ),
-            );
-        await (db.update(db.localNotes)..where((n) => n.id.equals(note.id)))
-            .write(const LocalNotesCompanion(syncState: Value('sending')));
-      });
-      final restarted = coordinator(handle);
-      await restarted.recoverInterruptedWrites();
-      await restarted.sync('a');
-      expect(puts, 0);
-      final row = (await db.note('a', note.id))!;
-      expect(row.syncState, 'needsDecision');
-      expect(row.content, 'edited');
-      final items = await AttentionFeed(db).watch('a').first;
-      expect(items.single.kind, AttentionKind.decision);
-      expect(items.single.reason, 'interrupted_write');
-      expect((await db.syncStatus('a')).decisions, 1);
-    });
+        // The first process died after it stored the operation as sending.
+        await db.transaction(() async {
+          await db
+              .into(db.operations)
+              .insert(
+                OperationsCompanion.insert(
+                  id: 'crashed',
+                  accountId: 'a',
+                  noteId: note.id,
+                  revision: note.revision + 1,
+                  kind: 'update',
+                  payload: '{}',
+                  state: const Value('sending'),
+                ),
+              );
+          await (db.update(db.localNotes)..where((n) => n.id.equals(note.id)))
+              .write(const LocalNotesCompanion(syncState: Value('sending')));
+        });
+        final restarted = coordinator(handle);
+        await restarted.recoverInterruptedWrites();
+        await restarted.sync('a');
+        expect(puts, 0);
+        final row = (await db.note('a', note.id))!;
+        expect(row.syncState, 'needsDecision');
+        expect(row.content, 'edited');
+        final items = await AttentionFeed(db).watch('a').first;
+        expect(items.single.kind, AttentionKind.decision);
+        expect(items.single.reason, 'interrupted_write');
+        expect((await db.syncStatus('a')).decisions, 1);
+      },
+    );
 
     test('local save failures are reported, listed and cleared', () async {
       final feed = AttentionFeed(db);
@@ -597,46 +625,52 @@ void main() {
     ]);
   });
 
-  test('a v3 database gains the status and recovery tables with its data', () async {
-    final dir = await Directory.systemTemp.createTemp('ownnotes-v3-');
-    addTearDown(() => dir.delete(recursive: true));
-    final file = File('${dir.path}/notes.sqlite');
-    final first = NotesDatabase(NativeDatabase(file));
-    await first
-        .into(first.accounts)
-        .insert(
-          AccountsCompanion.insert(
-            id: 'a',
-            server: 's',
-            loginName: 'u',
-            credentialRef: 'c',
-          ),
-        );
-    final id = await first.createDraft('a', content: 'kept through upgrade');
-    await first.customStatement('DROP TABLE sync_statuses');
-    await first.customStatement('DROP TABLE recovery_copies');
-    for (final c in ['delete_error', 'unreadable', 'missing_since']) {
-      await first.customStatement('ALTER TABLE local_notes DROP COLUMN $c');
-    }
-    await first.customStatement('PRAGMA user_version = 3');
-    await first.close();
+  test(
+    'a v3 database gains the status and recovery tables with its data',
+    () async {
+      final dir = await Directory.systemTemp.createTemp('ownnotes-v3-');
+      addTearDown(() => dir.delete(recursive: true));
+      final file = File('${dir.path}/notes.sqlite');
+      final first = NotesDatabase(NativeDatabase(file));
+      await first
+          .into(first.accounts)
+          .insert(
+            AccountsCompanion.insert(
+              id: 'a',
+              server: 's',
+              loginName: 'u',
+              credentialRef: 'c',
+            ),
+          );
+      final id = await first.createDraft('a', content: 'kept through upgrade');
+      await first.customStatement('DROP TABLE sync_statuses');
+      await first.customStatement('DROP TABLE recovery_copies');
+      for (final c in ['delete_error', 'unreadable', 'missing_since']) {
+        await first.customStatement('ALTER TABLE local_notes DROP COLUMN $c');
+      }
+      await first.customStatement('PRAGMA user_version = 3');
+      await first.close();
 
-    final upgraded = NotesDatabase(NativeDatabase(file));
-    addTearDown(upgraded.close);
-    final note = (await upgraded.note('a', id))!;
-    expect(note.content, 'kept through upgrade');
-    expect(note.deleteError, isNull);
-    expect(note.unreadable, isFalse);
-    expect(note.missingSince, isNull);
-    await upgraded.recordSyncResult('a', completed: true, problem: 'auth');
-    final status = await upgraded.syncStatus('a');
-    expect(status.problem, 'auth');
-    expect(status.lastCheckedAt, isNotNull);
-    await upgraded.keepCopy(note, 'device');
-    expect(await upgraded.select(upgraded.recoveryCopies).get(), hasLength(1));
-    // Removing the account takes its status and copies along.
-    await (upgraded.delete(upgraded.accounts)).go();
-    expect(await upgraded.select(upgraded.syncStatuses).get(), isEmpty);
-    expect(await upgraded.select(upgraded.recoveryCopies).get(), isEmpty);
-  });
+      final upgraded = NotesDatabase(NativeDatabase(file));
+      addTearDown(upgraded.close);
+      final note = (await upgraded.note('a', id))!;
+      expect(note.content, 'kept through upgrade');
+      expect(note.deleteError, isNull);
+      expect(note.unreadable, isNot(true));
+      expect(note.missingSince, isNull);
+      await upgraded.recordSyncResult('a', completed: true, problem: 'auth');
+      final status = await upgraded.syncStatus('a');
+      expect(status.problem, 'auth');
+      expect(status.lastCheckedAt, isNotNull);
+      await upgraded.keepCopy(note, 'device');
+      expect(
+        await upgraded.select(upgraded.recoveryCopies).get(),
+        hasLength(1),
+      );
+      // Removing the account takes its status and copies along.
+      await (upgraded.delete(upgraded.accounts)).go();
+      expect(await upgraded.select(upgraded.syncStatuses).get(), isEmpty);
+      expect(await upgraded.select(upgraded.recoveryCopies).get(), isEmpty);
+    },
+  );
 }

@@ -183,7 +183,12 @@ List<ChangedBlock> compareBlocks(String device, String server) {
   final hunks = _hunks(a, b);
   if (hunks == null) {
     return [
-      (deviceStart: 0, deviceEnd: a.length, serverStart: 0, serverEnd: b.length),
+      (
+        deviceStart: 0,
+        deviceEnd: a.length,
+        serverStart: 0,
+        serverEnd: b.length,
+      ),
     ];
   }
   var shift = 0;
@@ -285,7 +290,9 @@ final class NoteRecovery {
   }) async {
     await retainOriginals(expected, inspected);
     final fresh = await readServer();
-    if (fresh == null) return const ConflictOutcome(ConflictStatus.serverDeleted);
+    if (fresh == null) {
+      return const ConflictOutcome(ConflictStatus.serverDeleted);
+    }
     if (fresh.etag != inspected.etag) {
       await database.keepCopy(
         expected,
@@ -326,11 +333,9 @@ final class NoteRecovery {
 
   /// The unfinished Result stored by [saveResult], if any.
   Future<String?> savedResult(LocalNote note) async {
-    final rows =
-        await (database.select(database.recoveryCopies)..where(
-              (c) => c.noteId.equals(note.id) & c.kind.equals('result'),
-            ))
-            .get();
+    final rows = await (database.select(
+      database.recoveryCopies,
+    )..where((c) => c.noteId.equals(note.id) & c.kind.equals('result'))).get();
     return rows.isEmpty ? null : rows.first.content;
   }
 
@@ -343,7 +348,8 @@ final class NoteRecovery {
   Stream<List<RecoveryCopy>> watchCopies(String accountId) =>
       (database.select(database.recoveryCopies)
             ..where(
-              (c) => c.accountId.equals(accountId) & c.kind.equals('result').not(),
+              (c) =>
+                  c.accountId.equals(accountId) & c.kind.equals('result').not(),
             )
             ..orderBy([(c) => OrderingTerm.desc(c.createdAt)]))
           .watch();
@@ -459,7 +465,10 @@ final class NoteRecovery {
 
   /// Preserve the uncertain operation and original row for audit/recovery.
   /// The user is warned that the server may already contain another copy.
-  Future<String> copyAsNew(LocalNote expected) =>
+  ///
+  /// [content] is the text of the new note when it is not the device text,
+  /// e.g. an edited Result; the device text stays in the archived row.
+  Future<String> copyAsNew(LocalNote expected, {String? content}) =>
       database.transaction(() async {
         final current = await _current(expected);
         final id = const Uuid().v4();
@@ -470,7 +479,7 @@ final class NoteRecovery {
                 id: id,
                 accountId: current.accountId,
                 title: current.title,
-                content: current.content,
+                content: content ?? current.content,
                 category: Value(current.category),
                 favorite: Value(current.favorite),
                 updatedAt: DateTime.now().millisecondsSinceEpoch,
@@ -635,7 +644,8 @@ final class AttentionFeed {
       }
     }
     final items = <AttentionItem>[
-      for (final e in (_failures[accountId] ?? const <String, String?>{}).entries)
+      for (final e
+          in (_failures[accountId] ?? const <String, String?>{}).entries)
         AttentionItem(
           kind: AttentionKind.saveFailure,
           accountId: accountId,
@@ -668,7 +678,7 @@ final class AttentionFeed {
             note: n,
             noteId: n.id,
           )
-        else if (n.unreadable || n.syncState == 'unreadable')
+        else if (n.unreadable == true || n.syncState == 'unreadable')
           AttentionItem(
             kind: AttentionKind.unreadable,
             accountId: accountId,

@@ -701,13 +701,12 @@ class $LocalNotesTable extends LocalNotes
   late final GeneratedColumn<bool> unreadable = GeneratedColumn<bool>(
     'unreadable',
     aliasedName,
-    false,
+    true,
     type: DriftSqlType.bool,
     requiredDuringInsert: false,
     defaultConstraints: GeneratedColumn.constraintIsAlways(
       'CHECK ("unreadable" IN (0, 1))',
     ),
-    defaultValue: const Constant(false),
   );
   static const VerificationMeta _missingSinceMeta = const VerificationMeta(
     'missingSince',
@@ -996,7 +995,7 @@ class $LocalNotesTable extends LocalNotes
       unreadable: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}unreadable'],
-      )!,
+      ),
       missingSince: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}missing_since'],
@@ -1041,7 +1040,7 @@ class LocalNote extends DataClass implements Insertable<LocalNote> {
 
   /// The server could not hand out this note's text on the last pull; the
   /// stored copy may be stale.
-  final bool unreadable;
+  final bool? unreadable;
 
   /// When a pull stopped listing the note although the sync scope may have
   /// changed. The row is kept until the owner decides.
@@ -1066,7 +1065,7 @@ class LocalNote extends DataClass implements Insertable<LocalNote> {
     required this.kind,
     this.davPath,
     this.deleteError,
-    required this.unreadable,
+    this.unreadable,
     this.missingSince,
   });
   @override
@@ -1107,7 +1106,9 @@ class LocalNote extends DataClass implements Insertable<LocalNote> {
     if (!nullToAbsent || deleteError != null) {
       map['delete_error'] = Variable<String>(deleteError);
     }
-    map['unreadable'] = Variable<bool>(unreadable);
+    if (!nullToAbsent || unreadable != null) {
+      map['unreadable'] = Variable<bool>(unreadable);
+    }
     if (!nullToAbsent || missingSince != null) {
       map['missing_since'] = Variable<int>(missingSince);
     }
@@ -1149,7 +1150,9 @@ class LocalNote extends DataClass implements Insertable<LocalNote> {
       deleteError: deleteError == null && nullToAbsent
           ? const Value.absent()
           : Value(deleteError),
-      unreadable: Value(unreadable),
+      unreadable: unreadable == null && nullToAbsent
+          ? const Value.absent()
+          : Value(unreadable),
       missingSince: missingSince == null && nullToAbsent
           ? const Value.absent()
           : Value(missingSince),
@@ -1181,7 +1184,7 @@ class LocalNote extends DataClass implements Insertable<LocalNote> {
       kind: serializer.fromJson<String>(json['kind']),
       davPath: serializer.fromJson<String?>(json['davPath']),
       deleteError: serializer.fromJson<String?>(json['deleteError']),
-      unreadable: serializer.fromJson<bool>(json['unreadable']),
+      unreadable: serializer.fromJson<bool?>(json['unreadable']),
       missingSince: serializer.fromJson<int?>(json['missingSince']),
     );
   }
@@ -1208,7 +1211,7 @@ class LocalNote extends DataClass implements Insertable<LocalNote> {
       'kind': serializer.toJson<String>(kind),
       'davPath': serializer.toJson<String?>(davPath),
       'deleteError': serializer.toJson<String?>(deleteError),
-      'unreadable': serializer.toJson<bool>(unreadable),
+      'unreadable': serializer.toJson<bool?>(unreadable),
       'missingSince': serializer.toJson<int?>(missingSince),
     };
   }
@@ -1233,7 +1236,7 @@ class LocalNote extends DataClass implements Insertable<LocalNote> {
     String? kind,
     Value<String?> davPath = const Value.absent(),
     Value<String?> deleteError = const Value.absent(),
-    bool? unreadable,
+    Value<bool?> unreadable = const Value.absent(),
     Value<int?> missingSince = const Value.absent(),
   }) => LocalNote(
     id: id ?? this.id,
@@ -1255,7 +1258,7 @@ class LocalNote extends DataClass implements Insertable<LocalNote> {
     kind: kind ?? this.kind,
     davPath: davPath.present ? davPath.value : this.davPath,
     deleteError: deleteError.present ? deleteError.value : this.deleteError,
-    unreadable: unreadable ?? this.unreadable,
+    unreadable: unreadable.present ? unreadable.value : this.unreadable,
     missingSince: missingSince.present ? missingSince.value : this.missingSince,
   );
   LocalNote copyWithCompanion(LocalNotesCompanion data) {
@@ -1395,7 +1398,7 @@ class LocalNotesCompanion extends UpdateCompanion<LocalNote> {
   final Value<String> kind;
   final Value<String?> davPath;
   final Value<String?> deleteError;
-  final Value<bool> unreadable;
+  final Value<bool?> unreadable;
   final Value<int?> missingSince;
   final Value<int> rowid;
   const LocalNotesCompanion({
@@ -1520,7 +1523,7 @@ class LocalNotesCompanion extends UpdateCompanion<LocalNote> {
     Value<String>? kind,
     Value<String?>? davPath,
     Value<String?>? deleteError,
-    Value<bool>? unreadable,
+    Value<bool?>? unreadable,
     Value<int?>? missingSince,
     Value<int>? rowid,
   }) {
@@ -4333,7 +4336,7 @@ typedef $$LocalNotesTableCreateCompanionBuilder =
       Value<String> kind,
       Value<String?> davPath,
       Value<String?> deleteError,
-      Value<bool> unreadable,
+      Value<bool?> unreadable,
       Value<int?> missingSince,
       Value<int> rowid,
     });
@@ -4358,7 +4361,7 @@ typedef $$LocalNotesTableUpdateCompanionBuilder =
       Value<String> kind,
       Value<String?> davPath,
       Value<String?> deleteError,
-      Value<bool> unreadable,
+      Value<bool?> unreadable,
       Value<int?> missingSince,
       Value<int> rowid,
     });
@@ -4871,7 +4874,7 @@ class $$LocalNotesTableTableManager
                 Value<String> kind = const Value.absent(),
                 Value<String?> davPath = const Value.absent(),
                 Value<String?> deleteError = const Value.absent(),
-                Value<bool> unreadable = const Value.absent(),
+                Value<bool?> unreadable = const Value.absent(),
                 Value<int?> missingSince = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => LocalNotesCompanion(
@@ -4919,7 +4922,7 @@ class $$LocalNotesTableTableManager
                 Value<String> kind = const Value.absent(),
                 Value<String?> davPath = const Value.absent(),
                 Value<String?> deleteError = const Value.absent(),
-                Value<bool> unreadable = const Value.absent(),
+                Value<bool?> unreadable = const Value.absent(),
                 Value<int?> missingSince = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => LocalNotesCompanion.insert(

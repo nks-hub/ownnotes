@@ -145,5 +145,43 @@
   "serverCertificate": "Certifikát serveru se nepodařilo ověřit. Zkontroluj adresu, nebo oprav certifikát na serveru.",
   "serverTimeout": "Server odpovídal příliš dlouho. Zkus to znovu.",
   "notesAppMissing": "Aplikace Notes na tomto serveru není dostupná. Nainstaluj nebo zapni Nextcloud Notes.",
-  "reauthMismatch": "Toto přihlášení patří jinému serveru nebo uživateli. Přihlas se stejným účtem, aby poznámky zůstaly."
+  "reauthMismatch": "Toto přihlášení patří jinému serveru nebo uživateli. Přihlas se stejným účtem, aby poznámky zůstaly.",
+  "recTitle": "Porovnání verzí",
+  "recTabDevice": "Zařízení",
+  "recTabServer": "Server",
+  "recTabResult": "Výsledek",
+  "recUseResult": "Použít výsledek",
+  "recKeepSeparate": "Ponechat jako samostatnou poznámku",
+  "recUseServer": "Použít verzi ze serveru",
+  "recLeave": "Nechat nevyřešené",
+  "recFillDevice": "Dát do výsledku text ze zařízení",
+  "recFillServer": "Dát do výsledku text ze serveru",
+  "recFillBoth": "Dát do výsledku obojí",
+  "recResultReplaced": "Výsledek byl nahrazen",
+  "recUndo": "Zpět",
+  "recReasonConflict": "Poznámku změnil tento telefon i server.",
+  "recReasonUnknown": "Výsledek posledního odeslání není znám. Před rozhodnutím verze porovnej.",
+  "recReasonReadonly": "Server ti už tuto poznámku upravovat nedovolí. Tvůj text zůstává, ulož ho jako vlastní poznámku.",
+  "recReasonMove": "Poznámka s přílohami tady nemůže změnit kategorii. Ponech kategorii ze serveru, nebo ulož text jako samostatnou poznámku.",
+  "recReasonGeneric": "Tato poznámka čeká na tvé rozhodnutí.",
+  "recChangeCounter": "Změna {number} z {total}",
+  "@recChangeCounter": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "recNoChanges": "Text na zařízení a na serveru je stejný.",
+  "recPrevChange": "Předchozí změna",
+  "recNextChange": "Další změna",
+  "recServerChanged": "Verze na serveru se mezitím znovu změnila. Porovnání teď ukazuje novější verzi, tvůj výsledek zůstává. Projdi ji a rozhodni znovu.",
+  "recKept": "Obě verze zůstanou uložené v telefonu, dokud je sám neodstraníš.",
+  "recSaveAsNew": "Uložit jako novou poznámku",
+  "recKeepCategory": "Použít výsledek, ponechat kategorii ze serveru",
+  "recReadFailed": "Verzi ze serveru se nepodařilo načíst.",
+  "recKeepRecovery": "Ponechat v záchraně"
 }

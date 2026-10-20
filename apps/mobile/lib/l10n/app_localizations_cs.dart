@@ -514,4 +514,96 @@ class AppLocalizationsCs extends AppLocalizations {
   @override
   String get reauthMismatch =>
       'Toto přihlášení patří jinému serveru nebo uživateli. Přihlas se stejným účtem, aby poznámky zůstaly.';
+
+  @override
+  String get recTitle => 'Porovnání verzí';
+
+  @override
+  String get recTabDevice => 'Zařízení';
+
+  @override
+  String get recTabServer => 'Server';
+
+  @override
+  String get recTabResult => 'Výsledek';
+
+  @override
+  String get recUseResult => 'Použít výsledek';
+
+  @override
+  String get recKeepSeparate => 'Ponechat jako samostatnou poznámku';
+
+  @override
+  String get recUseServer => 'Použít verzi ze serveru';
+
+  @override
+  String get recLeave => 'Nechat nevyřešené';
+
+  @override
+  String get recFillDevice => 'Dát do výsledku text ze zařízení';
+
+  @override
+  String get recFillServer => 'Dát do výsledku text ze serveru';
+
+  @override
+  String get recFillBoth => 'Dát do výsledku obojí';
+
+  @override
+  String get recResultReplaced => 'Výsledek byl nahrazen';
+
+  @override
+  String get recUndo => 'Zpět';
+
+  @override
+  String get recReasonConflict => 'Poznámku změnil tento telefon i server.';
+
+  @override
+  String get recReasonUnknown =>
+      'Výsledek posledního odeslání není znám. Před rozhodnutím verze porovnej.';
+
+  @override
+  String get recReasonReadonly =>
+      'Server ti už tuto poznámku upravovat nedovolí. Tvůj text zůstává, ulož ho jako vlastní poznámku.';
+
+  @override
+  String get recReasonMove =>
+      'Poznámka s přílohami tady nemůže změnit kategorii. Ponech kategorii ze serveru, nebo ulož text jako samostatnou poznámku.';
+
+  @override
+  String get recReasonGeneric => 'Tato poznámka čeká na tvé rozhodnutí.';
+
+  @override
+  String recChangeCounter(int number, int total) {
+    return 'Změna $number z $total';
+  }
+
+  @override
+  String get recNoChanges => 'Text na zařízení a na serveru je stejný.';
+
+  @override
+  String get recPrevChange => 'Předchozí změna';
+
+  @override
+  String get recNextChange => 'Další změna';
+
+  @override
+  String get recServerChanged =>
+      'Verze na serveru se mezitím znovu změnila. Porovnání teď ukazuje novější verzi, tvůj výsledek zůstává. Projdi ji a rozhodni znovu.';
+
+  @override
+  String get recKept =>
+      'Obě verze zůstanou uložené v telefonu, dokud je sám neodstraníš.';
+
+  @override
+  String get recSaveAsNew => 'Uložit jako novou poznámku';
+
+  @override
+  String get recKeepCategory =>
+      'Použít výsledek, ponechat kategorii ze serveru';
+
+  @override
+  String get recReadFailed => 'Verzi ze serveru se nepodařilo načíst.';
+
+  @override
+  String get recKeepRecovery => 'Ponechat v záchraně';
 }
