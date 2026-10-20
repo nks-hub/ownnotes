@@ -1,0 +1,14 @@
+"widget_notes_list" = "Notizen";
+"widget_notes_list_desc" = "Deine neuesten Notizen.";
+"widget_single_note" = "Notiz";
+"widget_single_note_desc" = "Eine Notiz mit Auszug.";
+"widget_checklist" = "Checkliste";
+"widget_checklist_desc" = "Aufgaben einer Notiz.";
+"widget_quick_note" = "Schnellnotiz";
+"widget_quick_note_desc" = "Neue Notiz beginnen.";
+"hidden_by_lock" = "Notizen durch App-Sperre verborgen";
+"unlock_to_open" = "Zum Öffnen entsperren";
+"new_note" = "Neue Notiz";
+"no_notes" = "Noch keine Notizen";
+"no_tasks" = "Keine Aufgaben";
+"open_to_set_up" = "OwnNotes öffnen, um das Widget einzurichten";

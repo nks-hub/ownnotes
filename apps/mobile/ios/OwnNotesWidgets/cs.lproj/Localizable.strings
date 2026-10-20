@@ -1,0 +1,14 @@
+"widget_notes_list" = "Poznámky";
+"widget_notes_list_desc" = "Vaše poslední poznámky.";
+"widget_single_note" = "Poznámka";
+"widget_single_note_desc" = "Jedna poznámka s výňatkem.";
+"widget_checklist" = "Seznam úkolů";
+"widget_checklist_desc" = "Úkoly jedné poznámky.";
+"widget_quick_note" = "Rychlá poznámka";
+"widget_quick_note_desc" = "Začít novou poznámku.";
+"hidden_by_lock" = "Poznámky skryté zámkem aplikace";
+"unlock_to_open" = "Odemkněte pro otevření";
+"new_note" = "Nová poznámka";
+"no_notes" = "Zatím žádné poznámky";
+"no_tasks" = "Žádné úkoly";
+"open_to_set_up" = "Otevřete OwnNotes a nastavte widget";

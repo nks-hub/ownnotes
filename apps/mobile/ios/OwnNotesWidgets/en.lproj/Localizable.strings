@@ -1,0 +1,14 @@
+"widget_notes_list" = "Notes";
+"widget_notes_list_desc" = "Your latest notes.";
+"widget_single_note" = "Note";
+"widget_single_note_desc" = "One note with an excerpt.";
+"widget_checklist" = "Checklist";
+"widget_checklist_desc" = "Tasks of one note.";
+"widget_quick_note" = "Quick note";
+"widget_quick_note_desc" = "Start a new note.";
+"hidden_by_lock" = "Notes hidden by app lock";
+"unlock_to_open" = "Unlock to open";
+"new_note" = "New note";
+"no_notes" = "No notes yet";
+"no_tasks" = "No tasks";
+"open_to_set_up" = "Open OwnNotes to set up this widget";
