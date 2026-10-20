@@ -16,7 +16,13 @@ final class SyncCoordinator {
     this.lease = const Duration(minutes: 2),
     this.sharingFor,
     this.shareListInterval = const Duration(seconds: 60),
+    this.scopeFor,
   });
+
+  /// Describes what the server lists for the account, e.g. the Notes folder
+  /// and file suffix from the Notes settings. A change between two passes
+  /// stops notes missing from the listing being deleted here.
+  final Future<String?> Function(Account account)? scopeFor;
 
   /// When set, notes shared with the account are synced over WebDAV as well.
   final Future<SharingClient> Function(Account account)? sharingFor;
@@ -34,6 +40,8 @@ final class SyncCoordinator {
 
   /// Why the last sync of [accountId] left notes unsent: `offline`, `auth`,
   /// `locked`, `storage_full` or `server`; null when nothing went wrong.
+  /// Also stored per account: [NotesDatabase.watchSyncStatus] survives a
+  /// restart, this map is filled from it by [recoverInterruptedWrites].
   String? problem(String accountId) => _problems[accountId];
 
   /// [relist] reads the incoming shares now, e.g. right after accepting one.
@@ -49,6 +57,7 @@ final class SyncCoordinator {
   /// Call once during startup. An account whose lease another process holds
   /// is skipped: its worker is still sending, nothing was interrupted.
   Future<void> recoverInterruptedWrites() async {
+    _problems.addAll(await database.storedProblems());
     for (final account in await database.select(database.accounts).get()) {
       if (!await database.holdLease(account.id, _owner, lease)) continue;
       try {
@@ -80,8 +89,18 @@ final class SyncCoordinator {
     try {
       await _recover(accountId);
       await _pass(accountId);
+      await database.recordSyncResult(
+        accountId,
+        completed: true,
+        problem: _problems[accountId],
+      );
     } catch (e) {
       _problems[accountId] = _reason(e);
+      await database.recordSyncResult(
+        accountId,
+        completed: false,
+        problem: _problems[accountId],
+      );
       rethrow;
     } finally {
       await database.releaseLease(accountId, _owner);
@@ -97,6 +116,7 @@ final class SyncCoordinator {
   static String _reason(Object error) => switch (error) {
     NotesTransportException() || MutationUncertain() => 'offline',
     NotesHttpException(statusCode: 401) => 'auth',
+    StateError(message: 'reauth_required') => 'auth',
     NotesHttpException(statusCode: 423) => 'locked',
     NotesHttpException(statusCode: 507) => 'storage_full',
     _ => 'server',
@@ -139,7 +159,24 @@ final class SyncCoordinator {
       await _delete(client, note);
     }
     if (await database.account(accountId) == null) return;
-    if (!await _pull(client, accountId, _watermarks[accountId])) {
+    // An unreadable or missing note comes back as id only in a pruned pull,
+    // which would hide that it is readable again.
+    final suspect =
+        await (database.select(database.localNotes)
+              ..where(
+                (n) =>
+                    n.accountId.equals(accountId) &
+                    (n.unreadable.equals(true) |
+                        n.syncState.equals('unreadable') |
+                        n.missingSince.isNotNull()),
+              )
+              ..limit(1))
+            .get();
+    if (!await _pull(
+      client,
+      accountId,
+      suspect.isEmpty ? _watermarks[accountId] : null,
+    )) {
       _watermarks.remove(accountId);
       await _pull(client, accountId, null);
     }
@@ -159,6 +196,15 @@ final class SyncCoordinator {
     int? pruneBefore,
   ) async {
     final epoch = await database.readEpoch(accountId);
+    String? scope;
+    final account = await database.account(accountId);
+    if (scopeFor != null && account != null) {
+      try {
+        scope = await scopeFor!(account);
+      } catch (_) {
+        // Unknown scope: the census still protects an empty listing.
+      }
+    }
     String? cursor;
     DateTime? watermark;
     final seenCursors = <String>{};
@@ -187,7 +233,7 @@ final class SyncCoordinator {
               .get();
       if (known.length != pruned.length) return false;
     }
-    await database.census(accountId, epoch, listed);
+    await database.census(accountId, epoch, listed, scope: scope);
     if (watermark != null) {
       _watermarks[accountId] = watermark.millisecondsSinceEpoch ~/ 1000;
     }
@@ -205,6 +251,17 @@ final class SyncCoordinator {
               (n) => n.id.equals(note.id) & n.syncState.equals('deleting'),
             ))
             .go();
+    // The note stays "deleting" and visible with the reason; the next pass
+    // tries again, [retryDeletion] only skips the wait.
+    Future<void> failed(Object error) async {
+      final reason = _reason(error);
+      _problems[note.accountId] = reason;
+      await (database.update(database.localNotes)..where(
+            (n) => n.id.equals(note.id) & n.syncState.equals('deleting'),
+          ))
+          .write(LocalNotesCompanion(deleteError: Value(reason)));
+    }
+
     try {
       final read = await client.get(remoteId, ifNoneMatch: etag);
       if (read is RemoteNote && read.etag != etag) {
@@ -213,6 +270,7 @@ final class SyncCoordinator {
             ))
             .write(
               LocalNotesCompanion(
+                deleteError: const Value(null),
                 title: Value(read.title),
                 content: Value(read.content),
                 category: Value(read.category),
@@ -231,10 +289,31 @@ final class SyncCoordinator {
       await client.delete(remoteId);
       await forget();
     } on NotesHttpException catch (e) {
-      if (e.statusCode == 404) await forget();
-    } on MutationUncertain {
-      // Stays "deleting"; the next sync reads it again.
+      if (e.statusCode == 404) {
+        await forget();
+      } else {
+        await failed(e);
+      }
+    } on MutationUncertain catch (e) {
+      await failed(e);
+    } on NotesProtocolException catch (e) {
+      await failed(e);
+    } on NotesTransportException catch (e) {
+      await failed(e);
+      rethrow;
     }
+  }
+
+  /// Clears the failure of a deletion waiting for the server and syncs now.
+  Future<void> retryDeletion(String accountId, String noteId) async {
+    await (database.update(database.localNotes)..where(
+          (n) =>
+              n.id.equals(noteId) &
+              n.accountId.equals(accountId) &
+              n.syncState.equals('deleting'),
+        ))
+        .write(const LocalNotesCompanion(deleteError: Value(null)));
+    await sync(accountId);
   }
 
   Future<void> _push(

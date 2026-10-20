@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 import 'package:drift/drift.dart';
 import 'package:notes_protocol/notes_protocol.dart';
@@ -163,18 +164,269 @@ List<_Hunk>? _hunks(List<String> o, List<String> x) {
   return hunks;
 }
 
+/// A run of lines that differs between the device and the server text:
+/// lines `[deviceStart, deviceEnd)` of the device text correspond to
+/// `[serverStart, serverEnd)` of the server text. Either side may be empty
+/// (an insertion or a deletion).
+typedef ChangedBlock = ({
+  int deviceStart,
+  int deviceEnd,
+  int serverStart,
+  int serverEnd,
+});
+
+/// The changed blocks between [device] and [server], in text order. A text
+/// too large to compare line by line gives one block for all of it.
+List<ChangedBlock> compareBlocks(String device, String server) {
+  if (device == server) return const [];
+  final a = device.split('\n'), b = server.split('\n');
+  final hunks = _hunks(a, b);
+  if (hunks == null) {
+    return [
+      (deviceStart: 0, deviceEnd: a.length, serverStart: 0, serverEnd: b.length),
+    ];
+  }
+  var shift = 0;
+  final blocks = <ChangedBlock>[];
+  for (final h in hunks) {
+    final start = h.start + shift;
+    shift += h.lines.length - (h.end - h.start);
+    blocks.add((
+      deviceStart: h.start,
+      deviceEnd: h.end,
+      serverStart: start,
+      serverEnd: start + h.lines.length,
+    ));
+  }
+  return blocks;
+}
+
+/// What happened to a request to apply the owner's decision.
+enum ConflictStatus {
+  /// The note was updated; an upload follows through the ordinary queue.
+  applied,
+
+  /// The server holds another version than the one compared. Nothing was
+  /// applied; compare again.
+  serverChanged,
+
+  /// The note is gone from the server.
+  serverDeleted,
+
+  /// The server no longer lets this account edit the note.
+  permissionLost,
+}
+
+final class ConflictOutcome {
+  const ConflictOutcome(this.status, [this.server]);
+  final ConflictStatus status;
+
+  /// The version read again, for [ConflictStatus.serverChanged] and
+  /// [ConflictStatus.permissionLost].
+  final RemoteNote? server;
+}
+
+/// What the owner picked as the final text.
+enum ConflictChoice { result, server }
+
 /// These transitions require an explicit user decision in the conflict UI.
 final class NoteRecovery {
   NoteRecovery(this.database);
   final NotesDatabase database;
 
+  /// Why the note waits for a decision: the code of the operation that
+  /// stopped, e.g. `remote_conflict`, `remote_deleted`, `remote_readonly`,
+  /// `move_integrity_required`, `write_outcome_unknown`; null when unknown.
+  Future<String?> reason(LocalNote note) async {
+    final rows =
+        await (database.select(database.operations)
+              ..where(
+                (o) =>
+                    o.noteId.equals(note.id) & o.state.equals('needsDecision'),
+              )
+              ..orderBy([(o) => OrderingTerm.desc(o.revision)])
+              ..limit(1))
+            .get();
+    return rows.isEmpty ? null : rows.single.errorCode;
+  }
+
+  /// Keeps the device text and the server text compared as recovery copies.
+  /// They stay until [discardCopy].
+  Future<void> retainOriginals(LocalNote device, RemoteNote server) =>
+      database.transaction(() async {
+        await database.keepCopy(device, 'device', reason: 'compared');
+        await database.keepCopy(
+          device,
+          'server',
+          reason: 'compared',
+          title: server.title,
+          content: server.content,
+          category: server.category,
+          favorite: server.favorite,
+          etag: server.etag,
+        );
+      });
+
+  /// Applies the owner's decision after checking the server again.
+  ///
+  /// Both originals are stored first. [readServer] reads the note now (null
+  /// when it is gone); when its ETag is not [inspected]'s, nothing is applied
+  /// so the comparison can be shown again. [content], [title] and
+  /// [category] describe the Result for [ConflictChoice.result]. A network
+  /// error from [readServer] propagates and applies nothing.
+  Future<ConflictOutcome> resolve({
+    required LocalNote expected,
+    required RemoteNote inspected,
+    required Future<RemoteNote?> Function() readServer,
+    required ConflictChoice choice,
+    String? content,
+    String? title,
+    String? category,
+  }) async {
+    await retainOriginals(expected, inspected);
+    final fresh = await readServer();
+    if (fresh == null) return const ConflictOutcome(ConflictStatus.serverDeleted);
+    if (fresh.etag != inspected.etag) {
+      await database.keepCopy(
+        expected,
+        'server',
+        reason: 'compared',
+        title: fresh.title,
+        content: fresh.content,
+        category: fresh.category,
+        favorite: fresh.favorite,
+        etag: fresh.etag,
+      );
+      return ConflictOutcome(ConflictStatus.serverChanged, fresh);
+    }
+    final keepLocal = choice == ConflictChoice.result;
+    if (keepLocal && fresh.readonly) {
+      return ConflictOutcome(ConflictStatus.permissionLost, fresh);
+    }
+    await useRemote(
+      expected: expected,
+      remote: fresh,
+      keepLocal: keepLocal,
+      content: keepLocal ? content : null,
+      title: keepLocal ? title : null,
+      category: keepLocal ? category : null,
+    );
+    await _forgetResult(expected.id);
+    return const ConflictOutcome(ConflictStatus.applied);
+  }
+
+  /// Remembers an unfinished Result so leaving the comparison loses nothing.
+  Future<void> saveResult(LocalNote note, String text) =>
+      database.transaction(() async {
+        await _forgetResult(note.id);
+        if (text != note.content) {
+          await database.keepCopy(note, 'result', content: text);
+        }
+      });
+
+  /// The unfinished Result stored by [saveResult], if any.
+  Future<String?> savedResult(LocalNote note) async {
+    final rows =
+        await (database.select(database.recoveryCopies)..where(
+              (c) => c.noteId.equals(note.id) & c.kind.equals('result'),
+            ))
+            .get();
+    return rows.isEmpty ? null : rows.first.content;
+  }
+
+  Future<void> _forgetResult(String noteId) => (database.delete(
+    database.recoveryCopies,
+  )..where((c) => c.noteId.equals(noteId) & c.kind.equals('result'))).go();
+
+  /// Recovery copies of an account, newest first. Results in progress are
+  /// not listed.
+  Stream<List<RecoveryCopy>> watchCopies(String accountId) =>
+      (database.select(database.recoveryCopies)
+            ..where(
+              (c) => c.accountId.equals(accountId) & c.kind.equals('result').not(),
+            )
+            ..orderBy([(c) => OrderingTerm.desc(c.createdAt)]))
+          .watch();
+
+  /// Removes a copy for good. Only the owner does this.
+  Future<void> discardCopy(String accountId, String copyId) => (database.delete(
+    database.recoveryCopies,
+  )..where((c) => c.id.equals(copyId) & c.accountId.equals(accountId))).go();
+
+  /// A new local note with the text of a copy; the copy stays.
+  Future<String> restoreCopy(String accountId, String copyId) async {
+    final copy =
+        await (database.select(database.recoveryCopies)..where(
+              (c) => c.id.equals(copyId) & c.accountId.equals(accountId),
+            ))
+            .getSingleOrNull();
+    if (copy == null) throw StateError('copy_missing');
+    return database.createDraft(
+      accountId,
+      title: copy.title,
+      content: copy.content,
+      category: copy.category,
+    );
+  }
+
+  /// A note the server stopped listing although its scope may have changed:
+  /// make it an ordinary new note, to be uploaded again.
+  Future<void> keepMissingAsNew(LocalNote expected) =>
+      database.transaction(() async {
+        final current = await database.note(expected.accountId, expected.id);
+        if (current == null || current.missingSince == null) {
+          throw StateError('decision_stale');
+        }
+        await (database.update(
+          database.localNotes,
+        )..where((n) => n.id.equals(current.id))).write(
+          LocalNotesCompanion(
+            remoteId: const Value(null),
+            etag: const Value(null),
+            baseContent: const Value(null),
+            baseTitle: const Value(null),
+            baseCategory: const Value(null),
+            baseFavorite: const Value(null),
+            missingSince: const Value(null),
+            syncState: const Value('draft'),
+            revision: Value(current.revision + 1),
+          ),
+        );
+        await _bumpEpoch(current.accountId);
+      });
+
+  /// Drops a missing note from this phone; its recovery copy stays.
+  Future<void> removeMissing(LocalNote expected) =>
+      database.transaction(() async {
+        final current = await database.note(expected.accountId, expected.id);
+        if (current == null || current.missingSince == null) return;
+        await database.keepCopy(current, 'removed', reason: 'owner_removed');
+        await (database.delete(
+          database.localNotes,
+        )..where((n) => n.id.equals(current.id))).go();
+        await _bumpEpoch(current.accountId);
+      });
+
+  Future<void> _bumpEpoch(String accountId) async {
+    final account = await database.account(accountId);
+    if (account == null) throw StateError('account_missing');
+    await (database.update(
+      database.accounts,
+    )..where((a) => a.id.equals(account.id))).write(
+      AccountsCompanion(mutationEpoch: Value(account.mutationEpoch + 1)),
+    );
+  }
+
   /// [content] replaces the local text, e.g. with [mergeVersions]; it is
-  /// uploaded like kept local changes.
+  /// uploaded like kept local changes, together with [title] and [category]
+  /// when given.
   Future<void> useRemote({
     required LocalNote expected,
     required RemoteNote remote,
     required bool keepLocal,
     String? content,
+    String? title,
+    String? category,
   }) => database.transaction(() async {
     assert(content == null || keepLocal);
     final current = await _current(expected);
@@ -186,9 +438,11 @@ final class NoteRecovery {
       database.localNotes,
     )..where((n) => n.id.equals(current.id))).write(
       LocalNotesCompanion(
-        title: Value(keepLocal ? current.title : remote.title),
+        title: Value(keepLocal ? title ?? current.title : remote.title),
         content: Value(keepLocal ? content ?? current.content : remote.content),
-        category: Value(keepLocal ? current.category : remote.category),
+        category: Value(
+          keepLocal ? category ?? current.category : remote.category,
+        ),
         favorite: Value(keepLocal ? current.favorite : remote.favorite),
         baseTitle: Value(remote.title),
         baseContent: Value(remote.content),
@@ -252,12 +506,177 @@ final class NoteRecovery {
           (o) => o.noteId.equals(note.id) & o.state.equals('needsDecision'),
         ))
         .write(const OperationsCompanion(state: Value('dismissed')));
-    final account = await database.account(note.accountId);
-    if (account == null) throw StateError('account_missing');
-    await (database.update(
-      database.accounts,
-    )..where((a) => a.id.equals(account.id))).write(
-      AccountsCompanion(mutationEpoch: Value(account.mutationEpoch + 1)),
+    await _bumpEpoch(note.accountId);
+  }
+}
+
+/// Why something needs the owner, most urgent first.
+enum AttentionKind {
+  /// The phone could not keep the owner's text.
+  saveFailure,
+
+  /// Device and server differ; [AttentionItem.reason] says why.
+  decision,
+
+  /// The server refused or could not be asked; [AttentionItem.reason] is the
+  /// problem category. The note can be restored with [NotesDatabase.undoDelete].
+  failedDeletion,
+
+  /// The server stopped listing the note; it is kept here.
+  missing,
+
+  /// The server cannot hand out the text; the copy here may be stale.
+  unreadable,
+
+  /// A deletion waiting for the next sync; Undo is still possible.
+  pendingDeletion,
+}
+
+final class AttentionItem {
+  const AttentionItem({
+    required this.kind,
+    required this.accountId,
+    this.note,
+    this.noteId,
+    this.reason,
+  });
+  final AttentionKind kind;
+  final String accountId;
+
+  /// The row; null for a save failure whose note is not stored.
+  final LocalNote? note;
+  final String? noteId;
+  final String? reason;
+}
+
+/// The "Needs attention" list of an account: decisions, deletions waiting or
+/// failed, unreadable and missing notes (from the database, so it survives a
+/// restart) and local save failures (reported by the editor, in memory,
+/// because the database itself refused the write).
+final class AttentionFeed {
+  AttentionFeed(this.database);
+  final NotesDatabase database;
+  final Map<String, Map<String, String?>> _failures = {};
+  final _changes = StreamController<void>.broadcast(sync: true);
+
+  /// The editor could not persist [noteId]; [reason] is a short code.
+  void reportSaveFailure(String accountId, String noteId, [String? reason]) {
+    (_failures[accountId] ??= {})[noteId] = reason;
+    _changes.add(null);
+  }
+
+  void clearSaveFailure(String accountId, String noteId) {
+    _failures[accountId]?.remove(noteId);
+    _changes.add(null);
+  }
+
+  Stream<List<AttentionItem>> watch(String accountId) {
+    late final StreamController<List<AttentionItem>> out;
+    StreamSubscription<List<LocalNote>>? rows;
+    StreamSubscription<void>? changes;
+    var latest = <LocalNote>[];
+    var ready = false;
+    var token = 0;
+    Future<void> emit() async {
+      if (!ready) return;
+      final mine = ++token;
+      final items = await _items(accountId, latest);
+      if (mine == token && !out.isClosed) out.add(items);
+    }
+
+    out = StreamController<List<AttentionItem>>(
+      onListen: () {
+        rows =
+            (database.select(database.localNotes)..where(
+                  (n) =>
+                      n.accountId.equals(accountId) &
+                      (n.syncState.isIn([
+                            'needsDecision',
+                            'deleting',
+                            'unreadable',
+                          ]) |
+                          n.unreadable.equals(true) |
+                          n.missingSince.isNotNull()),
+                ))
+                .watch()
+                .listen((r) {
+                  latest = r;
+                  ready = true;
+                  emit();
+                }, onError: out.addError);
+        changes = _changes.stream.listen((_) => emit());
+      },
+      onCancel: () async {
+        await rows?.cancel();
+        await changes?.cancel();
+      },
     );
+    return out.stream;
+  }
+
+  Future<List<AttentionItem>> _items(
+    String accountId,
+    List<LocalNote> rows,
+  ) async {
+    final decisions = rows.where((n) => n.syncState == 'needsDecision');
+    final reasons = <String, String?>{};
+    if (decisions.isNotEmpty) {
+      final ops =
+          await (database.select(database.operations)
+                ..where(
+                  (o) =>
+                      o.noteId.isIn(decisions.map((n) => n.id)) &
+                      o.state.equals('needsDecision'),
+                )
+                ..orderBy([(o) => OrderingTerm.asc(o.revision)]))
+              .get();
+      for (final o in ops) {
+        reasons[o.noteId] = o.errorCode;
+      }
+    }
+    final items = <AttentionItem>[
+      for (final e in (_failures[accountId] ?? const <String, String?>{}).entries)
+        AttentionItem(
+          kind: AttentionKind.saveFailure,
+          accountId: accountId,
+          noteId: e.key,
+          reason: e.value,
+        ),
+      for (final n in rows)
+        if (n.syncState == 'needsDecision')
+          AttentionItem(
+            kind: AttentionKind.decision,
+            accountId: accountId,
+            note: n,
+            noteId: n.id,
+            reason: reasons[n.id],
+          )
+        else if (n.syncState == 'deleting')
+          AttentionItem(
+            kind: n.deleteError == null
+                ? AttentionKind.pendingDeletion
+                : AttentionKind.failedDeletion,
+            accountId: accountId,
+            note: n,
+            noteId: n.id,
+            reason: n.deleteError,
+          )
+        else if (n.missingSince != null)
+          AttentionItem(
+            kind: AttentionKind.missing,
+            accountId: accountId,
+            note: n,
+            noteId: n.id,
+          )
+        else if (n.unreadable || n.syncState == 'unreadable')
+          AttentionItem(
+            kind: AttentionKind.unreadable,
+            accountId: accountId,
+            note: n,
+            noteId: n.id,
+          ),
+    ];
+    items.sort((a, b) => a.kind.index.compareTo(b.kind.index));
+    return items;
   }
 }

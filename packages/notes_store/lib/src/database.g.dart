@@ -683,6 +683,43 @@ class $LocalNotesTable extends LocalNotes
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _deleteErrorMeta = const VerificationMeta(
+    'deleteError',
+  );
+  @override
+  late final GeneratedColumn<String> deleteError = GeneratedColumn<String>(
+    'delete_error',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _unreadableMeta = const VerificationMeta(
+    'unreadable',
+  );
+  @override
+  late final GeneratedColumn<bool> unreadable = GeneratedColumn<bool>(
+    'unreadable',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("unreadable" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _missingSinceMeta = const VerificationMeta(
+    'missingSince',
+  );
+  @override
+  late final GeneratedColumn<int> missingSince = GeneratedColumn<int>(
+    'missing_since',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -703,6 +740,9 @@ class $LocalNotesTable extends LocalNotes
     updatedAt,
     kind,
     davPath,
+    deleteError,
+    unreadable,
+    missingSince,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -840,6 +880,30 @@ class $LocalNotesTable extends LocalNotes
         davPath.isAcceptableOrUnknown(data['dav_path']!, _davPathMeta),
       );
     }
+    if (data.containsKey('delete_error')) {
+      context.handle(
+        _deleteErrorMeta,
+        deleteError.isAcceptableOrUnknown(
+          data['delete_error']!,
+          _deleteErrorMeta,
+        ),
+      );
+    }
+    if (data.containsKey('unreadable')) {
+      context.handle(
+        _unreadableMeta,
+        unreadable.isAcceptableOrUnknown(data['unreadable']!, _unreadableMeta),
+      );
+    }
+    if (data.containsKey('missing_since')) {
+      context.handle(
+        _missingSinceMeta,
+        missingSince.isAcceptableOrUnknown(
+          data['missing_since']!,
+          _missingSinceMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -925,6 +989,18 @@ class $LocalNotesTable extends LocalNotes
         DriftSqlType.string,
         data['${effectivePrefix}dav_path'],
       ),
+      deleteError: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}delete_error'],
+      ),
+      unreadable: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}unreadable'],
+      )!,
+      missingSince: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}missing_since'],
+      ),
     );
   }
 
@@ -958,6 +1034,18 @@ class LocalNote extends DataClass implements Insertable<LocalNote> {
   /// entity tag.
   final String kind;
   final String? davPath;
+
+  /// Category of the last failed attempt to delete the note on the server
+  /// (`offline`, `auth`, `server`, ...); null while nothing failed.
+  final String? deleteError;
+
+  /// The server could not hand out this note's text on the last pull; the
+  /// stored copy may be stale.
+  final bool unreadable;
+
+  /// When a pull stopped listing the note although the sync scope may have
+  /// changed. The row is kept until the owner decides.
+  final int? missingSince;
   const LocalNote({
     required this.id,
     required this.accountId,
@@ -977,6 +1065,9 @@ class LocalNote extends DataClass implements Insertable<LocalNote> {
     required this.updatedAt,
     required this.kind,
     this.davPath,
+    this.deleteError,
+    required this.unreadable,
+    this.missingSince,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1013,6 +1104,13 @@ class LocalNote extends DataClass implements Insertable<LocalNote> {
     if (!nullToAbsent || davPath != null) {
       map['dav_path'] = Variable<String>(davPath);
     }
+    if (!nullToAbsent || deleteError != null) {
+      map['delete_error'] = Variable<String>(deleteError);
+    }
+    map['unreadable'] = Variable<bool>(unreadable);
+    if (!nullToAbsent || missingSince != null) {
+      map['missing_since'] = Variable<int>(missingSince);
+    }
     return map;
   }
 
@@ -1048,6 +1146,13 @@ class LocalNote extends DataClass implements Insertable<LocalNote> {
       davPath: davPath == null && nullToAbsent
           ? const Value.absent()
           : Value(davPath),
+      deleteError: deleteError == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deleteError),
+      unreadable: Value(unreadable),
+      missingSince: missingSince == null && nullToAbsent
+          ? const Value.absent()
+          : Value(missingSince),
     );
   }
 
@@ -1075,6 +1180,9 @@ class LocalNote extends DataClass implements Insertable<LocalNote> {
       updatedAt: serializer.fromJson<int>(json['updatedAt']),
       kind: serializer.fromJson<String>(json['kind']),
       davPath: serializer.fromJson<String?>(json['davPath']),
+      deleteError: serializer.fromJson<String?>(json['deleteError']),
+      unreadable: serializer.fromJson<bool>(json['unreadable']),
+      missingSince: serializer.fromJson<int?>(json['missingSince']),
     );
   }
   @override
@@ -1099,6 +1207,9 @@ class LocalNote extends DataClass implements Insertable<LocalNote> {
       'updatedAt': serializer.toJson<int>(updatedAt),
       'kind': serializer.toJson<String>(kind),
       'davPath': serializer.toJson<String?>(davPath),
+      'deleteError': serializer.toJson<String?>(deleteError),
+      'unreadable': serializer.toJson<bool>(unreadable),
+      'missingSince': serializer.toJson<int?>(missingSince),
     };
   }
 
@@ -1121,6 +1232,9 @@ class LocalNote extends DataClass implements Insertable<LocalNote> {
     int? updatedAt,
     String? kind,
     Value<String?> davPath = const Value.absent(),
+    Value<String?> deleteError = const Value.absent(),
+    bool? unreadable,
+    Value<int?> missingSince = const Value.absent(),
   }) => LocalNote(
     id: id ?? this.id,
     accountId: accountId ?? this.accountId,
@@ -1140,6 +1254,9 @@ class LocalNote extends DataClass implements Insertable<LocalNote> {
     updatedAt: updatedAt ?? this.updatedAt,
     kind: kind ?? this.kind,
     davPath: davPath.present ? davPath.value : this.davPath,
+    deleteError: deleteError.present ? deleteError.value : this.deleteError,
+    unreadable: unreadable ?? this.unreadable,
+    missingSince: missingSince.present ? missingSince.value : this.missingSince,
   );
   LocalNote copyWithCompanion(LocalNotesCompanion data) {
     return LocalNote(
@@ -1167,6 +1284,15 @@ class LocalNote extends DataClass implements Insertable<LocalNote> {
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
       kind: data.kind.present ? data.kind.value : this.kind,
       davPath: data.davPath.present ? data.davPath.value : this.davPath,
+      deleteError: data.deleteError.present
+          ? data.deleteError.value
+          : this.deleteError,
+      unreadable: data.unreadable.present
+          ? data.unreadable.value
+          : this.unreadable,
+      missingSince: data.missingSince.present
+          ? data.missingSince.value
+          : this.missingSince,
     );
   }
 
@@ -1190,13 +1316,16 @@ class LocalNote extends DataClass implements Insertable<LocalNote> {
           ..write('syncState: $syncState, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('kind: $kind, ')
-          ..write('davPath: $davPath')
+          ..write('davPath: $davPath, ')
+          ..write('deleteError: $deleteError, ')
+          ..write('unreadable: $unreadable, ')
+          ..write('missingSince: $missingSince')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(
+  int get hashCode => Object.hashAll([
     id,
     accountId,
     remoteId,
@@ -1215,7 +1344,10 @@ class LocalNote extends DataClass implements Insertable<LocalNote> {
     updatedAt,
     kind,
     davPath,
-  );
+    deleteError,
+    unreadable,
+    missingSince,
+  ]);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1237,7 +1369,10 @@ class LocalNote extends DataClass implements Insertable<LocalNote> {
           other.syncState == this.syncState &&
           other.updatedAt == this.updatedAt &&
           other.kind == this.kind &&
-          other.davPath == this.davPath);
+          other.davPath == this.davPath &&
+          other.deleteError == this.deleteError &&
+          other.unreadable == this.unreadable &&
+          other.missingSince == this.missingSince);
 }
 
 class LocalNotesCompanion extends UpdateCompanion<LocalNote> {
@@ -1259,6 +1394,9 @@ class LocalNotesCompanion extends UpdateCompanion<LocalNote> {
   final Value<int> updatedAt;
   final Value<String> kind;
   final Value<String?> davPath;
+  final Value<String?> deleteError;
+  final Value<bool> unreadable;
+  final Value<int?> missingSince;
   final Value<int> rowid;
   const LocalNotesCompanion({
     this.id = const Value.absent(),
@@ -1279,6 +1417,9 @@ class LocalNotesCompanion extends UpdateCompanion<LocalNote> {
     this.updatedAt = const Value.absent(),
     this.kind = const Value.absent(),
     this.davPath = const Value.absent(),
+    this.deleteError = const Value.absent(),
+    this.unreadable = const Value.absent(),
+    this.missingSince = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   LocalNotesCompanion.insert({
@@ -1300,6 +1441,9 @@ class LocalNotesCompanion extends UpdateCompanion<LocalNote> {
     required int updatedAt,
     this.kind = const Value.absent(),
     this.davPath = const Value.absent(),
+    this.deleteError = const Value.absent(),
+    this.unreadable = const Value.absent(),
+    this.missingSince = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        accountId = Value(accountId),
@@ -1325,6 +1469,9 @@ class LocalNotesCompanion extends UpdateCompanion<LocalNote> {
     Expression<int>? updatedAt,
     Expression<String>? kind,
     Expression<String>? davPath,
+    Expression<String>? deleteError,
+    Expression<bool>? unreadable,
+    Expression<int>? missingSince,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -1346,6 +1493,9 @@ class LocalNotesCompanion extends UpdateCompanion<LocalNote> {
       if (updatedAt != null) 'updated_at': updatedAt,
       if (kind != null) 'kind': kind,
       if (davPath != null) 'dav_path': davPath,
+      if (deleteError != null) 'delete_error': deleteError,
+      if (unreadable != null) 'unreadable': unreadable,
+      if (missingSince != null) 'missing_since': missingSince,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -1369,6 +1519,9 @@ class LocalNotesCompanion extends UpdateCompanion<LocalNote> {
     Value<int>? updatedAt,
     Value<String>? kind,
     Value<String?>? davPath,
+    Value<String?>? deleteError,
+    Value<bool>? unreadable,
+    Value<int?>? missingSince,
     Value<int>? rowid,
   }) {
     return LocalNotesCompanion(
@@ -1390,6 +1543,9 @@ class LocalNotesCompanion extends UpdateCompanion<LocalNote> {
       updatedAt: updatedAt ?? this.updatedAt,
       kind: kind ?? this.kind,
       davPath: davPath ?? this.davPath,
+      deleteError: deleteError ?? this.deleteError,
+      unreadable: unreadable ?? this.unreadable,
+      missingSince: missingSince ?? this.missingSince,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -1451,6 +1607,15 @@ class LocalNotesCompanion extends UpdateCompanion<LocalNote> {
     if (davPath.present) {
       map['dav_path'] = Variable<String>(davPath.value);
     }
+    if (deleteError.present) {
+      map['delete_error'] = Variable<String>(deleteError.value);
+    }
+    if (unreadable.present) {
+      map['unreadable'] = Variable<bool>(unreadable.value);
+    }
+    if (missingSince.present) {
+      map['missing_since'] = Variable<int>(missingSince.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -1478,6 +1643,9 @@ class LocalNotesCompanion extends UpdateCompanion<LocalNote> {
           ..write('updatedAt: $updatedAt, ')
           ..write('kind: $kind, ')
           ..write('davPath: $davPath, ')
+          ..write('deleteError: $deleteError, ')
+          ..write('unreadable: $unreadable, ')
+          ..write('missingSince: $missingSince, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -2262,6 +2430,1092 @@ class SyncLeasesCompanion extends UpdateCompanion<SyncLease> {
   }
 }
 
+class $SyncStatusesTable extends SyncStatuses
+    with TableInfo<$SyncStatusesTable, SyncStatusRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SyncStatusesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _accountIdMeta = const VerificationMeta(
+    'accountId',
+  );
+  @override
+  late final GeneratedColumn<String> accountId = GeneratedColumn<String>(
+    'account_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES accounts (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _lastCheckedAtMeta = const VerificationMeta(
+    'lastCheckedAt',
+  );
+  @override
+  late final GeneratedColumn<int> lastCheckedAt = GeneratedColumn<int>(
+    'last_checked_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _problemMeta = const VerificationMeta(
+    'problem',
+  );
+  @override
+  late final GeneratedColumn<String> problem = GeneratedColumn<String>(
+    'problem',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _problemAtMeta = const VerificationMeta(
+    'problemAt',
+  );
+  @override
+  late final GeneratedColumn<int> problemAt = GeneratedColumn<int>(
+    'problem_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _scopeMeta = const VerificationMeta('scope');
+  @override
+  late final GeneratedColumn<String> scope = GeneratedColumn<String>(
+    'scope',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    accountId,
+    lastCheckedAt,
+    problem,
+    problemAt,
+    scope,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'sync_statuses';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SyncStatusRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('account_id')) {
+      context.handle(
+        _accountIdMeta,
+        accountId.isAcceptableOrUnknown(data['account_id']!, _accountIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_accountIdMeta);
+    }
+    if (data.containsKey('last_checked_at')) {
+      context.handle(
+        _lastCheckedAtMeta,
+        lastCheckedAt.isAcceptableOrUnknown(
+          data['last_checked_at']!,
+          _lastCheckedAtMeta,
+        ),
+      );
+    }
+    if (data.containsKey('problem')) {
+      context.handle(
+        _problemMeta,
+        problem.isAcceptableOrUnknown(data['problem']!, _problemMeta),
+      );
+    }
+    if (data.containsKey('problem_at')) {
+      context.handle(
+        _problemAtMeta,
+        problemAt.isAcceptableOrUnknown(data['problem_at']!, _problemAtMeta),
+      );
+    }
+    if (data.containsKey('scope')) {
+      context.handle(
+        _scopeMeta,
+        scope.isAcceptableOrUnknown(data['scope']!, _scopeMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {accountId};
+  @override
+  SyncStatusRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SyncStatusRow(
+      accountId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}account_id'],
+      )!,
+      lastCheckedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}last_checked_at'],
+      ),
+      problem: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}problem'],
+      ),
+      problemAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}problem_at'],
+      ),
+      scope: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}scope'],
+      ),
+    );
+  }
+
+  @override
+  $SyncStatusesTable createAlias(String alias) {
+    return $SyncStatusesTable(attachedDatabase, alias);
+  }
+}
+
+class SyncStatusRow extends DataClass implements Insertable<SyncStatusRow> {
+  final String accountId;
+
+  /// End of the last pass that reached the server.
+  final int? lastCheckedAt;
+
+  /// `offline`, `auth`, `locked`, `storage_full` or `server`.
+  final String? problem;
+  final int? problemAt;
+
+  /// Fingerprint of what the server lists for the account (Notes folder).
+  final String? scope;
+  const SyncStatusRow({
+    required this.accountId,
+    this.lastCheckedAt,
+    this.problem,
+    this.problemAt,
+    this.scope,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['account_id'] = Variable<String>(accountId);
+    if (!nullToAbsent || lastCheckedAt != null) {
+      map['last_checked_at'] = Variable<int>(lastCheckedAt);
+    }
+    if (!nullToAbsent || problem != null) {
+      map['problem'] = Variable<String>(problem);
+    }
+    if (!nullToAbsent || problemAt != null) {
+      map['problem_at'] = Variable<int>(problemAt);
+    }
+    if (!nullToAbsent || scope != null) {
+      map['scope'] = Variable<String>(scope);
+    }
+    return map;
+  }
+
+  SyncStatusesCompanion toCompanion(bool nullToAbsent) {
+    return SyncStatusesCompanion(
+      accountId: Value(accountId),
+      lastCheckedAt: lastCheckedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastCheckedAt),
+      problem: problem == null && nullToAbsent
+          ? const Value.absent()
+          : Value(problem),
+      problemAt: problemAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(problemAt),
+      scope: scope == null && nullToAbsent
+          ? const Value.absent()
+          : Value(scope),
+    );
+  }
+
+  factory SyncStatusRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SyncStatusRow(
+      accountId: serializer.fromJson<String>(json['accountId']),
+      lastCheckedAt: serializer.fromJson<int?>(json['lastCheckedAt']),
+      problem: serializer.fromJson<String?>(json['problem']),
+      problemAt: serializer.fromJson<int?>(json['problemAt']),
+      scope: serializer.fromJson<String?>(json['scope']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'accountId': serializer.toJson<String>(accountId),
+      'lastCheckedAt': serializer.toJson<int?>(lastCheckedAt),
+      'problem': serializer.toJson<String?>(problem),
+      'problemAt': serializer.toJson<int?>(problemAt),
+      'scope': serializer.toJson<String?>(scope),
+    };
+  }
+
+  SyncStatusRow copyWith({
+    String? accountId,
+    Value<int?> lastCheckedAt = const Value.absent(),
+    Value<String?> problem = const Value.absent(),
+    Value<int?> problemAt = const Value.absent(),
+    Value<String?> scope = const Value.absent(),
+  }) => SyncStatusRow(
+    accountId: accountId ?? this.accountId,
+    lastCheckedAt: lastCheckedAt.present
+        ? lastCheckedAt.value
+        : this.lastCheckedAt,
+    problem: problem.present ? problem.value : this.problem,
+    problemAt: problemAt.present ? problemAt.value : this.problemAt,
+    scope: scope.present ? scope.value : this.scope,
+  );
+  SyncStatusRow copyWithCompanion(SyncStatusesCompanion data) {
+    return SyncStatusRow(
+      accountId: data.accountId.present ? data.accountId.value : this.accountId,
+      lastCheckedAt: data.lastCheckedAt.present
+          ? data.lastCheckedAt.value
+          : this.lastCheckedAt,
+      problem: data.problem.present ? data.problem.value : this.problem,
+      problemAt: data.problemAt.present ? data.problemAt.value : this.problemAt,
+      scope: data.scope.present ? data.scope.value : this.scope,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SyncStatusRow(')
+          ..write('accountId: $accountId, ')
+          ..write('lastCheckedAt: $lastCheckedAt, ')
+          ..write('problem: $problem, ')
+          ..write('problemAt: $problemAt, ')
+          ..write('scope: $scope')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(accountId, lastCheckedAt, problem, problemAt, scope);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SyncStatusRow &&
+          other.accountId == this.accountId &&
+          other.lastCheckedAt == this.lastCheckedAt &&
+          other.problem == this.problem &&
+          other.problemAt == this.problemAt &&
+          other.scope == this.scope);
+}
+
+class SyncStatusesCompanion extends UpdateCompanion<SyncStatusRow> {
+  final Value<String> accountId;
+  final Value<int?> lastCheckedAt;
+  final Value<String?> problem;
+  final Value<int?> problemAt;
+  final Value<String?> scope;
+  final Value<int> rowid;
+  const SyncStatusesCompanion({
+    this.accountId = const Value.absent(),
+    this.lastCheckedAt = const Value.absent(),
+    this.problem = const Value.absent(),
+    this.problemAt = const Value.absent(),
+    this.scope = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  SyncStatusesCompanion.insert({
+    required String accountId,
+    this.lastCheckedAt = const Value.absent(),
+    this.problem = const Value.absent(),
+    this.problemAt = const Value.absent(),
+    this.scope = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : accountId = Value(accountId);
+  static Insertable<SyncStatusRow> custom({
+    Expression<String>? accountId,
+    Expression<int>? lastCheckedAt,
+    Expression<String>? problem,
+    Expression<int>? problemAt,
+    Expression<String>? scope,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (accountId != null) 'account_id': accountId,
+      if (lastCheckedAt != null) 'last_checked_at': lastCheckedAt,
+      if (problem != null) 'problem': problem,
+      if (problemAt != null) 'problem_at': problemAt,
+      if (scope != null) 'scope': scope,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  SyncStatusesCompanion copyWith({
+    Value<String>? accountId,
+    Value<int?>? lastCheckedAt,
+    Value<String?>? problem,
+    Value<int?>? problemAt,
+    Value<String?>? scope,
+    Value<int>? rowid,
+  }) {
+    return SyncStatusesCompanion(
+      accountId: accountId ?? this.accountId,
+      lastCheckedAt: lastCheckedAt ?? this.lastCheckedAt,
+      problem: problem ?? this.problem,
+      problemAt: problemAt ?? this.problemAt,
+      scope: scope ?? this.scope,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (accountId.present) {
+      map['account_id'] = Variable<String>(accountId.value);
+    }
+    if (lastCheckedAt.present) {
+      map['last_checked_at'] = Variable<int>(lastCheckedAt.value);
+    }
+    if (problem.present) {
+      map['problem'] = Variable<String>(problem.value);
+    }
+    if (problemAt.present) {
+      map['problem_at'] = Variable<int>(problemAt.value);
+    }
+    if (scope.present) {
+      map['scope'] = Variable<String>(scope.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SyncStatusesCompanion(')
+          ..write('accountId: $accountId, ')
+          ..write('lastCheckedAt: $lastCheckedAt, ')
+          ..write('problem: $problem, ')
+          ..write('problemAt: $problemAt, ')
+          ..write('scope: $scope, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $RecoveryCopiesTable extends RecoveryCopies
+    with TableInfo<$RecoveryCopiesTable, RecoveryCopy> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $RecoveryCopiesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _accountIdMeta = const VerificationMeta(
+    'accountId',
+  );
+  @override
+  late final GeneratedColumn<String> accountId = GeneratedColumn<String>(
+    'account_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES accounts (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _noteIdMeta = const VerificationMeta('noteId');
+  @override
+  late final GeneratedColumn<String> noteId = GeneratedColumn<String>(
+    'note_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _remoteIdMeta = const VerificationMeta(
+    'remoteId',
+  );
+  @override
+  late final GeneratedColumn<int> remoteId = GeneratedColumn<int>(
+    'remote_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _kindMeta = const VerificationMeta('kind');
+  @override
+  late final GeneratedColumn<String> kind = GeneratedColumn<String>(
+    'kind',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _titleMeta = const VerificationMeta('title');
+  @override
+  late final GeneratedColumn<String> title = GeneratedColumn<String>(
+    'title',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _contentMeta = const VerificationMeta(
+    'content',
+  );
+  @override
+  late final GeneratedColumn<String> content = GeneratedColumn<String>(
+    'content',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _categoryMeta = const VerificationMeta(
+    'category',
+  );
+  @override
+  late final GeneratedColumn<String> category = GeneratedColumn<String>(
+    'category',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
+  static const VerificationMeta _favoriteMeta = const VerificationMeta(
+    'favorite',
+  );
+  @override
+  late final GeneratedColumn<bool> favorite = GeneratedColumn<bool>(
+    'favorite',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("favorite" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _etagMeta = const VerificationMeta('etag');
+  @override
+  late final GeneratedColumn<String> etag = GeneratedColumn<String>(
+    'etag',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _reasonMeta = const VerificationMeta('reason');
+  @override
+  late final GeneratedColumn<String> reason = GeneratedColumn<String>(
+    'reason',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<int> createdAt = GeneratedColumn<int>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    accountId,
+    noteId,
+    remoteId,
+    kind,
+    title,
+    content,
+    category,
+    favorite,
+    etag,
+    reason,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'recovery_copies';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<RecoveryCopy> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('account_id')) {
+      context.handle(
+        _accountIdMeta,
+        accountId.isAcceptableOrUnknown(data['account_id']!, _accountIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_accountIdMeta);
+    }
+    if (data.containsKey('note_id')) {
+      context.handle(
+        _noteIdMeta,
+        noteId.isAcceptableOrUnknown(data['note_id']!, _noteIdMeta),
+      );
+    }
+    if (data.containsKey('remote_id')) {
+      context.handle(
+        _remoteIdMeta,
+        remoteId.isAcceptableOrUnknown(data['remote_id']!, _remoteIdMeta),
+      );
+    }
+    if (data.containsKey('kind')) {
+      context.handle(
+        _kindMeta,
+        kind.isAcceptableOrUnknown(data['kind']!, _kindMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_kindMeta);
+    }
+    if (data.containsKey('title')) {
+      context.handle(
+        _titleMeta,
+        title.isAcceptableOrUnknown(data['title']!, _titleMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_titleMeta);
+    }
+    if (data.containsKey('content')) {
+      context.handle(
+        _contentMeta,
+        content.isAcceptableOrUnknown(data['content']!, _contentMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_contentMeta);
+    }
+    if (data.containsKey('category')) {
+      context.handle(
+        _categoryMeta,
+        category.isAcceptableOrUnknown(data['category']!, _categoryMeta),
+      );
+    }
+    if (data.containsKey('favorite')) {
+      context.handle(
+        _favoriteMeta,
+        favorite.isAcceptableOrUnknown(data['favorite']!, _favoriteMeta),
+      );
+    }
+    if (data.containsKey('etag')) {
+      context.handle(
+        _etagMeta,
+        etag.isAcceptableOrUnknown(data['etag']!, _etagMeta),
+      );
+    }
+    if (data.containsKey('reason')) {
+      context.handle(
+        _reasonMeta,
+        reason.isAcceptableOrUnknown(data['reason']!, _reasonMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  RecoveryCopy map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return RecoveryCopy(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      accountId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}account_id'],
+      )!,
+      noteId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}note_id'],
+      ),
+      remoteId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}remote_id'],
+      ),
+      kind: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}kind'],
+      )!,
+      title: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}title'],
+      )!,
+      content: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}content'],
+      )!,
+      category: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}category'],
+      )!,
+      favorite: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}favorite'],
+      )!,
+      etag: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}etag'],
+      ),
+      reason: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}reason'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $RecoveryCopiesTable createAlias(String alias) {
+    return $RecoveryCopiesTable(attachedDatabase, alias);
+  }
+}
+
+class RecoveryCopy extends DataClass implements Insertable<RecoveryCopy> {
+  final String id;
+  final String accountId;
+  final String? noteId;
+  final int? remoteId;
+
+  /// `device`, `server`, `deleted` or `removed`.
+  final String kind;
+  final String title;
+  final String content;
+  final String category;
+  final bool favorite;
+  final String? etag;
+  final String? reason;
+  final int createdAt;
+  const RecoveryCopy({
+    required this.id,
+    required this.accountId,
+    this.noteId,
+    this.remoteId,
+    required this.kind,
+    required this.title,
+    required this.content,
+    required this.category,
+    required this.favorite,
+    this.etag,
+    this.reason,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['account_id'] = Variable<String>(accountId);
+    if (!nullToAbsent || noteId != null) {
+      map['note_id'] = Variable<String>(noteId);
+    }
+    if (!nullToAbsent || remoteId != null) {
+      map['remote_id'] = Variable<int>(remoteId);
+    }
+    map['kind'] = Variable<String>(kind);
+    map['title'] = Variable<String>(title);
+    map['content'] = Variable<String>(content);
+    map['category'] = Variable<String>(category);
+    map['favorite'] = Variable<bool>(favorite);
+    if (!nullToAbsent || etag != null) {
+      map['etag'] = Variable<String>(etag);
+    }
+    if (!nullToAbsent || reason != null) {
+      map['reason'] = Variable<String>(reason);
+    }
+    map['created_at'] = Variable<int>(createdAt);
+    return map;
+  }
+
+  RecoveryCopiesCompanion toCompanion(bool nullToAbsent) {
+    return RecoveryCopiesCompanion(
+      id: Value(id),
+      accountId: Value(accountId),
+      noteId: noteId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(noteId),
+      remoteId: remoteId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(remoteId),
+      kind: Value(kind),
+      title: Value(title),
+      content: Value(content),
+      category: Value(category),
+      favorite: Value(favorite),
+      etag: etag == null && nullToAbsent ? const Value.absent() : Value(etag),
+      reason: reason == null && nullToAbsent
+          ? const Value.absent()
+          : Value(reason),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory RecoveryCopy.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return RecoveryCopy(
+      id: serializer.fromJson<String>(json['id']),
+      accountId: serializer.fromJson<String>(json['accountId']),
+      noteId: serializer.fromJson<String?>(json['noteId']),
+      remoteId: serializer.fromJson<int?>(json['remoteId']),
+      kind: serializer.fromJson<String>(json['kind']),
+      title: serializer.fromJson<String>(json['title']),
+      content: serializer.fromJson<String>(json['content']),
+      category: serializer.fromJson<String>(json['category']),
+      favorite: serializer.fromJson<bool>(json['favorite']),
+      etag: serializer.fromJson<String?>(json['etag']),
+      reason: serializer.fromJson<String?>(json['reason']),
+      createdAt: serializer.fromJson<int>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'accountId': serializer.toJson<String>(accountId),
+      'noteId': serializer.toJson<String?>(noteId),
+      'remoteId': serializer.toJson<int?>(remoteId),
+      'kind': serializer.toJson<String>(kind),
+      'title': serializer.toJson<String>(title),
+      'content': serializer.toJson<String>(content),
+      'category': serializer.toJson<String>(category),
+      'favorite': serializer.toJson<bool>(favorite),
+      'etag': serializer.toJson<String?>(etag),
+      'reason': serializer.toJson<String?>(reason),
+      'createdAt': serializer.toJson<int>(createdAt),
+    };
+  }
+
+  RecoveryCopy copyWith({
+    String? id,
+    String? accountId,
+    Value<String?> noteId = const Value.absent(),
+    Value<int?> remoteId = const Value.absent(),
+    String? kind,
+    String? title,
+    String? content,
+    String? category,
+    bool? favorite,
+    Value<String?> etag = const Value.absent(),
+    Value<String?> reason = const Value.absent(),
+    int? createdAt,
+  }) => RecoveryCopy(
+    id: id ?? this.id,
+    accountId: accountId ?? this.accountId,
+    noteId: noteId.present ? noteId.value : this.noteId,
+    remoteId: remoteId.present ? remoteId.value : this.remoteId,
+    kind: kind ?? this.kind,
+    title: title ?? this.title,
+    content: content ?? this.content,
+    category: category ?? this.category,
+    favorite: favorite ?? this.favorite,
+    etag: etag.present ? etag.value : this.etag,
+    reason: reason.present ? reason.value : this.reason,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  RecoveryCopy copyWithCompanion(RecoveryCopiesCompanion data) {
+    return RecoveryCopy(
+      id: data.id.present ? data.id.value : this.id,
+      accountId: data.accountId.present ? data.accountId.value : this.accountId,
+      noteId: data.noteId.present ? data.noteId.value : this.noteId,
+      remoteId: data.remoteId.present ? data.remoteId.value : this.remoteId,
+      kind: data.kind.present ? data.kind.value : this.kind,
+      title: data.title.present ? data.title.value : this.title,
+      content: data.content.present ? data.content.value : this.content,
+      category: data.category.present ? data.category.value : this.category,
+      favorite: data.favorite.present ? data.favorite.value : this.favorite,
+      etag: data.etag.present ? data.etag.value : this.etag,
+      reason: data.reason.present ? data.reason.value : this.reason,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RecoveryCopy(')
+          ..write('id: $id, ')
+          ..write('accountId: $accountId, ')
+          ..write('noteId: $noteId, ')
+          ..write('remoteId: $remoteId, ')
+          ..write('kind: $kind, ')
+          ..write('title: $title, ')
+          ..write('content: $content, ')
+          ..write('category: $category, ')
+          ..write('favorite: $favorite, ')
+          ..write('etag: $etag, ')
+          ..write('reason: $reason, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    accountId,
+    noteId,
+    remoteId,
+    kind,
+    title,
+    content,
+    category,
+    favorite,
+    etag,
+    reason,
+    createdAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is RecoveryCopy &&
+          other.id == this.id &&
+          other.accountId == this.accountId &&
+          other.noteId == this.noteId &&
+          other.remoteId == this.remoteId &&
+          other.kind == this.kind &&
+          other.title == this.title &&
+          other.content == this.content &&
+          other.category == this.category &&
+          other.favorite == this.favorite &&
+          other.etag == this.etag &&
+          other.reason == this.reason &&
+          other.createdAt == this.createdAt);
+}
+
+class RecoveryCopiesCompanion extends UpdateCompanion<RecoveryCopy> {
+  final Value<String> id;
+  final Value<String> accountId;
+  final Value<String?> noteId;
+  final Value<int?> remoteId;
+  final Value<String> kind;
+  final Value<String> title;
+  final Value<String> content;
+  final Value<String> category;
+  final Value<bool> favorite;
+  final Value<String?> etag;
+  final Value<String?> reason;
+  final Value<int> createdAt;
+  final Value<int> rowid;
+  const RecoveryCopiesCompanion({
+    this.id = const Value.absent(),
+    this.accountId = const Value.absent(),
+    this.noteId = const Value.absent(),
+    this.remoteId = const Value.absent(),
+    this.kind = const Value.absent(),
+    this.title = const Value.absent(),
+    this.content = const Value.absent(),
+    this.category = const Value.absent(),
+    this.favorite = const Value.absent(),
+    this.etag = const Value.absent(),
+    this.reason = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  RecoveryCopiesCompanion.insert({
+    required String id,
+    required String accountId,
+    this.noteId = const Value.absent(),
+    this.remoteId = const Value.absent(),
+    required String kind,
+    required String title,
+    required String content,
+    this.category = const Value.absent(),
+    this.favorite = const Value.absent(),
+    this.etag = const Value.absent(),
+    this.reason = const Value.absent(),
+    required int createdAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       accountId = Value(accountId),
+       kind = Value(kind),
+       title = Value(title),
+       content = Value(content),
+       createdAt = Value(createdAt);
+  static Insertable<RecoveryCopy> custom({
+    Expression<String>? id,
+    Expression<String>? accountId,
+    Expression<String>? noteId,
+    Expression<int>? remoteId,
+    Expression<String>? kind,
+    Expression<String>? title,
+    Expression<String>? content,
+    Expression<String>? category,
+    Expression<bool>? favorite,
+    Expression<String>? etag,
+    Expression<String>? reason,
+    Expression<int>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (accountId != null) 'account_id': accountId,
+      if (noteId != null) 'note_id': noteId,
+      if (remoteId != null) 'remote_id': remoteId,
+      if (kind != null) 'kind': kind,
+      if (title != null) 'title': title,
+      if (content != null) 'content': content,
+      if (category != null) 'category': category,
+      if (favorite != null) 'favorite': favorite,
+      if (etag != null) 'etag': etag,
+      if (reason != null) 'reason': reason,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  RecoveryCopiesCompanion copyWith({
+    Value<String>? id,
+    Value<String>? accountId,
+    Value<String?>? noteId,
+    Value<int?>? remoteId,
+    Value<String>? kind,
+    Value<String>? title,
+    Value<String>? content,
+    Value<String>? category,
+    Value<bool>? favorite,
+    Value<String?>? etag,
+    Value<String?>? reason,
+    Value<int>? createdAt,
+    Value<int>? rowid,
+  }) {
+    return RecoveryCopiesCompanion(
+      id: id ?? this.id,
+      accountId: accountId ?? this.accountId,
+      noteId: noteId ?? this.noteId,
+      remoteId: remoteId ?? this.remoteId,
+      kind: kind ?? this.kind,
+      title: title ?? this.title,
+      content: content ?? this.content,
+      category: category ?? this.category,
+      favorite: favorite ?? this.favorite,
+      etag: etag ?? this.etag,
+      reason: reason ?? this.reason,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (accountId.present) {
+      map['account_id'] = Variable<String>(accountId.value);
+    }
+    if (noteId.present) {
+      map['note_id'] = Variable<String>(noteId.value);
+    }
+    if (remoteId.present) {
+      map['remote_id'] = Variable<int>(remoteId.value);
+    }
+    if (kind.present) {
+      map['kind'] = Variable<String>(kind.value);
+    }
+    if (title.present) {
+      map['title'] = Variable<String>(title.value);
+    }
+    if (content.present) {
+      map['content'] = Variable<String>(content.value);
+    }
+    if (category.present) {
+      map['category'] = Variable<String>(category.value);
+    }
+    if (favorite.present) {
+      map['favorite'] = Variable<bool>(favorite.value);
+    }
+    if (etag.present) {
+      map['etag'] = Variable<String>(etag.value);
+    }
+    if (reason.present) {
+      map['reason'] = Variable<String>(reason.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<int>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RecoveryCopiesCompanion(')
+          ..write('id: $id, ')
+          ..write('accountId: $accountId, ')
+          ..write('noteId: $noteId, ')
+          ..write('remoteId: $remoteId, ')
+          ..write('kind: $kind, ')
+          ..write('title: $title, ')
+          ..write('content: $content, ')
+          ..write('category: $category, ')
+          ..write('favorite: $favorite, ')
+          ..write('etag: $etag, ')
+          ..write('reason: $reason, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$NotesDatabase extends GeneratedDatabase {
   _$NotesDatabase(QueryExecutor e) : super(e);
   $NotesDatabaseManager get managers => $NotesDatabaseManager(this);
@@ -2269,6 +3523,8 @@ abstract class _$NotesDatabase extends GeneratedDatabase {
   late final $LocalNotesTable localNotes = $LocalNotesTable(this);
   late final $OperationsTable operations = $OperationsTable(this);
   late final $SyncLeasesTable syncLeases = $SyncLeasesTable(this);
+  late final $SyncStatusesTable syncStatuses = $SyncStatusesTable(this);
+  late final $RecoveryCopiesTable recoveryCopies = $RecoveryCopiesTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -2278,6 +3534,8 @@ abstract class _$NotesDatabase extends GeneratedDatabase {
     localNotes,
     operations,
     syncLeases,
+    syncStatuses,
+    recoveryCopies,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -2308,6 +3566,20 @@ abstract class _$NotesDatabase extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('sync_leases', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'accounts',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('sync_statuses', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'accounts',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('recovery_copies', kind: UpdateKind.delete)],
     ),
   ]);
 }
@@ -2388,6 +3660,42 @@ final class $$AccountsTableReferences
     ).filter((f) => f.accountId.id.sqlEquals($_itemColumn<String>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_syncLeasesRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$SyncStatusesTable, List<SyncStatusRow>>
+  _syncStatusesRefsTable(_$NotesDatabase db) => MultiTypedResultKey.fromTable(
+    db.syncStatuses,
+    aliasName: 'accounts__id__sync_statuses__account_id',
+  );
+
+  $$SyncStatusesTableProcessedTableManager get syncStatusesRefs {
+    final manager = $$SyncStatusesTableTableManager(
+      $_db,
+      $_db.syncStatuses,
+    ).filter((f) => f.accountId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_syncStatusesRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$RecoveryCopiesTable, List<RecoveryCopy>>
+  _recoveryCopiesRefsTable(_$NotesDatabase db) => MultiTypedResultKey.fromTable(
+    db.recoveryCopies,
+    aliasName: 'accounts__id__recovery_copies__account_id',
+  );
+
+  $$RecoveryCopiesTableProcessedTableManager get recoveryCopiesRefs {
+    final manager = $$RecoveryCopiesTableTableManager(
+      $_db,
+      $_db.recoveryCopies,
+    ).filter((f) => f.accountId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_recoveryCopiesRefsTable($_db));
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -2504,6 +3812,56 @@ class $$AccountsTableFilterComposer
           }) => $$SyncLeasesTableFilterComposer(
             $db: $db,
             $table: $db.syncLeases,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> syncStatusesRefs(
+    Expression<bool> Function($$SyncStatusesTableFilterComposer f) f,
+  ) {
+    final $$SyncStatusesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.syncStatuses,
+      getReferencedColumn: (t) => t.accountId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SyncStatusesTableFilterComposer(
+            $db: $db,
+            $table: $db.syncStatuses,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> recoveryCopiesRefs(
+    Expression<bool> Function($$RecoveryCopiesTableFilterComposer f) f,
+  ) {
+    final $$RecoveryCopiesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.recoveryCopies,
+      getReferencedColumn: (t) => t.accountId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$RecoveryCopiesTableFilterComposer(
+            $db: $db,
+            $table: $db.recoveryCopies,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -2669,6 +4027,56 @@ class $$AccountsTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> syncStatusesRefs<T extends Object>(
+    Expression<T> Function($$SyncStatusesTableAnnotationComposer a) f,
+  ) {
+    final $$SyncStatusesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.syncStatuses,
+      getReferencedColumn: (t) => t.accountId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SyncStatusesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.syncStatuses,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<T> recoveryCopiesRefs<T extends Object>(
+    Expression<T> Function($$RecoveryCopiesTableAnnotationComposer a) f,
+  ) {
+    final $$RecoveryCopiesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.recoveryCopies,
+      getReferencedColumn: (t) => t.accountId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$RecoveryCopiesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.recoveryCopies,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$AccountsTableTableManager
@@ -2688,6 +4096,8 @@ class $$AccountsTableTableManager
             bool localNotesRefs,
             bool operationsRefs,
             bool syncLeasesRefs,
+            bool syncStatusesRefs,
+            bool recoveryCopiesRefs,
           })
         > {
   $$AccountsTableTableManager(_$NotesDatabase db, $AccountsTable table)
@@ -2754,6 +4164,8 @@ class $$AccountsTableTableManager
                 localNotesRefs = false,
                 operationsRefs = false,
                 syncLeasesRefs = false,
+                syncStatusesRefs = false,
+                recoveryCopiesRefs = false,
               }) {
                 return PrefetchHooks(
                   db: db,
@@ -2761,6 +4173,8 @@ class $$AccountsTableTableManager
                     if (localNotesRefs) db.localNotes,
                     if (operationsRefs) db.operations,
                     if (syncLeasesRefs) db.syncLeases,
+                    if (syncStatusesRefs) db.syncStatuses,
+                    if (recoveryCopiesRefs) db.recoveryCopies,
                   ],
                   addJoins: null,
                   getPrefetchedDataCallback: (items) async {
@@ -2828,6 +4242,48 @@ class $$AccountsTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (syncStatusesRefs)
+                        await $_getPrefetchedData<
+                          Account,
+                          $AccountsTable,
+                          SyncStatusRow
+                        >(
+                          currentTable: table,
+                          referencedTable: $$AccountsTableReferences
+                              ._syncStatusesRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$AccountsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).syncStatusesRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.accountId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (recoveryCopiesRefs)
+                        await $_getPrefetchedData<
+                          Account,
+                          $AccountsTable,
+                          RecoveryCopy
+                        >(
+                          currentTable: table,
+                          referencedTable: $$AccountsTableReferences
+                              ._recoveryCopiesRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$AccountsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).recoveryCopiesRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.accountId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -2852,6 +4308,8 @@ typedef $$AccountsTableProcessedTableManager =
         bool localNotesRefs,
         bool operationsRefs,
         bool syncLeasesRefs,
+        bool syncStatusesRefs,
+        bool recoveryCopiesRefs,
       })
     >;
 typedef $$LocalNotesTableCreateCompanionBuilder =
@@ -2874,6 +4332,9 @@ typedef $$LocalNotesTableCreateCompanionBuilder =
       required int updatedAt,
       Value<String> kind,
       Value<String?> davPath,
+      Value<String?> deleteError,
+      Value<bool> unreadable,
+      Value<int?> missingSince,
       Value<int> rowid,
     });
 typedef $$LocalNotesTableUpdateCompanionBuilder =
@@ -2896,6 +4357,9 @@ typedef $$LocalNotesTableUpdateCompanionBuilder =
       Value<int> updatedAt,
       Value<String> kind,
       Value<String?> davPath,
+      Value<String?> deleteError,
+      Value<bool> unreadable,
+      Value<int?> missingSince,
       Value<int> rowid,
     });
 
@@ -3030,6 +4494,21 @@ class $$LocalNotesTableFilterComposer
 
   ColumnFilters<String> get davPath => $composableBuilder(
     column: $table.davPath,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get deleteError => $composableBuilder(
+    column: $table.deleteError,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get unreadable => $composableBuilder(
+    column: $table.unreadable,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get missingSince => $composableBuilder(
+    column: $table.missingSince,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3176,6 +4655,21 @@ class $$LocalNotesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get deleteError => $composableBuilder(
+    column: $table.deleteError,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get unreadable => $composableBuilder(
+    column: $table.unreadable,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get missingSince => $composableBuilder(
+    column: $table.missingSince,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$AccountsTableOrderingComposer get accountId {
     final $$AccountsTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -3265,6 +4759,21 @@ class $$LocalNotesTableAnnotationComposer
 
   GeneratedColumn<String> get davPath =>
       $composableBuilder(column: $table.davPath, builder: (column) => column);
+
+  GeneratedColumn<String> get deleteError => $composableBuilder(
+    column: $table.deleteError,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get unreadable => $composableBuilder(
+    column: $table.unreadable,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get missingSince => $composableBuilder(
+    column: $table.missingSince,
+    builder: (column) => column,
+  );
 
   $$AccountsTableAnnotationComposer get accountId {
     final $$AccountsTableAnnotationComposer composer = $composerBuilder(
@@ -3361,6 +4870,9 @@ class $$LocalNotesTableTableManager
                 Value<int> updatedAt = const Value.absent(),
                 Value<String> kind = const Value.absent(),
                 Value<String?> davPath = const Value.absent(),
+                Value<String?> deleteError = const Value.absent(),
+                Value<bool> unreadable = const Value.absent(),
+                Value<int?> missingSince = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => LocalNotesCompanion(
                 id: id,
@@ -3381,6 +4893,9 @@ class $$LocalNotesTableTableManager
                 updatedAt: updatedAt,
                 kind: kind,
                 davPath: davPath,
+                deleteError: deleteError,
+                unreadable: unreadable,
+                missingSince: missingSince,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -3403,6 +4918,9 @@ class $$LocalNotesTableTableManager
                 required int updatedAt,
                 Value<String> kind = const Value.absent(),
                 Value<String?> davPath = const Value.absent(),
+                Value<String?> deleteError = const Value.absent(),
+                Value<bool> unreadable = const Value.absent(),
+                Value<int?> missingSince = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => LocalNotesCompanion.insert(
                 id: id,
@@ -3423,6 +4941,9 @@ class $$LocalNotesTableTableManager
                 updatedAt: updatedAt,
                 kind: kind,
                 davPath: davPath,
+                deleteError: deleteError,
+                unreadable: unreadable,
+                missingSince: missingSince,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -4251,6 +5772,783 @@ typedef $$SyncLeasesTableProcessedTableManager =
       SyncLease,
       PrefetchHooks Function({bool accountId})
     >;
+typedef $$SyncStatusesTableCreateCompanionBuilder =
+    SyncStatusesCompanion Function({
+      required String accountId,
+      Value<int?> lastCheckedAt,
+      Value<String?> problem,
+      Value<int?> problemAt,
+      Value<String?> scope,
+      Value<int> rowid,
+    });
+typedef $$SyncStatusesTableUpdateCompanionBuilder =
+    SyncStatusesCompanion Function({
+      Value<String> accountId,
+      Value<int?> lastCheckedAt,
+      Value<String?> problem,
+      Value<int?> problemAt,
+      Value<String?> scope,
+      Value<int> rowid,
+    });
+
+final class $$SyncStatusesTableReferences
+    extends BaseReferences<_$NotesDatabase, $SyncStatusesTable, SyncStatusRow> {
+  $$SyncStatusesTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $AccountsTable _accountIdTable(_$NotesDatabase db) =>
+      db.accounts.createAlias('sync_statuses__account_id__accounts__id');
+
+  $$AccountsTableProcessedTableManager get accountId {
+    final $_column = $_itemColumn<String>('account_id')!;
+
+    final manager = $$AccountsTableTableManager(
+      $_db,
+      $_db.accounts,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_accountIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$SyncStatusesTableFilterComposer
+    extends Composer<_$NotesDatabase, $SyncStatusesTable> {
+  $$SyncStatusesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get lastCheckedAt => $composableBuilder(
+    column: $table.lastCheckedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get problem => $composableBuilder(
+    column: $table.problem,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get problemAt => $composableBuilder(
+    column: $table.problemAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get scope => $composableBuilder(
+    column: $table.scope,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$AccountsTableFilterComposer get accountId {
+    final $$AccountsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.accountId,
+      referencedTable: $db.accounts,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AccountsTableFilterComposer(
+            $db: $db,
+            $table: $db.accounts,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$SyncStatusesTableOrderingComposer
+    extends Composer<_$NotesDatabase, $SyncStatusesTable> {
+  $$SyncStatusesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get lastCheckedAt => $composableBuilder(
+    column: $table.lastCheckedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get problem => $composableBuilder(
+    column: $table.problem,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get problemAt => $composableBuilder(
+    column: $table.problemAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get scope => $composableBuilder(
+    column: $table.scope,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$AccountsTableOrderingComposer get accountId {
+    final $$AccountsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.accountId,
+      referencedTable: $db.accounts,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AccountsTableOrderingComposer(
+            $db: $db,
+            $table: $db.accounts,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$SyncStatusesTableAnnotationComposer
+    extends Composer<_$NotesDatabase, $SyncStatusesTable> {
+  $$SyncStatusesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get lastCheckedAt => $composableBuilder(
+    column: $table.lastCheckedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get problem =>
+      $composableBuilder(column: $table.problem, builder: (column) => column);
+
+  GeneratedColumn<int> get problemAt =>
+      $composableBuilder(column: $table.problemAt, builder: (column) => column);
+
+  GeneratedColumn<String> get scope =>
+      $composableBuilder(column: $table.scope, builder: (column) => column);
+
+  $$AccountsTableAnnotationComposer get accountId {
+    final $$AccountsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.accountId,
+      referencedTable: $db.accounts,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AccountsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.accounts,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$SyncStatusesTableTableManager
+    extends
+        RootTableManager<
+          _$NotesDatabase,
+          $SyncStatusesTable,
+          SyncStatusRow,
+          $$SyncStatusesTableFilterComposer,
+          $$SyncStatusesTableOrderingComposer,
+          $$SyncStatusesTableAnnotationComposer,
+          $$SyncStatusesTableCreateCompanionBuilder,
+          $$SyncStatusesTableUpdateCompanionBuilder,
+          (SyncStatusRow, $$SyncStatusesTableReferences),
+          SyncStatusRow,
+          PrefetchHooks Function({bool accountId})
+        > {
+  $$SyncStatusesTableTableManager(_$NotesDatabase db, $SyncStatusesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$SyncStatusesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$SyncStatusesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$SyncStatusesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> accountId = const Value.absent(),
+                Value<int?> lastCheckedAt = const Value.absent(),
+                Value<String?> problem = const Value.absent(),
+                Value<int?> problemAt = const Value.absent(),
+                Value<String?> scope = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => SyncStatusesCompanion(
+                accountId: accountId,
+                lastCheckedAt: lastCheckedAt,
+                problem: problem,
+                problemAt: problemAt,
+                scope: scope,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String accountId,
+                Value<int?> lastCheckedAt = const Value.absent(),
+                Value<String?> problem = const Value.absent(),
+                Value<int?> problemAt = const Value.absent(),
+                Value<String?> scope = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => SyncStatusesCompanion.insert(
+                accountId: accountId,
+                lastCheckedAt: lastCheckedAt,
+                problem: problem,
+                problemAt: problemAt,
+                scope: scope,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$SyncStatusesTable, SyncStatusRow>(table),
+                  $$SyncStatusesTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({accountId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (accountId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.accountId,
+                                referencedTable: $$SyncStatusesTableReferences
+                                    ._accountIdTable(db),
+                                referencedColumn: $$SyncStatusesTableReferences
+                                    ._accountIdTable(db)
+                                    .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$SyncStatusesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$NotesDatabase,
+      $SyncStatusesTable,
+      SyncStatusRow,
+      $$SyncStatusesTableFilterComposer,
+      $$SyncStatusesTableOrderingComposer,
+      $$SyncStatusesTableAnnotationComposer,
+      $$SyncStatusesTableCreateCompanionBuilder,
+      $$SyncStatusesTableUpdateCompanionBuilder,
+      (SyncStatusRow, $$SyncStatusesTableReferences),
+      SyncStatusRow,
+      PrefetchHooks Function({bool accountId})
+    >;
+typedef $$RecoveryCopiesTableCreateCompanionBuilder =
+    RecoveryCopiesCompanion Function({
+      required String id,
+      required String accountId,
+      Value<String?> noteId,
+      Value<int?> remoteId,
+      required String kind,
+      required String title,
+      required String content,
+      Value<String> category,
+      Value<bool> favorite,
+      Value<String?> etag,
+      Value<String?> reason,
+      required int createdAt,
+      Value<int> rowid,
+    });
+typedef $$RecoveryCopiesTableUpdateCompanionBuilder =
+    RecoveryCopiesCompanion Function({
+      Value<String> id,
+      Value<String> accountId,
+      Value<String?> noteId,
+      Value<int?> remoteId,
+      Value<String> kind,
+      Value<String> title,
+      Value<String> content,
+      Value<String> category,
+      Value<bool> favorite,
+      Value<String?> etag,
+      Value<String?> reason,
+      Value<int> createdAt,
+      Value<int> rowid,
+    });
+
+final class $$RecoveryCopiesTableReferences
+    extends
+        BaseReferences<_$NotesDatabase, $RecoveryCopiesTable, RecoveryCopy> {
+  $$RecoveryCopiesTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $AccountsTable _accountIdTable(_$NotesDatabase db) =>
+      db.accounts.createAlias('recovery_copies__account_id__accounts__id');
+
+  $$AccountsTableProcessedTableManager get accountId {
+    final $_column = $_itemColumn<String>('account_id')!;
+
+    final manager = $$AccountsTableTableManager(
+      $_db,
+      $_db.accounts,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_accountIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$RecoveryCopiesTableFilterComposer
+    extends Composer<_$NotesDatabase, $RecoveryCopiesTable> {
+  $$RecoveryCopiesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get noteId => $composableBuilder(
+    column: $table.noteId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get remoteId => $composableBuilder(
+    column: $table.remoteId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get content => $composableBuilder(
+    column: $table.content,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get category => $composableBuilder(
+    column: $table.category,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get favorite => $composableBuilder(
+    column: $table.favorite,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get etag => $composableBuilder(
+    column: $table.etag,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get reason => $composableBuilder(
+    column: $table.reason,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$AccountsTableFilterComposer get accountId {
+    final $$AccountsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.accountId,
+      referencedTable: $db.accounts,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AccountsTableFilterComposer(
+            $db: $db,
+            $table: $db.accounts,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$RecoveryCopiesTableOrderingComposer
+    extends Composer<_$NotesDatabase, $RecoveryCopiesTable> {
+  $$RecoveryCopiesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get noteId => $composableBuilder(
+    column: $table.noteId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get remoteId => $composableBuilder(
+    column: $table.remoteId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get content => $composableBuilder(
+    column: $table.content,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get category => $composableBuilder(
+    column: $table.category,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get favorite => $composableBuilder(
+    column: $table.favorite,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get etag => $composableBuilder(
+    column: $table.etag,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get reason => $composableBuilder(
+    column: $table.reason,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$AccountsTableOrderingComposer get accountId {
+    final $$AccountsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.accountId,
+      referencedTable: $db.accounts,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AccountsTableOrderingComposer(
+            $db: $db,
+            $table: $db.accounts,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$RecoveryCopiesTableAnnotationComposer
+    extends Composer<_$NotesDatabase, $RecoveryCopiesTable> {
+  $$RecoveryCopiesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get noteId =>
+      $composableBuilder(column: $table.noteId, builder: (column) => column);
+
+  GeneratedColumn<int> get remoteId =>
+      $composableBuilder(column: $table.remoteId, builder: (column) => column);
+
+  GeneratedColumn<String> get kind =>
+      $composableBuilder(column: $table.kind, builder: (column) => column);
+
+  GeneratedColumn<String> get title =>
+      $composableBuilder(column: $table.title, builder: (column) => column);
+
+  GeneratedColumn<String> get content =>
+      $composableBuilder(column: $table.content, builder: (column) => column);
+
+  GeneratedColumn<String> get category =>
+      $composableBuilder(column: $table.category, builder: (column) => column);
+
+  GeneratedColumn<bool> get favorite =>
+      $composableBuilder(column: $table.favorite, builder: (column) => column);
+
+  GeneratedColumn<String> get etag =>
+      $composableBuilder(column: $table.etag, builder: (column) => column);
+
+  GeneratedColumn<String> get reason =>
+      $composableBuilder(column: $table.reason, builder: (column) => column);
+
+  GeneratedColumn<int> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  $$AccountsTableAnnotationComposer get accountId {
+    final $$AccountsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.accountId,
+      referencedTable: $db.accounts,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AccountsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.accounts,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$RecoveryCopiesTableTableManager
+    extends
+        RootTableManager<
+          _$NotesDatabase,
+          $RecoveryCopiesTable,
+          RecoveryCopy,
+          $$RecoveryCopiesTableFilterComposer,
+          $$RecoveryCopiesTableOrderingComposer,
+          $$RecoveryCopiesTableAnnotationComposer,
+          $$RecoveryCopiesTableCreateCompanionBuilder,
+          $$RecoveryCopiesTableUpdateCompanionBuilder,
+          (RecoveryCopy, $$RecoveryCopiesTableReferences),
+          RecoveryCopy,
+          PrefetchHooks Function({bool accountId})
+        > {
+  $$RecoveryCopiesTableTableManager(
+    _$NotesDatabase db,
+    $RecoveryCopiesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$RecoveryCopiesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$RecoveryCopiesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$RecoveryCopiesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> accountId = const Value.absent(),
+                Value<String?> noteId = const Value.absent(),
+                Value<int?> remoteId = const Value.absent(),
+                Value<String> kind = const Value.absent(),
+                Value<String> title = const Value.absent(),
+                Value<String> content = const Value.absent(),
+                Value<String> category = const Value.absent(),
+                Value<bool> favorite = const Value.absent(),
+                Value<String?> etag = const Value.absent(),
+                Value<String?> reason = const Value.absent(),
+                Value<int> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => RecoveryCopiesCompanion(
+                id: id,
+                accountId: accountId,
+                noteId: noteId,
+                remoteId: remoteId,
+                kind: kind,
+                title: title,
+                content: content,
+                category: category,
+                favorite: favorite,
+                etag: etag,
+                reason: reason,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String accountId,
+                Value<String?> noteId = const Value.absent(),
+                Value<int?> remoteId = const Value.absent(),
+                required String kind,
+                required String title,
+                required String content,
+                Value<String> category = const Value.absent(),
+                Value<bool> favorite = const Value.absent(),
+                Value<String?> etag = const Value.absent(),
+                Value<String?> reason = const Value.absent(),
+                required int createdAt,
+                Value<int> rowid = const Value.absent(),
+              }) => RecoveryCopiesCompanion.insert(
+                id: id,
+                accountId: accountId,
+                noteId: noteId,
+                remoteId: remoteId,
+                kind: kind,
+                title: title,
+                content: content,
+                category: category,
+                favorite: favorite,
+                etag: etag,
+                reason: reason,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$RecoveryCopiesTable, RecoveryCopy>(table),
+                  $$RecoveryCopiesTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({accountId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (accountId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.accountId,
+                                referencedTable: $$RecoveryCopiesTableReferences
+                                    ._accountIdTable(db),
+                                referencedColumn:
+                                    $$RecoveryCopiesTableReferences
+                                        ._accountIdTable(db)
+                                        .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$RecoveryCopiesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$NotesDatabase,
+      $RecoveryCopiesTable,
+      RecoveryCopy,
+      $$RecoveryCopiesTableFilterComposer,
+      $$RecoveryCopiesTableOrderingComposer,
+      $$RecoveryCopiesTableAnnotationComposer,
+      $$RecoveryCopiesTableCreateCompanionBuilder,
+      $$RecoveryCopiesTableUpdateCompanionBuilder,
+      (RecoveryCopy, $$RecoveryCopiesTableReferences),
+      RecoveryCopy,
+      PrefetchHooks Function({bool accountId})
+    >;
 
 class $NotesDatabaseManager {
   final _$NotesDatabase _db;
@@ -4263,4 +6561,8 @@ class $NotesDatabaseManager {
       $$OperationsTableTableManager(_db, _db.operations);
   $$SyncLeasesTableTableManager get syncLeases =>
       $$SyncLeasesTableTableManager(_db, _db.syncLeases);
+  $$SyncStatusesTableTableManager get syncStatuses =>
+      $$SyncStatusesTableTableManager(_db, _db.syncStatuses);
+  $$RecoveryCopiesTableTableManager get recoveryCopies =>
+      $$RecoveryCopiesTableTableManager(_db, _db.recoveryCopies);
 }
