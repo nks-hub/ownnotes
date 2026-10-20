@@ -81,12 +81,14 @@ Future<bool> _store(
 /// configured to show. With [onlyAccount] only that account's instances are
 /// rebuilt (the app knows the notes of the account on screen); the others keep
 /// their snapshot until the background run. [source] returns null for an
-/// account that no longer exists; its widgets lose the account.
+/// account that no longer exists; its widgets lose the account. [language] is
+/// the tag the widget code localises its own texts with.
 Future<void> publishWidgets(
   WidgetStorage storage, {
   required Future<WidgetSource?> Function(String accountId) source,
   required bool locked,
   required String untitled,
+  String? language,
   String? onlyAccount,
   int? now,
 }) async {
@@ -101,6 +103,10 @@ Future<void> publishWidgets(
   }
   if (await storage.read(WidgetKeys.untitled) != untitled) {
     await storage.write(WidgetKeys.untitled, untitled);
+  }
+  if (language != null && await storage.read(WidgetKeys.language) != language) {
+    await storage.write(WidgetKeys.language, language);
+    changed = true;
   }
   final sources = <String, WidgetSource?>{};
   for (final config in await readWidgetConfigs(storage)) {

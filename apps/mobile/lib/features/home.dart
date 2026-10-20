@@ -1484,7 +1484,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     if (old != null &&
         old.accountId == accountId &&
         identical(old.notes, notes) &&
-        old.locked == locked) {
+        old.locked == locked &&
+        old.language == l.localeName) {
       return old;
     }
     final previous = old?.accountId == accountId
@@ -1519,12 +1520,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       notes,
       locked: locked,
       untitled: l.untitled,
+      language: l.localeName,
       database: ref.read(runtimeProvider).database,
     );
     return _index = _Index(
       notes: notes,
       accountId: accountId,
       locked: locked,
+      language: l.localeName,
       rows: [for (final n in notes) NoteRow.of(n, previous[n.id])],
       tree: tree,
       paths: paths,
@@ -1560,6 +1563,7 @@ class _Index {
     required this.notes,
     required this.accountId,
     required this.locked,
+    required this.language,
     required this.rows,
     required this.tree,
     required this.paths,
@@ -1570,6 +1574,7 @@ class _Index {
   final List<LocalNote> notes;
   final String accountId;
   final bool locked;
+  final String language;
   final List<NoteRow> rows;
   final List<CategoryNode> tree;
   final Set<String> paths;

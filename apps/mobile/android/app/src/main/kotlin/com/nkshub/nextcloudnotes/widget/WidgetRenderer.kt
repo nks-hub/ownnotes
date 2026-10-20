@@ -42,7 +42,7 @@ object WidgetRenderer {
     private fun State.largeText() = context.resources.configuration.fontScale >= 1.3f
 
     fun update(context: Context, manager: AppWidgetManager, id: Int) {
-        manager.updateAppWidget(id, build(context, manager, id))
+        manager.updateAppWidget(id, build(WidgetStore.localized(context), manager, id))
         manager.notifyAppWidgetViewDataChanged(id, R.id.list)
     }
 

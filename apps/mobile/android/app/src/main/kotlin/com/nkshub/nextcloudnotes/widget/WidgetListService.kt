@@ -17,7 +17,8 @@ class WidgetListService : RemoteViewsService() {
     override fun onGetViewFactory(intent: Intent): RemoteViewsFactory =
         Factory(applicationContext, intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, 0))
 
-    private class Factory(private val context: Context, private val id: Int) : RemoteViewsFactory {
+    private class Factory(private val appContext: Context, private val id: Int) : RemoteViewsFactory {
+        private var context = appContext
         private var config: WidgetConfig? = null
         private var snapshot: WidgetSnapshot? = null
         private var palette: WidgetPalette? = null
@@ -27,6 +28,7 @@ class WidgetListService : RemoteViewsService() {
         override fun onCreate() = Unit
 
         override fun onDataSetChanged() {
+            context = WidgetStore.localized(appContext)
             val c = WidgetStore.config(context, id)
             config = c
             palette = WidgetPalette.of(context, c?.appearance ?: "system")
