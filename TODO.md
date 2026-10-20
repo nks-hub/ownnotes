@@ -30,9 +30,10 @@ references: [docs/research/review-2026-10-20.md](docs/research/review-2026-10-20
       note with a second account and editing it from both; QR login and
       "sign in again"; widgets on Android 10 (S9) with the fallback colours;
       tablet layout on a large screen.
-- [ ] Android: the app started in landscape on the S9 several times
-      although rotation was locked; find out whether the app or an agent
-      changed the rotation setting.
+- [ ] S9 test phone: auto-rotate keeps switching itself back on
+      (`accelerometer_rotation` returns to 1 within a minute), so the app
+      opens in landscape. The app requests no orientation; the phone is
+      rooted (Magisk, LSPosed), check its modules before the next device run.
 
 ## Next
 
