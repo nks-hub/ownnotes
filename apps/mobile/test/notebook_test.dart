@@ -304,7 +304,7 @@ void main() {
         ),
       );
       expect(tester.takeException(), isNull);
-      expect(find.text('Čeká na vaše rozhodnutí'), findsOneWidget);
+      expect(find.text('Čeká na tvé rozhodnutí'), findsOneWidget);
       expect(find.text('Sdíleno · Jen pro čtení'), findsOneWidget);
     });
 
