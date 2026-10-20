@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="wd_description">Seznam poznámek, jedna poznámka, úkoly nebo rychlá poznámka.</string>
+    <string name="wd_new_note">Nová poznámka</string>
+    <string name="wd_all_notes">Všechny poznámky</string>
+    <string name="wd_favorites">Oblíbené</string>
+    <string name="wd_uncategorised">Bez kategorie</string>
+    <string name="wd_hidden">Poznámky skryté zámkem aplikace</string>
+    <string name="wd_unlock">Odemknout a otevřít</string>
+    <string name="wd_configure">Nastavit widget</string>
+    <string name="wd_configure_hint">Widget zatím nemá účet ani poznámku.</string>
+    <string name="wd_updating">Aktualizuji…</string>
+    <string name="wd_empty_notes">Zatím žádné poznámky.</string>
+    <string name="wd_empty_tasks">Poznámka nemá žádné úkoly.</string>
+    <string name="wd_note_missing">Tato poznámka už není dostupná.</string>
+    <string name="wd_no_excerpt">Prázdná poznámka</string>
+    <string name="wd_updated">Aktualizováno %1$s</string>
+    <string name="wd_progress">Hotovo %1$d z %2$d</string>
+    <string name="wd_stale">Změněno. Klepni pro otevření.</string>
+    <string name="wd_task_done">%1$s, hotovo</string>
+    <string name="wd_task_open">%1$s, nehotovo</string>
+    <string name="wd_new_checklist">Úkoly</string>
+    <string name="wd_daily">Denní poznámka</string>
+    <string name="wd_template">Šablona</string>
+</resources>

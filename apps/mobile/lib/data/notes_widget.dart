@@ -1,59 +1,144 @@
-import 'dart:convert';
 import 'dart:io';
+import 'dart:ui' show PluginUtilities;
 import 'package:home_widget/home_widget.dart';
 import 'package:notes_store/notes_store.dart';
+import '../features/widgets/widget_config_main.dart' show widgetConfigMain;
+import 'runtime.dart';
+import 'widgets/widget_publisher.dart';
+import 'widgets/widget_storage.dart';
 
-String? _published;
+const _storage = HomeWidgetStorage();
 
-/// Empties the widget when it still shows [accountId], so titles of a removed
-/// account do not stay on the home screen.
+int? _published;
+bool? _lastLocked;
+bool _callbackRegistered = false;
+
+/// Removes what the widgets of a removed account showed; they ask to be
+/// configured again.
 Future<void> clearNotesWidget(String accountId) async {
   if (!Platform.isAndroid) return;
+  _published = null;
   try {
-    if (await HomeWidget.getWidgetData<String>('account') != accountId) return;
-    _published = null;
-    await HomeWidget.saveWidgetData<String>('account', '');
-    await HomeWidget.saveWidgetData<String>('notes', '[]');
-    await HomeWidget.updateWidget(
-      qualifiedAndroidName: 'com.nkshub.nextcloudnotes.NotesWidget',
-    );
+    await clearWidgetsOfAccount(_storage, accountId);
   } catch (_) {
     // No widget support here; nothing is shown either.
   }
 }
 
-/// Writes the five latest notes of [accountId] for the Android home-screen
-/// widget (`NotesWidget.kt`). With the app lock on no titles are written.
-/// Runs from the app and from the background worker.
+/// Redraws the home-screen widgets from the notes of the account on screen
+/// (`widget/**` in the Android project). Every widget keeps the account it was
+/// configured with; the selected account only decides whose notes are at hand.
+/// With the app lock on every widget gets the redacted snapshot. Runs from the
+/// app; the background worker uses [publishAllWidgets].
+///
+/// With [database] the first publish and every change of the lock state also
+/// rebuild the widgets of the other accounts, so unlocking brings all of them
+/// back at once.
 Future<void> publishNotesWidget(
   String accountId,
   List<LocalNote> notes, {
   required bool locked,
   required String untitled,
+  NotesDatabase? database,
 }) async {
   if (!Platform.isAndroid) return;
-  String title(LocalNote n) {
-    final title = n.title.trim().isEmpty
-        ? titleFromContent(n.content)
-        : n.title;
-    return title.isEmpty ? untitled : title;
-  }
-
-  final data = jsonEncode([
-    if (!locked)
-      for (final n in notes.take(5)) {'id': n.id, 'title': title(n)},
-  ]);
-  final key = '$accountId$locked$data';
+  final key = Object.hash(
+    accountId,
+    locked,
+    untitled,
+    Object.hashAll([
+      for (final n in notes)
+        Object.hash(n.id, n.revision, n.title, n.category, n.favorite),
+    ]),
+  );
   if (key == _published) return;
   _published = key;
+  final everyAccount = database != null && _lastLocked != locked;
+  _lastLocked = locked;
   try {
-    await HomeWidget.saveWidgetData<String>('account', accountId);
-    await HomeWidget.saveWidgetData<bool>('locked', locked);
-    await HomeWidget.saveWidgetData<String>('notes', data);
-    await HomeWidget.updateWidget(
-      qualifiedAndroidName: 'com.nkshub.nextcloudnotes.NotesWidget',
+    await _registerCallback();
+    await publishWidgets(
+      _storage,
+      source: everyAccount
+          ? (id) async {
+              final account = await database.account(id);
+              if (account == null) return null;
+              return WidgetSource(
+                id == accountId ? notes : await database.watchNotes(id).first,
+                label: widgetAccountLabel(account),
+              );
+            }
+          : (id) async => WidgetSource(notes),
+      locked: locked,
+      untitled: untitled,
+      onlyAccount: everyAccount ? null : accountId,
     );
   } catch (_) {
     _published = null; // No widget support here; try again next time.
+  }
+}
+
+/// Applies queued widget commands, then redraws every widget from the
+/// database, for all accounts. Used by the background worker and by the
+/// widget's own background callback. Returns the accounts whose notes a
+/// command changed, so the caller can upload them.
+Future<Set<String>> publishAllWidgets(NotesDatabase db) async {
+  if (!Platform.isAndroid) return {};
+  final changed = await drainWidgetCommands(_storage, db);
+  await publishWidgets(
+    _storage,
+    source: (id) async {
+      final account = await db.account(id);
+      if (account == null) return null;
+      return WidgetSource(
+        await db.watchNotes(id).first,
+        label: widgetAccountLabel(account),
+      );
+    },
+    locked: await _storage.isLocked(),
+    untitled: await _storage.read(WidgetKeys.untitled) ?? '…',
+  );
+  return changed;
+}
+
+/// Tells the widget code which Dart functions to run: [widgetBackgroundCallback]
+/// when a task is ticked while the app is closed, and the configuration screen
+/// when a widget is placed. Handles may change with every build, so this runs
+/// once per start of the app.
+Future<void> _registerCallback() async {
+  if (_callbackRegistered) return;
+  _callbackRegistered = true;
+  await HomeWidget.registerInteractivityCallback(widgetBackgroundCallback);
+  final config = PluginUtilities.getCallbackHandle(widgetConfigMain);
+  await _storage.write(WidgetKeys.configHandle, config?.toRawHandle().toString());
+}
+
+/// Runs in the background engine the widget starts after a tap: takes the
+/// queued commands, uploads what they changed and redraws the widgets.
+@pragma('vm:entry-point')
+Future<void> widgetBackgroundCallback(Uri? _) {
+  // Taps arrive faster than a run ends; one run at a time keeps two of them
+  // from reading the same queue.
+  final run = _tail.then((_) => _drainAndUpload());
+  _tail = run.catchError((Object _) {});
+  return run;
+}
+
+Future<void> _tail = Future<void>.value();
+
+Future<void> _drainAndUpload() async {
+  final runtime = AppRuntime.production();
+  try {
+    final changed = await publishAllWidgets(runtime.database);
+    for (final account in changed) {
+      try {
+        await runtime.sync.sync(account).timeout(const Duration(seconds: 25));
+      } catch (_) {
+        // Offline or refused; the draft stays and the next sync sends it.
+      }
+    }
+    if (changed.isNotEmpty) await publishAllWidgets(runtime.database);
+  } finally {
+    await runtime.close();
   }
 }

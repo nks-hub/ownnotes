@@ -879,5 +879,19 @@
       }
     }
   },
-  "attachMoreOptions": "More options"
+  "attachMoreOptions": "More options",
+  "widgetConfigTitle": "Configure widget",
+  "widgetTypeLabel": "Widget type",
+  "widgetTypeList": "Notes list",
+  "widgetTypeNote": "Single note",
+  "widgetTypeChecklist": "Checklist",
+  "widgetTypeQuick": "Quick note",
+  "widgetAccountLabel": "Account",
+  "widgetCollectionLabel": "Notes shown",
+  "widgetNoteLabel": "Note",
+  "widgetNoChecklistNotes": "This account has no note with tasks.",
+  "widgetAppearanceLabel": "Appearance",
+  "widgetAdd": "Add widget",
+  "widgetNoAccount": "Sign in to OwnNotes before adding a widget.",
+  "widgetSaveFailed": "The widget could not be configured."
 }

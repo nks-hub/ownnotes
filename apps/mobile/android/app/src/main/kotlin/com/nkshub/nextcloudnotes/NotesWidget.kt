@@ -1,74 +1,48 @@
 package com.nkshub.nextcloudnotes
 
 import android.appwidget.AppWidgetManager
+import android.content.ComponentName
 import android.content.Context
 import android.content.SharedPreferences
-import android.net.Uri
-import android.view.View
-import android.widget.RemoteViews
-import es.antonborri.home_widget.HomeWidgetLaunchIntent
+import android.os.Bundle
+import com.nkshub.nextcloudnotes.widget.WidgetMigration
+import com.nkshub.nextcloudnotes.widget.WidgetRenderer
+import com.nkshub.nextcloudnotes.widget.WidgetStore
 import es.antonborri.home_widget.HomeWidgetProvider
-import org.json.JSONArray
 
 /**
- * Home-screen list of the latest notes. The app writes them as JSON
- * (`[{"id": ..., "title": ...}]`) whenever its note list changes; a tap
- * opens the note, "+" starts a new one.
+ * Provider of all four widget types (Notes list, Single note, Checklist, Quick
+ * note). The type, account and collection or note belong to each instance and
+ * are written by its configuration screen; the app and the background worker
+ * write the snapshot each instance shows. The component keeps the name of the
+ * single-list widget it replaces, so widgets already on the home screen stay.
  */
 class NotesWidget : HomeWidgetProvider() {
-    private val rows = intArrayOf(R.id.note0, R.id.note1, R.id.note2, R.id.note3, R.id.note4)
-
     override fun onUpdate(
         context: Context,
         appWidgetManager: AppWidgetManager,
         appWidgetIds: IntArray,
         widgetData: SharedPreferences,
     ) {
-        val notes = try {
-            JSONArray(widgetData.getString("notes", "[]"))
-        } catch (_: Exception) {
-            JSONArray()
-        }
-        for (widgetId in appWidgetIds) {
-            val views = RemoteViews(context.packageName, R.layout.notes_widget)
-            views.setOnClickPendingIntent(R.id.widget_title, open(context, null))
-            views.setOnClickPendingIntent(R.id.widget_new, open(context, "ownnotes://new"))
-            rows.forEachIndexed { index, row ->
-                if (index < notes.length()) {
-                    val note = notes.getJSONObject(index)
-                    views.setTextViewText(row, note.optString("title"))
-                    views.setViewVisibility(row, View.VISIBLE)
-                    views.setOnClickPendingIntent(
-                        row,
-                        open(context, "ownnotes://note/" + Uri.encode(note.optString("id"))),
-                    )
-                } else {
-                    views.setViewVisibility(row, View.GONE)
-                }
-            }
-            views.setViewVisibility(
-                R.id.widget_empty,
-                if (notes.length() == 0) View.VISIBLE else View.GONE,
-            )
-            // The app lock is on: titles stay hidden, the widget says so.
-            views.setTextViewText(
-                R.id.widget_empty,
-                context.getString(
-                    if (widgetData.getBoolean("locked", false)) {
-                        R.string.widget_locked
-                    } else {
-                        R.string.widget_empty
-                    },
-                ),
-            )
-            appWidgetManager.updateAppWidget(widgetId, views)
-        }
+        WidgetMigration.run(
+            context,
+            appWidgetManager.getAppWidgetIds(ComponentName(context, NotesWidget::class.java)),
+        )
+        for (id in appWidgetIds) WidgetRenderer.update(context, appWidgetManager, id)
     }
 
-    private fun open(context: Context, uri: String?) =
-        HomeWidgetLaunchIntent.getActivity(
-            context,
-            MainActivity::class.java,
-            uri?.let(Uri::parse),
-        )
+    override fun onAppWidgetOptionsChanged(
+        context: Context,
+        appWidgetManager: AppWidgetManager,
+        appWidgetId: Int,
+        newOptions: Bundle,
+    ) {
+        super.onAppWidgetOptionsChanged(context, appWidgetManager, appWidgetId, newOptions)
+        WidgetRenderer.update(context, appWidgetManager, appWidgetId)
+    }
+
+    override fun onDeleted(context: Context, appWidgetIds: IntArray) {
+        super.onDeleted(context, appWidgetIds)
+        WidgetStore.forget(context, appWidgetIds)
+    }
 }

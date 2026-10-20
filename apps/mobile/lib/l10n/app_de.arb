@@ -676,5 +676,19 @@
   "captureSaveFailed": "Speichern auf diesem Gerät nicht möglich. Die Inhalte bleiben erhalten.",
   "captureFiles": "{count, plural, =1{1 Datei} other{{count} Dateien}}",
   "importKeepAttachments": "Importierte Notizen: {notes}, Anhänge: {files}, übersprungene Dateien: {skipped}.",
-  "attachMoreOptions": "Weitere Optionen"
+  "attachMoreOptions": "Weitere Optionen",
+  "widgetConfigTitle": "Widget einrichten",
+  "widgetTypeLabel": "Widget-Typ",
+  "widgetTypeList": "Notizliste",
+  "widgetTypeNote": "Einzelne Notiz",
+  "widgetTypeChecklist": "Checkliste",
+  "widgetTypeQuick": "Schnelle Notiz",
+  "widgetAccountLabel": "Konto",
+  "widgetCollectionLabel": "Angezeigte Notizen",
+  "widgetNoteLabel": "Notiz",
+  "widgetNoChecklistNotes": "Dieses Konto hat keine Notiz mit Aufgaben.",
+  "widgetAppearanceLabel": "Darstellung",
+  "widgetAdd": "Widget hinzufügen",
+  "widgetNoAccount": "Melde dich in OwnNotes an, bevor du ein Widget hinzufügst.",
+  "widgetSaveFailed": "Das Widget konnte nicht eingerichtet werden."
 }

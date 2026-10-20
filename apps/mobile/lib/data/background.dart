@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'package:home_widget/home_widget.dart';
 import 'package:workmanager/workmanager.dart';
 import 'notes_widget.dart';
 import 'runtime.dart';
@@ -22,16 +21,9 @@ void backgroundDispatcher() {
           // Offline or refused; drafts stay and the next run tries again.
         }
       }
-      // The app redraws the widget only while it is open.
-      final shown = await HomeWidget.getWidgetData<String>('account');
-      if (shown != null && await db.account(shown) != null) {
-        await publishNotesWidget(
-          shown,
-          await db.watchNotes(shown).first,
-          locked: await HomeWidget.getWidgetData<bool>('locked') ?? false,
-          untitled: '…',
-        );
-      }
+      // The app redraws the widgets only while it is open; this also applies
+      // ticks queued on the widgets meanwhile.
+      await publishAllWidgets(db);
       return true;
     } finally {
       await runtime.close();

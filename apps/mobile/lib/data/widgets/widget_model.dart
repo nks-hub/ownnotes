@@ -66,6 +66,11 @@ final class WidgetConfig {
         WidgetType.quickNote => true,
       };
 
+  /// The same instance after its account was removed: type and appearance
+  /// stay, everything that pointed at the account goes.
+  WidgetConfig withoutAccount() =>
+      WidgetConfig(instanceId: instanceId, type: type, appearance: appearance);
+
   Map<String, Object?> toJson() => {
     'schema': widgetSchema,
     'instanceId': instanceId,
@@ -179,6 +184,7 @@ final class WidgetSnapshot {
     this.accountLabel,
     this.noteId,
     this.revision,
+    this.contentHash,
     this.title,
     this.excerpt,
     this.notes = const [],
@@ -195,6 +201,7 @@ final class WidgetSnapshot {
        accountLabel = null,
        noteId = null,
        revision = null,
+       contentHash = null,
        title = null,
        excerpt = null,
        notes = const [],
@@ -214,6 +221,11 @@ final class WidgetSnapshot {
 
   /// Note revision the content was read at; commands carry it back.
   final int? revision;
+
+  /// Digest of the note text the snapshot shows (see `widgetContentHash`). A
+  /// command whose revision is behind still applies when the text is the same,
+  /// e.g. after a sync that only changed the sync state.
+  final String? contentHash;
   final String? title;
   final String? excerpt;
   final List<WidgetNoteEntry> notes;
@@ -234,6 +246,7 @@ final class WidgetSnapshot {
       'accountLabel': ?accountLabel,
       'noteId': ?noteId,
       'revision': ?revision,
+      'contentHash': ?contentHash,
       'title': ?title,
       'excerpt': ?excerpt,
       if (notes.isNotEmpty) 'notes': [for (final n in notes) n.toJson()],
@@ -266,6 +279,7 @@ final class WidgetSnapshot {
       accountLabel: json['accountLabel'] as String?,
       noteId: json['noteId'] as String?,
       revision: (json['revision'] as num?)?.toInt(),
+      contentHash: json['contentHash'] as String?,
       title: json['title'] as String?,
       excerpt: json['excerpt'] as String?,
       notes: list('notes', WidgetNoteEntry.fromJson),
@@ -292,6 +306,7 @@ final class WidgetCommand {
     required this.expectedRevision,
     required this.task,
     required this.checked,
+    this.contentHash,
     this.kind = WidgetCommandKind.setTask,
   });
 
@@ -308,6 +323,21 @@ final class WidgetCommand {
   /// The requested result, not a toggle.
   final bool checked;
 
+  /// Digest of the note text the user tapped in, when the snapshot had one.
+  final String? contentHash;
+
+  WidgetCommand withRevision(int revision) => WidgetCommand(
+    commandId: commandId,
+    instanceId: instanceId,
+    accountId: accountId,
+    noteId: noteId,
+    expectedRevision: revision,
+    task: task,
+    checked: checked,
+    contentHash: contentHash,
+    kind: kind,
+  );
+
   Map<String, Object?> toJson() => {
     'schema': widgetSchema,
     'commandId': commandId,
@@ -318,6 +348,7 @@ final class WidgetCommand {
     'kind': kind.name,
     'task': task.toJson(),
     'checked': checked,
+    'contentHash': ?contentHash,
   };
 
   factory WidgetCommand.fromJson(Map<String, Object?> json) => WidgetCommand(
@@ -330,6 +361,7 @@ final class WidgetCommand {
         WidgetCommandKind.setTask,
     task: WidgetTaskKey.fromJson(Map<String, Object?>.from(json['task']! as Map)),
     checked: json['checked'] == true,
+    contentHash: json['contentHash'] as String?,
   );
 
   String encode() => jsonEncode(toJson());

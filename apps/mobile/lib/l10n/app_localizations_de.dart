@@ -1804,4 +1804,48 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get attachMoreOptions => 'Weitere Optionen';
+
+  @override
+  String get widgetConfigTitle => 'Widget einrichten';
+
+  @override
+  String get widgetTypeLabel => 'Widget-Typ';
+
+  @override
+  String get widgetTypeList => 'Notizliste';
+
+  @override
+  String get widgetTypeNote => 'Einzelne Notiz';
+
+  @override
+  String get widgetTypeChecklist => 'Checkliste';
+
+  @override
+  String get widgetTypeQuick => 'Schnelle Notiz';
+
+  @override
+  String get widgetAccountLabel => 'Konto';
+
+  @override
+  String get widgetCollectionLabel => 'Angezeigte Notizen';
+
+  @override
+  String get widgetNoteLabel => 'Notiz';
+
+  @override
+  String get widgetNoChecklistNotes =>
+      'Dieses Konto hat keine Notiz mit Aufgaben.';
+
+  @override
+  String get widgetAppearanceLabel => 'Darstellung';
+
+  @override
+  String get widgetAdd => 'Widget hinzufügen';
+
+  @override
+  String get widgetNoAccount =>
+      'Melde dich in OwnNotes an, bevor du ein Widget hinzufügst.';
+
+  @override
+  String get widgetSaveFailed => 'Das Widget konnte nicht eingerichtet werden.';
 }

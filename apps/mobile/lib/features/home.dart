@@ -13,7 +13,8 @@ import '../data/export.dart';
 import '../data/keep_import.dart';
 import '../data/notes_widget.dart';
 import '../data/runtime.dart';
-import '../data/settings.dart';
+import '../data/settings.dart';
+import '../data/widgets/widget_links.dart';
 import '../design/design.dart';
 import '../l10n/app_localizations.dart';
 import 'accounts.dart';
@@ -122,6 +123,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       onResume: () {
         final id = _shown;
         if (id != null) _sync(id, quiet: true);
+        // Ticks queued by the widgets while the app was closed.
+        publishAllWidgets(ref.read(runtimeProvider).database).ignore();
         // iOS: the share extension leaves text in the App Group meanwhile.
         _takeShared();
       },
@@ -156,35 +159,44 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   /// Links from the home-screen widget and the launcher shortcut:
   /// `ownnotes://new` and `ownnotes://note/<local id>`.
-  Future<void> _openLink(Uri? link) async {
-    final accountId = _shown;
-    if (link == null || link.scheme != 'ownnotes' || accountId == null) return;
-    if (!mounted) return;
+  Future<void> _openLink(Uri? uri) async {
+    final link = parseWidgetLink(uri);
+    if (link == null || !mounted) return;
     Navigator.of(context).popUntil((route) => route.isFirst);
-    if (link.host == 'new') {
-      await _create(accountId);
-      return;
-    }
-    final id = link.pathSegments.firstOrNull;
-    if (link.host != 'note' || id == null) return;
-    final db = ref.read(runtimeProvider).database;
-    var note = await db.note(accountId, id);
-    if (note == null) {
-      // The link may belong to another signed-in account.
-      for (final other in await ref.read(accountsProvider.future)) {
-        if (other.id == accountId) continue;
-        note = await db.note(other.id, id);
-        if (note != null) break;
+    if (link is OpenAppLink) return;
+    final accounts = await ref.read(accountsProvider.future);
+    final wanted = switch (link) {
+      NewNoteLink(:final accountId) || OpenNoteLink(:final accountId) => accountId,
+      _ => null,
+    };
+    var accountId = accounts.any((a) => a.id == wanted) ? wanted : _shown;
+    if (accountId == null || !mounted) return;
+    if (link is OpenNoteLink) {
+      final db = ref.read(runtimeProvider).database;
+      var note = await db.note(accountId, link.noteId);
+      if (note == null && link.accountId == null) {
+        // An old link may belong to another signed-in account.
+        for (final other in accounts) {
+          note = await db.note(other.id, link.noteId);
+          if (note != null) break;
+        }
       }
+      if (note == null || !mounted) return;
+      accountId = note.accountId;
     }
-    if (note == null || !mounted) return;
-    if (note.accountId != accountId) {
-      ref.read(selectedAccountIdProvider.notifier).state = note.accountId;
+    if (accountId != _shown) {
+      ref.read(selectedAccountIdProvider.notifier).state = accountId;
       _go(NoteScope.all);
     }
-    await _edit(note);
+    switch (link) {
+      case OpenNoteLink(:final noteId):
+        await _openById(accountId, noteId);
+      case NewNoteLink(:final kind):
+        await _createKind(accountId, NewKind.values.byName(kind.name));
+      case OpenAppLink():
+        break;
+    }
   }
-
   /// Content shared from other apps waits on disk until it is stored as a
   /// note; the capture screen asks for the account and destination.
   Future<void> _takeShared() async {
@@ -1497,7 +1509,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
 
     walk(tree);
-    publishNotesWidget(accountId, notes, locked: locked, untitled: l.untitled);
+    publishNotesWidget(
+      accountId,
+      notes,
+      locked: locked,
+      untitled: l.untitled,
+      database: ref.read(runtimeProvider).database,
+    );
     return _index = _Index(
       notes: notes,
       accountId: accountId,

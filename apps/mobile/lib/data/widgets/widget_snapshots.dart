@@ -4,9 +4,18 @@ import 'widget_model.dart';
 
 const _listLimit = 8;
 
-String _titleOf(LocalNote n, String untitled) {
+String widgetNoteTitle(LocalNote n, String untitled) {
   final title = n.title.trim().isEmpty ? titleFromContent(n.content) : n.title;
   return title.isEmpty ? untitled : title;
+}
+
+/// Stable digest of a note's text (FNV-1a over UTF-16 code units).
+String widgetContentHash(String content) {
+  var hash = 0x811c9dc5;
+  for (final unit in content.codeUnits) {
+    hash = ((hash ^ unit) * 0x01000193) & 0xffffffff;
+  }
+  return hash.toRadixString(16);
 }
 
 bool _inCollection(LocalNote n, WidgetCollection c) => switch (c.scope) {
@@ -55,6 +64,7 @@ WidgetSnapshot buildWidgetSnapshot(
     accountLabel: accountLabel,
     noteId: note?.id,
     revision: note?.revision,
+    contentHash: note == null ? null : widgetContentHash(note.content),
     title: title,
     excerpt: excerpt,
     notes: entries,
@@ -73,7 +83,7 @@ WidgetSnapshot buildWidgetSnapshot(
           for (final n in shown.take(_listLimit))
             WidgetNoteEntry(
               id: n.id,
-              title: _titleOf(n, untitled),
+              title: widgetNoteTitle(n, untitled),
               favorite: n.favorite,
             ),
         ],
@@ -81,7 +91,7 @@ WidgetSnapshot buildWidgetSnapshot(
     case WidgetType.singleNote || WidgetType.checklist:
       final note = own.where((n) => n.id == config.noteId).firstOrNull;
       if (note == null) return make();
-      final title = _titleOf(note, untitled);
+      final title = widgetNoteTitle(note, untitled);
       final doc = MarkdownDocument.parse(note.content);
       return make(
         note: note,
@@ -142,8 +152,15 @@ WidgetCommandResult resolveWidgetCommand(
   if (applied.contains(command.commandId)) return const DuplicateCommand();
   if (note == null ||
       note.accountId != command.accountId ||
-      note.id != command.noteId ||
-      note.revision != command.expectedRevision) {
+      note.id != command.noteId) {
+    return const OpenNoteCommand();
+  }
+  // A newer revision with the very text the user tapped in is not a change
+  // they did not see.
+  final sameText =
+      command.contentHash != null &&
+      command.contentHash == widgetContentHash(note.content);
+  if (note.revision != command.expectedRevision && !sameText) {
     return const OpenNoteCommand();
   }
   final doc = MarkdownDocument.parse(note.content);

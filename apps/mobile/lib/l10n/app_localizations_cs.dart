@@ -1816,4 +1816,46 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get attachMoreOptions => 'Další možnosti';
+
+  @override
+  String get widgetConfigTitle => 'Nastavení widgetu';
+
+  @override
+  String get widgetTypeLabel => 'Typ widgetu';
+
+  @override
+  String get widgetTypeList => 'Seznam poznámek';
+
+  @override
+  String get widgetTypeNote => 'Jedna poznámka';
+
+  @override
+  String get widgetTypeChecklist => 'Úkoly';
+
+  @override
+  String get widgetTypeQuick => 'Rychlá poznámka';
+
+  @override
+  String get widgetAccountLabel => 'Účet';
+
+  @override
+  String get widgetCollectionLabel => 'Zobrazené poznámky';
+
+  @override
+  String get widgetNoteLabel => 'Poznámka';
+
+  @override
+  String get widgetNoChecklistNotes => 'Tento účet nemá poznámku s úkoly.';
+
+  @override
+  String get widgetAppearanceLabel => 'Vzhled';
+
+  @override
+  String get widgetAdd => 'Přidat widget';
+
+  @override
+  String get widgetNoAccount => 'Před přidáním widgetu se přihlas v OwnNotes.';
+
+  @override
+  String get widgetSaveFailed => 'Widget se nepodařilo nastavit.';
 }

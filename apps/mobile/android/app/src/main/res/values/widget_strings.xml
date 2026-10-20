@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="wd_description">Notes list, single note, checklist or quick note.</string>
+    <string name="wd_new_note">New note</string>
+    <string name="wd_all_notes">All notes</string>
+    <string name="wd_favorites">Favorites</string>
+    <string name="wd_uncategorised">Uncategorized</string>
+    <string name="wd_hidden">Notes hidden by app lock</string>
+    <string name="wd_unlock">Unlock to open</string>
+    <string name="wd_configure">Configure widget</string>
+    <string name="wd_configure_hint">This widget has no account or note yet.</string>
+    <string name="wd_updating">Updating…</string>
+    <string name="wd_empty_notes">No notes yet.</string>
+    <string name="wd_empty_tasks">No tasks in this note.</string>
+    <string name="wd_note_missing">This note is no longer available.</string>
+    <string name="wd_no_excerpt">Empty note</string>
+    <string name="wd_updated">Updated %1$s</string>
+    <string name="wd_progress">%1$d of %2$d done</string>
+    <string name="wd_stale">Changed. Tap to open.</string>
+    <string name="wd_task_done">%1$s, done</string>
+    <string name="wd_task_open">%1$s, not done</string>
+    <string name="wd_new_checklist">Checklist</string>
+    <string name="wd_daily">Daily note</string>
+    <string name="wd_template">Template</string>
+</resources>
