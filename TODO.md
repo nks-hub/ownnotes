@@ -53,6 +53,9 @@ references: [docs/research/review-2026-10-20.md](docs/research/review-2026-10-20
       an unreadable preference turns the lock off.
 - [ ] Unsupported phone languages fall back to English (today Czech);
       Face ID text in Czech too.
+- [ ] German translation next to Czech and English: app texts (ARB),
+      iOS system texts (Face ID, share extension) and the store listings.
+      Done after the UI rework, so the new texts are translated too.
 
 ## Next
 
