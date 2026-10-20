@@ -5,6 +5,12 @@ stays raw Markdown and never switches to preview on its own. Never add a
 rich-text WebView editor, a per-note remembered view mode, or the server's
 `noteMode=preview`.
 
+Everything must stay compatible with Nextcloud: notes remain plain Markdown
+files in the Notes folder, categories are folders, attachments live in the
+note's `.attachments.<id>` folder, sharing uses the standard Nextcloud
+shares. Nothing the Notes web app, the Text app or other clients cannot
+read; app-only settings (views, locks, indexes) stay on the device.
+
 Finished items go to [docs/history.md](docs/history.md). Codex review with file
 references: [docs/research/review-2026-10-20.md](docs/research/review-2026-10-20.md).
 
@@ -111,7 +117,8 @@ references: [docs/research/review-2026-10-20.md](docs/research/review-2026-10-20
 - [ ] Quick capture appended to an inbox note.
 - [ ] Spotlight and Android search indexing (opt-in, hidden while locked),
       Siri / App Intents: new note, append, open, search.
-- [ ] Links between notes and backlinks.
+- [ ] Links between notes and backlinks, written as relative Markdown
+      links that the Notes web app and the Text app also open (check first).
 - [ ] Online search through Nextcloud unified search.
 - [ ] Notification when a conflict needs a decision.
 - [ ] Grid layout, word and character count.
