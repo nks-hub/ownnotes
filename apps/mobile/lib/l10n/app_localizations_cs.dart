@@ -808,7 +808,7 @@ class AppLocalizationsCs extends AppLocalizations {
   String get suggestSearching => 'Hledám…';
 
   @override
-  String get suggestError => 'Návrhy teď nejsou k dispozici. Můžete psát dál.';
+  String get suggestError => 'Návrhy teď nejsou k dispozici. Můžeš psát dál.';
 
   @override
   String suggestCount(int count) {
@@ -889,7 +889,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get checklistEmpty =>
-      'Zatím tu nejsou žádné úkoly. První položku přidejte dole.';
+      'Zatím tu nejsou žádné úkoly. První položku přidej dole.';
 
   @override
   String get checklistAdd => 'Přidat položku';
@@ -978,7 +978,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get shareFailed =>
-      'Nepodařilo se. Zkontrolujte připojení a zkuste to znovu.';
+      'Nepodařilo se. Zkontroluj připojení a zkus to znovu.';
 
   @override
   String get shareNotUploaded =>
@@ -996,11 +996,11 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get shareIncoming =>
-      'Tuto poznámku s vámi někdo sdílí. Dál ji může sdílet jen její vlastník.';
+      'Tuto poznámku s tebou někdo sdílí. Dál ji může sdílet jen její vlastník.';
 
   @override
   String get shareAttachmentsWarning =>
-      'Poznámka má přílohy. Lidé, se kterými ji sdílíte, je nemusí umět otevřít.';
+      'Poznámka má přílohy. Lidé, se kterými ji sdílíš, je nemusí umět otevřít.';
 
   @override
   String get shareNone => 'Zatím s nikým nesdíleno.';
@@ -1050,7 +1050,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get noteUnreadable =>
-      'Server nevydal text této poznámky. Poslední kopie je uložená. Zkuste to znovu, nebo si text zkopírujte.';
+      'Server nevydal text této poznámky. Poslední kopie je uložená. Zkus to znovu, nebo si text zkopíruj.';
 
   @override
   String get exportDraft => 'Exportovat koncept';
@@ -1175,8 +1175,7 @@ class AppLocalizationsCs extends AppLocalizations {
   String get syncOfflineShort => 'Offline';
 
   @override
-  String get syncAuthFailure =>
-      'Přihlaste se znovu · místní poznámky zůstávají';
+  String get syncAuthFailure => 'Přihlas se znovu · místní poznámky zůstávají';
 
   @override
   String get syncSaveFailure => 'Uložení v tomto zařízení se nepodařilo';
@@ -1284,7 +1283,7 @@ class AppLocalizationsCs extends AppLocalizations {
   String get rowUploading => 'Odesílají se změny';
 
   @override
-  String get rowNeedsDecision => 'Čeká na vaše rozhodnutí';
+  String get rowNeedsDecision => 'Čeká na tvé rozhodnutí';
 
   @override
   String get rowUnavailable => 'Tuto poznámku nelze obnovit';
@@ -1421,17 +1420,17 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get emptyFavoritesBody =>
-      'Označte poznámku hvězdičkou a najdete ji tady. Použijte nabídku poznámky nebo ji přejeďte.';
+      'Označ poznámku hvězdičkou a najdeš ji tady. Použij nabídku poznámky nebo ji přejeďte.';
 
   @override
-  String get emptySharedTitle => 'Nic s vámi není sdíleno';
+  String get emptySharedTitle => 'Nic s tebou není sdíleno';
 
   @override
   String get emptySharedBody =>
       'Poznámky, které s tímto účtem sdílejí ostatní, se zobrazí tady.';
 
   @override
-  String get emptyAttentionTitle => 'Nic nevyžaduje vaši pozornost';
+  String get emptyAttentionTitle => 'Nic nevyžaduje tvou pozornost';
 
   @override
   String get emptyAttentionBody =>
@@ -1443,7 +1442,7 @@ class AppLocalizationsCs extends AppLocalizations {
   }
 
   @override
-  String get downloadingTitle => 'Stahují se vaše poznámky';
+  String get downloadingTitle => 'Stahují se tvoje poznámky';
 
   @override
   String downloadingBody(int count) {
@@ -1513,7 +1512,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get bulkDeleteBody =>
-      'Poznámky se smažou i na serveru. Do provedení na serveru to můžete vrátit zpět.';
+      'Poznámky se smažou i na serveru. Do provedení na serveru to můžeš vrátit zpět.';
 
   @override
   String notesDeleted(int count) {
@@ -1605,7 +1604,7 @@ class AppLocalizationsCs extends AppLocalizations {
   String get attachErrOffline => 'Server není dostupný.';
 
   @override
-  String get attachErrAuth => 'Pro nahrání se přihlaste znovu.';
+  String get attachErrAuth => 'Pro nahrání se přihlas znovu.';
 
   @override
   String get attachErrTooLarge =>
@@ -1726,7 +1725,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get voiceMicDenied =>
-      'Přístup k mikrofonu je vypnutý. Povolte ho v nastavení systému.';
+      'Přístup k mikrofonu je vypnutý. Povol ho v nastavení systému.';
 
   @override
   String get voiceInterrupted =>
@@ -1750,11 +1749,11 @@ class AppLocalizationsCs extends AppLocalizations {
   String get captureAccount => 'Účet';
 
   @override
-  String get captureChooseAccount => 'Vyberte účet pro tento obsah.';
+  String get captureChooseAccount => 'Vyber účet pro tento obsah.';
 
   @override
   String get captureUnknownAccount =>
-      'Odesílatel uvedl účet, který tu není přihlášen. Vyberte jiný.';
+      'Odesílatel uvedl účet, který tu není přihlášen. Vyber jiný.';
 
   @override
   String get captureNewNote => 'Nová poznámka';
@@ -1769,7 +1768,7 @@ class AppLocalizationsCs extends AppLocalizations {
   String get captureSearchTarget => 'Hledat poznámku, ke které připojit';
 
   @override
-  String get captureNoTarget => 'Vyberte poznámku, ke které se připojí.';
+  String get captureNoTarget => 'Vyber poznámku, ke které se připojí.';
 
   @override
   String get captureNoMatches => 'Žádná shodná poznámka.';
@@ -1789,7 +1788,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get captureKept =>
-      'Zavřením obrazovky se obsah ponechá, dokud se nerozhodnete.';
+      'Zavřením obrazovky se obsah ponechá, dokud se nerozhodneš.';
 
   @override
   String get captureNoText => 'Bez textu, jen soubory.';
