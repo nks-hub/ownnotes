@@ -317,7 +317,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     try {
       do {
         _again = null;
-        await ref.read(runtimeProvider).sync.sync(accountId);
+        // A sync the user asked for also reads new shares at once.
+        await ref.read(runtimeProvider).sync.sync(accountId, relist: !quiet);
         // Staged attachments upload once their notes exist on the server;
         // a failure keeps them staged for the next run.
         try {
