@@ -89,6 +89,17 @@
             android:name=".widget.WidgetListService"
             android:exported="false"
             android:permission="android.permission.BIND_REMOTEVIEWS" />
+        <!-- Quick settings tile "New note". -->
+        <service
+            android:name=".NewNoteTileService"
+            android:exported="true"
+            android:icon="@drawable/widget_ic_add"
+            android:label="@string/tile_new_note"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data
