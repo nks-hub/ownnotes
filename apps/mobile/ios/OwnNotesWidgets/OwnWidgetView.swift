@@ -196,8 +196,9 @@ private struct TaskRow: View {
         HStack(spacing: 6) {
             Image(systemName: task.checked ? "checkmark.circle.fill" : "circle")
                 .foregroundColor(task.checked ? .accentColor : .secondary)
-            Text(task.key.label).font(.subheadline).lineLimit(1)
-                .strikethrough(task.checked)
+            // Text's own strikethrough works on iOS 15; the View one needs 16.
+            Text(task.key.label).font(.subheadline).strikethrough(task.checked)
+                .lineLimit(1)
                 .foregroundColor(task.checked ? .secondary : .primary)
             Spacer(minLength: 0)
         }

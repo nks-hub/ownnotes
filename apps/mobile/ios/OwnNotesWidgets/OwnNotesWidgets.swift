@@ -67,7 +67,9 @@ private func families(_ base: [WidgetFamily], accessory: [String]) -> [WidgetFam
     return all
 }
 
-struct OwnWidget: Widget {
+/// Shared configuration of the four widgets; not a `Widget` itself, which
+/// would need an argument-free initializer.
+struct OwnWidget {
     let kind: OwnKind
     let name: LocalizedStringKey
     let blurb: LocalizedStringKey
