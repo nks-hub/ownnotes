@@ -1858,4 +1858,37 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get widgetSaveFailed => 'Widget se nepodařilo nastavit.';
+
+  @override
+  String aboutVersion(String version, String build) {
+    return 'Verze $version ($build)';
+  }
+
+  @override
+  String get aboutFormatTitle => 'Obyčejné soubory Markdown';
+
+  @override
+  String get aboutFormatBody =>
+      'Poznámky jsou soubory Markdown ve složce Notes a kategorie jsou složky. Otevře je i webová aplikace Notes, aplikace Text a další klienti.';
+
+  @override
+  String get aboutServer => 'Server';
+
+  @override
+  String get aboutServerUnknown => 'Server svou verzi neuvedl.';
+
+  @override
+  String get aboutWebsite => 'Web aplikace';
+
+  @override
+  String get aboutPrivacy => 'Zásady ochrany soukromí';
+
+  @override
+  String get aboutSupport => 'Napsat podpoře';
+
+  @override
+  String get aboutLicenses => 'Licence open-source součástí';
+
+  @override
+  String get aboutCopyright => '© 2026 NKS Hub';
 }

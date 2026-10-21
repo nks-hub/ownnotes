@@ -7,9 +7,9 @@ import '../data/export.dart';
 import '../data/runtime.dart';
 import '../data/settings.dart';
 import '../l10n/app_localizations.dart';
+import 'about.dart';
 import 'accounts.dart';
 import 'lock.dart' show localAuthProvider;
-import 'login.dart' show BrandMark;
 import 'templates/templates_screen.dart';
 
 /// Languages the user can pick; null follows the system. Each is shown in
@@ -191,14 +191,15 @@ class SettingsScreen extends ConsumerWidget {
                 leading: const Icon(Icons.info_outline),
                 title: Text(l.appTitle),
                 subtitle: Text(
-                  MaterialLocalizations.of(context).viewLicensesButtonLabel,
+                  ref.watch(packageInfoProvider).whenOrNull(
+                        data: (i) => l.aboutVersion(i.version, i.buildNumber),
+                      ) ??
+                      l.settingsAbout,
                 ),
-                onTap: () => showLicensePage(
-                  context: context,
-                  applicationName: l.appTitle,
-                  applicationIcon: const Padding(
-                    padding: EdgeInsets.all(8),
-                    child: BrandMark(size: 64),
+                onTap: () => Navigator.of(context).push<void>(
+                  MaterialPageRoute(
+                    settings: const RouteSettings(name: '/about'),
+                    builder: (_) => AboutScreen(account: account),
                   ),
                 ),
               ),

@@ -54,6 +54,7 @@ void main() {
       return json({
         'ocs': {
           'data': {
+            'version': {'string': '34.0.4'},
             'capabilities': {
               'notes': {'version': '6.1.0'},
             },
@@ -62,6 +63,7 @@ void main() {
       });
     });
     expect(await api.notesVersion(), '6.1.0');
+    expect(await api.versions(), (nextcloud: '34.0.4', notes: '6.1.0'));
     expect(url.path, '/sub/ocs/v2.php/cloud/capabilities');
     expect(
       await client(

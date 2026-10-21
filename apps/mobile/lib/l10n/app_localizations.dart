@@ -3099,6 +3099,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The widget could not be configured.'**
   String get widgetSaveFailed;
+
+  /// No description provided for @aboutVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Version {version} ({build})'**
+  String aboutVersion(String version, String build);
+
+  /// No description provided for @aboutFormatTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Plain Markdown files'**
+  String get aboutFormatTitle;
+
+  /// No description provided for @aboutFormatBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes are Markdown files in the Notes folder and categories are folders. The Notes web app, the Text app and other clients open them too.'**
+  String get aboutFormatBody;
+
+  /// No description provided for @aboutServer.
+  ///
+  /// In en, this message translates to:
+  /// **'Server'**
+  String get aboutServer;
+
+  /// No description provided for @aboutServerUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'The server did not report its version.'**
+  String get aboutServerUnknown;
+
+  /// No description provided for @aboutWebsite.
+  ///
+  /// In en, this message translates to:
+  /// **'Website'**
+  String get aboutWebsite;
+
+  /// No description provided for @aboutPrivacy.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy policy'**
+  String get aboutPrivacy;
+
+  /// No description provided for @aboutSupport.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact support'**
+  String get aboutSupport;
+
+  /// No description provided for @aboutLicenses.
+  ///
+  /// In en, this message translates to:
+  /// **'Open source licenses'**
+  String get aboutLicenses;
+
+  /// No description provided for @aboutCopyright.
+  ///
+  /// In en, this message translates to:
+  /// **'© 2026 NKS Hub'**
+  String get aboutCopyright;
 }
 
 class _AppLocalizationsDelegate

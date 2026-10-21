@@ -690,5 +690,15 @@
   "widgetAppearanceLabel": "Vzhled",
   "widgetAdd": "Přidat widget",
   "widgetNoAccount": "Před přidáním widgetu se přihlas v OwnNotes.",
-  "widgetSaveFailed": "Widget se nepodařilo nastavit."
+  "widgetSaveFailed": "Widget se nepodařilo nastavit.",
+  "aboutVersion": "Verze {version} ({build})",
+  "aboutFormatTitle": "Obyčejné soubory Markdown",
+  "aboutFormatBody": "Poznámky jsou soubory Markdown ve složce Notes a kategorie jsou složky. Otevře je i webová aplikace Notes, aplikace Text a další klienti.",
+  "aboutServer": "Server",
+  "aboutServerUnknown": "Server svou verzi neuvedl.",
+  "aboutWebsite": "Web aplikace",
+  "aboutPrivacy": "Zásady ochrany soukromí",
+  "aboutSupport": "Napsat podpoře",
+  "aboutLicenses": "Licence open-source součástí",
+  "aboutCopyright": "© 2026 NKS Hub"
 }

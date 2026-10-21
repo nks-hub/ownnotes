@@ -690,5 +690,15 @@
   "widgetAppearanceLabel": "Darstellung",
   "widgetAdd": "Widget hinzufügen",
   "widgetNoAccount": "Melde dich in OwnNotes an, bevor du ein Widget hinzufügst.",
-  "widgetSaveFailed": "Das Widget konnte nicht eingerichtet werden."
+  "widgetSaveFailed": "Das Widget konnte nicht eingerichtet werden.",
+  "aboutVersion": "Version {version} ({build})",
+  "aboutFormatTitle": "Einfache Markdown-Dateien",
+  "aboutFormatBody": "Notizen sind Markdown-Dateien im Ordner Notes, Kategorien sind Ordner. Die Notes-Web-App, die App Text und andere Clients öffnen sie ebenfalls.",
+  "aboutServer": "Server",
+  "aboutServerUnknown": "Der Server hat seine Version nicht angegeben.",
+  "aboutWebsite": "Website",
+  "aboutPrivacy": "Datenschutzerklärung",
+  "aboutSupport": "Support kontaktieren",
+  "aboutLicenses": "Open-Source-Lizenzen",
+  "aboutCopyright": "© 2026 NKS Hub"
 }

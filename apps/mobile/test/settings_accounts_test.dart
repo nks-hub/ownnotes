@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:nextcloudnotes/data/runtime.dart';
+import 'package:nextcloudnotes/features/about.dart';
 import 'package:nextcloudnotes/data/settings.dart';
 import 'package:nextcloudnotes/features/accounts.dart';
 import 'package:nextcloudnotes/features/lock.dart';
@@ -15,6 +16,7 @@ import 'package:nextcloudnotes/features/settings.dart';
 import 'package:nextcloudnotes/l10n/app_localizations.dart';
 import 'package:notes_protocol/notes_protocol.dart';
 import 'package:notes_store/notes_store.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 import 'package:shared_preferences_platform_interface/types.dart';
@@ -93,15 +95,23 @@ void main() {
     }))!;
   }
 
-  Widget app(Widget home, {FakeAuth? auth, Locale? locale, double scale = 1}) =>
-      ProviderScope(
+  Widget app(
+    Widget home, {
+    FakeAuth? auth,
+    Locale? locale,
+    double scale = 1,
+    http.Client Function()? transport,
+  }) => ProviderScope(
         overrides: [
           runtimeProvider.overrideWithValue(runtime),
           localAuthProvider.overrideWithValue(
             auth ?? FakeAuth(supported: true),
           ),
           accountTransportProvider.overrideWithValue(
-            () => MockClient((r) async => http.Response(jsonEncode({}), 404)),
+            transport ??
+                () => MockClient(
+                  (r) async => http.Response(jsonEncode({}), 404),
+                ),
           ),
         ],
         // The same wiring main.dart gets: preferences feed MaterialApp.
@@ -558,6 +568,64 @@ void main() {
     });
   });
 
+  group('about', () {
+    testWidgets('shows version, server versions and where to get help', (
+      tester,
+    ) async {
+      SharedPreferencesAsyncPlatform.instance =
+          InMemorySharedPreferencesAsync.empty();
+      PackageInfo.setMockInitialValues(
+        appName: 'OwnNotes',
+        packageName: 'com.nkshub.nextcloudnotes',
+        version: '0.2.2',
+        buildNumber: '5',
+        buildSignature: '',
+      );
+      final accounts = await boot(tester, const Size(411, 1200));
+      await pumpApp(
+        tester,
+        app(
+          AboutScreen(account: accounts.first),
+          transport: () => MockClient(
+            (r) async => http.Response(
+              jsonEncode({
+                'ocs': {
+                  'data': {
+                    'version': {'string': '34.0.4'},
+                    'capabilities': {
+                      'notes': {'version': '6.1.0'},
+                    },
+                  },
+                },
+              }),
+              200,
+              headers: {'content-type': 'application/json'},
+            ),
+          ),
+        ),
+      );
+      expect(find.text('Version 0.2.2 (5)'), findsOneWidget);
+      expect(find.text('Server · one.test'), findsOneWidget);
+      expect(find.text('Nextcloud 34.0.4 · Notes 6.1.0'), findsOneWidget);
+      expect(find.text('Plain Markdown files'), findsOneWidget);
+      expect(find.text('dev@nks-hub.cz'), findsOneWidget);
+      expect(find.text('Open source licenses'), findsOneWidget);
+      await close(tester);
+    });
+
+    testWidgets('an unreachable server is said plainly', (tester) async {
+      SharedPreferencesAsyncPlatform.instance =
+          InMemorySharedPreferencesAsync.empty();
+      final accounts = await boot(tester, const Size(411, 1200));
+      await pumpApp(tester, app(AboutScreen(account: accounts.first)));
+      expect(
+        find.text('The server did not report its version.'),
+        findsOneWidget,
+      );
+      await close(tester);
+    });
+  });
+
   group('200% text on a 360 dp phone', () {
     Future<void> check(WidgetTester tester, Widget home, Locale locale) async {
       SharedPreferencesAsyncPlatform.instance =
@@ -585,6 +653,7 @@ void main() {
           locale,
         );
         await check(tester, const AccountsScreen(), locale);
+        await check(tester, AboutScreen(account: accounts.first), locale);
         await check(tester, SettingsScreen(account: accounts.first), locale);
         await check(tester, const SizedBox(), locale);
       });

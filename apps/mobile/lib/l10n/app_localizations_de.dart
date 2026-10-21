@@ -1848,4 +1848,38 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get widgetSaveFailed => 'Das Widget konnte nicht eingerichtet werden.';
+
+  @override
+  String aboutVersion(String version, String build) {
+    return 'Version $version ($build)';
+  }
+
+  @override
+  String get aboutFormatTitle => 'Einfache Markdown-Dateien';
+
+  @override
+  String get aboutFormatBody =>
+      'Notizen sind Markdown-Dateien im Ordner Notes, Kategorien sind Ordner. Die Notes-Web-App, die App Text und andere Clients öffnen sie ebenfalls.';
+
+  @override
+  String get aboutServer => 'Server';
+
+  @override
+  String get aboutServerUnknown =>
+      'Der Server hat seine Version nicht angegeben.';
+
+  @override
+  String get aboutWebsite => 'Website';
+
+  @override
+  String get aboutPrivacy => 'Datenschutzerklärung';
+
+  @override
+  String get aboutSupport => 'Support kontaktieren';
+
+  @override
+  String get aboutLicenses => 'Open-Source-Lizenzen';
+
+  @override
+  String get aboutCopyright => '© 2026 NKS Hub';
 }

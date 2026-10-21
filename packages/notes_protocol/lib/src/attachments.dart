@@ -78,7 +78,11 @@ final class AttachmentsClient {
 
   /// The Notes app version advertised in the capabilities, or null when the
   /// server does not say.
-  Future<String?> notesVersion() async {
+  Future<String?> notesVersion() async => (await versions()).notes;
+
+  /// Nextcloud and Notes app versions from the capabilities; each is null
+  /// when the server does not say.
+  Future<({String? nextcloud, String? notes})> versions() async {
     final response = await _send(
       http.Request(
         'GET',
@@ -99,16 +103,24 @@ final class AttachmentsClient {
     if (response.statusCode != 200) {
       throw NotesHttpException(response.statusCode, mayHaveApplied: false);
     }
+    Object? data;
     try {
-      final body = jsonDecode(utf8.decode(response.bodyBytes)) as Map;
-      final capabilities =
-          ((body['ocs'] as Map)['data'] as Map)['capabilities'];
-      final notes = (capabilities as Map)['notes'];
-      final version = notes is Map ? notes['version'] : null;
-      return version is String ? version : null;
+      data = (jsonDecode(utf8.decode(response.bodyBytes)) as Map)['ocs'];
+      data = (data as Map)['data'];
     } on Object {
-      return null;
+      data = null;
     }
+    String? text(Object? map, String group, String key) {
+      final inner = map is Map ? map[group] : null;
+      final value = inner is Map ? inner[key] : null;
+      return value is String ? value : null;
+    }
+
+    final capabilities = data is Map ? data['capabilities'] : null;
+    return (
+      nextcloud: text(data, 'version', 'string'),
+      notes: text(capabilities, 'notes', 'version'),
+    );
   }
 
   /// Stores [content] in the attachment folder of note [noteId] and returns
