@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui' show DisplayFeatureState, DisplayFeatureType;
 import 'package:flutter/material.dart';
 import '../../design/design.dart';
 import '../../l10n/app_localizations.dart';
@@ -6,17 +7,133 @@ import '../../l10n/app_localizations.dart';
 /// Width classes of the notebook (spec 8.1).
 enum NotebookLayout { phone, twoPane, threePane }
 
-/// Below 840 dp one pane; from 840 list and editor; from 1280 also a 240 dp
-/// navigation. Larger text takes the navigation away first, then the second
-/// pane (spec 8.1: collapse navigation first, then one pane).
-NotebookLayout notebookLayout(double width, double textScale) {
-  if (width < 840 || textScale >= 2.0) return NotebookLayout.phone;
+/// Below 600 dp one pane; from 600 list and editor (the inner display of a
+/// foldable is 670-830 dp); from 1280 also the navigation. Larger text takes
+/// the navigation away first, then the second pane (spec 8.1). A vertical
+/// fold with room on both sides gives list and editor one side each.
+NotebookLayout notebookLayout(
+  double width,
+  double textScale, {
+  bool fold = false,
+}) {
+  if (textScale >= 2.0 || (width < 600 && !fold)) return NotebookLayout.phone;
+  if (width < 840 && textScale >= 1.3 && !fold) return NotebookLayout.phone;
   if (width >= 1280 && textScale < 1.3) return NotebookLayout.threePane;
   return NotebookLayout.twoPane;
 }
 
+/// The list takes its full width from 840 dp, below that a share that still
+/// leaves the editor more room than the list.
+double listWidthFor(double width) =>
+    width >= 840 ? listPaneWidth : (width * 0.45).clamp(270.0, listPaneWidth);
+
+/// The fold or hinge that splits the window into a left and a right side, as
+/// the part of the window it covers; null when there is none or one side is
+/// too narrow for a pane.
+Rect? verticalFold(MediaQueryData media) {
+  for (final feature in media.displayFeatures) {
+    final bounds = feature.bounds;
+    if (feature.type == DisplayFeatureType.cutout ||
+        bounds.top > 0 ||
+        bounds.bottom < media.size.height) {
+      continue;
+    }
+    if (bounds.left >= minFoldSide &&
+        media.size.width - bounds.right >= minFoldSide) {
+      return bounds;
+    }
+  }
+  return null;
+}
+
+const minFoldSide = 280.0;
+
+/// The fold of a half-open device lying like a laptop (tabletop posture):
+/// the part of the window it covers, or null. The note goes above it, the
+/// list below, where the keyboard comes up when typing.
+Rect? tabletopFold(MediaQueryData media) {
+  for (final feature in media.displayFeatures) {
+    final bounds = feature.bounds;
+    if (feature.type != DisplayFeatureType.cutout &&
+        feature.state == DisplayFeatureState.postureHalfOpened &&
+        bounds.left <= 0 &&
+        bounds.right >= media.size.width &&
+        bounds.top >= minFoldSide / 2 &&
+        media.size.height - bounds.bottom >= minFoldSide / 2) {
+      return bounds;
+    }
+  }
+  return null;
+}
+
 const navigationPaneWidth = 300.0;
 const listPaneWidth = 340.0;
+
+/// Keeps the floating button at the end of the list pane, off the editor.
+class PaneEndFloat extends FloatingActionButtonLocation {
+  const PaneEndFloat(this.paneEnd);
+  final double paneEnd;
+
+  @override
+  Offset getOffset(ScaffoldPrelayoutGeometry geometry) {
+    final end = FloatingActionButtonLocation.endFloat.getOffset(geometry);
+    final x =
+        paneEnd -
+        geometry.floatingActionButtonSize.width -
+        kFloatingActionButtonMargin;
+    return Offset(x < end.dx ? x : end.dx, end.dy);
+  }
+}
+
+/// Puts [top] above a horizontal [fold] (window coordinates) and [bottom]
+/// below it. When the keyboard leaves no usable room under the fold, [top]
+/// gets all of it.
+class FoldSplit extends StatefulWidget {
+  const FoldSplit({
+    required this.fold,
+    required this.top,
+    required this.bottom,
+    super.key,
+  });
+  final Rect fold;
+  final Widget top;
+  final Widget bottom;
+
+  @override
+  State<FoldSplit> createState() => _FoldSplitState();
+}
+
+class _FoldSplitState extends State<FoldSplit> {
+  double _origin = 0;
+
+  void _measure(Duration _) {
+    final box = context.findRenderObject() as RenderBox?;
+    if (!mounted || box == null || !box.attached) return;
+    final y = box.localToGlobal(Offset.zero).dy;
+    if (y != _origin) setState(() => _origin = y);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback(_measure);
+    return LayoutBuilder(
+      builder: (context, box) {
+        final above = widget.fold.top - _origin;
+        if (box.maxHeight - above - widget.fold.height < 48) return widget.top;
+        return Column(
+          children: [
+            SizedBox(height: above, child: widget.top),
+            if (widget.fold.height > 0)
+              SizedBox(height: widget.fold.height)
+            else
+              const Divider(height: 1),
+            Expanded(child: widget.bottom),
+          ],
+        );
+      },
+    );
+  }
+}
 
 /// Owns the editor shown beside the list on wide windows. The editor is a
 /// route of a nested [Navigator], so its own back and delete handling work

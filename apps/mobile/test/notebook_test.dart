@@ -1,3 +1,6 @@
+import 'dart:ui'
+    show DisplayFeature, DisplayFeatureState, DisplayFeatureType;
+
 import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
@@ -113,9 +116,13 @@ class _Env {
 }
 
 /// An app test that also lets drift's stream clean-up timers run out, as
-/// the other widget tests of this project do.
+/// the other widget tests of this project do. It runs at phone size unless
+/// the test sets its own; the default 800 x 600 window shows two panes.
 void appTest(String name, Future<void> Function(WidgetTester tester) body) =>
     testWidgets(name, (tester) async {
+      tester.view.physicalSize = const Size(411, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
       await body(tester);
       await tester.pumpWidget(const SizedBox());
       await tester.pumpAndSettle();
@@ -725,6 +732,61 @@ void main() {
       expect(find.byType(EditorScreen), findsOneWidget);
       expect(find.widgetWithText(TextField, 'second text'), findsOneWidget);
       expect(find.widgetWithText(TextField, 'first text'), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+
+    appTest('an open foldable splits list and editor at the fold', (
+      tester,
+    ) async {
+      // Inner display of a book-style foldable: narrower than 840 dp.
+      tester.view.physicalSize = const Size(700, 800);
+      tester.view.devicePixelRatio = 1;
+      tester.view.displayFeatures = const [
+        DisplayFeature(
+          bounds: Rect.fromLTWH(350, 0, 0, 800),
+          type: DisplayFeatureType.fold,
+          state: DisplayFeatureState.postureFlat,
+        ),
+      ];
+      addTearDown(tester.view.reset);
+      await open(tester, [const _Seed('Alpha', content: 'first text')]);
+      expect(find.text('Select a note'), findsOneWidget);
+      await tester.tap(find.text('Alpha'));
+      await settle(tester);
+      expect(find.text('Alpha'), findsWidgets);
+      final editor = tester.getTopLeft(find.byType(EditorScreen));
+      expect(editor.dx, 351);
+
+      // Folded: the cover display has no fold and shows one pane.
+      tester.view.displayFeatures = const [];
+      tester.view.physicalSize = const Size(380, 800);
+      await settle(tester);
+      expect(find.widgetWithText(TextField, 'first text'), findsOneWidget);
+      expect(find.text('Select a note'), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+
+    appTest('a half-open foldable lying flat shows the note above the fold', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(800, 700);
+      tester.view.devicePixelRatio = 1;
+      tester.view.displayFeatures = const [
+        DisplayFeature(
+          bounds: Rect.fromLTWH(0, 380, 800, 0),
+          type: DisplayFeatureType.fold,
+          state: DisplayFeatureState.postureHalfOpened,
+        ),
+      ];
+      addTearDown(tester.view.reset);
+      await open(tester, [const _Seed('Alpha', content: 'first text')]);
+      await settle(tester);
+      expect(tester.getTopLeft(find.text('Alpha')).dy, greaterThan(380));
+      await tester.tap(find.text('Alpha'));
+      await settle(tester);
+      final editor = tester.getRect(find.byType(EditorScreen));
+      expect(editor.bottom, lessThanOrEqualTo(380));
+      expect(tester.getTopLeft(find.text('Alpha').last).dy, greaterThan(380));
       expect(tester.takeException(), isNull);
     });
 

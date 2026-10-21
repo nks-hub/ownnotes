@@ -914,7 +914,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ? null
         : _indexFor(account.id, notes, locked, l);
     final media = MediaQuery.of(context);
-    _layout = notebookLayout(media.size.width, media.textScaler.scale(16) / 16);
+    final fold = verticalFold(media);
+    final tabletop = fold == null ? tabletopFold(media) : null;
+    _layout = notebookLayout(
+      media.size.width,
+      media.textScaler.scale(16) / 16,
+      fold: fold != null || tabletop != null,
+    );
     var scope = _scope;
     if (index != null &&
         scope == NoteScope.category &&
@@ -1011,6 +1017,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 child: list,
               ),
             );
+    } else if (tabletop != null && !inlineNav) {
+      body = FoldSplit(
+        fold: tabletop,
+        top: EditorPane(controller: _pane),
+        bottom: list,
+      );
+    } else if (fold != null && !inlineNav) {
+      // Nothing crosses the fold: the list ends where it starts, the editor
+      // begins where it ends (a hinge has width, a flat fold has none).
+      body = Row(
+        children: [
+          SizedBox(width: fold.left, child: list),
+          if (fold.width > 0)
+            SizedBox(width: fold.width)
+          else
+            const VerticalDivider(width: 1),
+          Expanded(child: EditorPane(controller: _pane)),
+        ],
+      );
     } else {
       body = Row(
         children: [
@@ -1018,13 +1043,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             SizedBox(width: navigationPaneWidth, child: panel),
             const VerticalDivider(width: 1),
           ],
-          SizedBox(width: listPaneWidth, child: list),
+          SizedBox(width: listWidthFor(media.size.width), child: list),
           const VerticalDivider(width: 1),
           Expanded(child: EditorPane(controller: _pane)),
         ],
       );
     }
     final editorOnly = _layout == NotebookLayout.phone && _pane.isOpen;
+    // Where the list pane ends when the editor sits beside it.
+    final double? listEnd = switch (_layout) {
+      NotebookLayout.phone => null,
+      _ when tabletop != null && !inlineNav => null,
+      _ when fold != null && !inlineNav => fold.left,
+      _ =>
+        (inlineNav ? navigationPaneWidth + 1 : 0) +
+            listWidthFor(media.size.width),
+    };
 
     final primary =
         defaultTargetPlatform == TargetPlatform.iOS ||
@@ -1066,7 +1100,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     l,
                     inlineNav,
                   ),
-            floatingActionButton: selecting || editorOnly
+            floatingActionButtonLocation: listEnd == null
+                ? null
+                : PaneEndFloat(listEnd),
+            // Typing on a half-open foldable: the keyboard covers the list.
+            floatingActionButton:
+                selecting ||
+                    editorOnly ||
+                    (tabletop != null && media.viewInsets.bottom > 0)
                 ? null
                 : FloatingActionButton(
                     tooltip: l.newNote,

@@ -32,12 +32,22 @@ class Vault implements CredentialVault {
   Future<Set<String>> references() async => entries.keys.toSet();
 }
 
+/// A widget test at phone size unless it sets its own; the default 800 x 600
+/// window shows list and editor side by side.
+void phoneTest(String name, WidgetTesterCallback body) =>
+    testWidgets(name, (tester) async {
+      tester.view.physicalSize = const Size(411, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await body(tester);
+    });
+
 void main() {
   setUpAll(() {
     SharedPreferencesAsyncPlatform.instance =
         InMemorySharedPreferencesAsync.empty();
   });
-  testWidgets('empty state offers account onboarding', (tester) async {
+  phoneTest('empty state offers account onboarding', (tester) async {
     final runtime = (await tester.runAsync(() async {
       final runtime = AppRuntime(
         NotesDatabase(NativeDatabase.memory()),
@@ -73,7 +83,7 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     await tester.pumpAndSettle();
   });
-  testWidgets('HTTP pull reaches SQLite and UI; editor persists raw Markdown', (
+  phoneTest('HTTP pull reaches SQLite and UI; editor persists raw Markdown', (
     tester,
   ) async {
     final runtime = (await tester.runAsync(
@@ -166,7 +176,7 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     await tester.pumpAndSettle();
   });
-  testWidgets('preview shows an image attached to the note', (tester) async {
+  phoneTest('preview shows an image attached to the note', (tester) async {
     // 1x1 transparent PNG.
     final png = base64Decode(
       'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
@@ -238,7 +248,7 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     await tester.pumpAndSettle();
   });
-  testWidgets('deleting from the editor removes the note on the server', (
+  phoneTest('deleting from the editor removes the note on the server', (
     tester,
   ) async {
     final requests = <String>[];
@@ -312,7 +322,7 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     await tester.pumpAndSettle();
   });
-  testWidgets('opening pulls without a tap; leaving the editor uploads', (
+  phoneTest('opening pulls without a tap; leaving the editor uploads', (
     tester,
   ) async {
     final requests = <String>[];
@@ -393,7 +403,7 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     await tester.pumpAndSettle();
   });
-  testWidgets('an open note takes a change made on another phone', (
+  phoneTest('an open note takes a change made on another phone', (
     tester,
   ) async {
     var etag = 'etag1';
@@ -503,7 +513,7 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     await tester.pumpAndSettle();
   });
-  testWidgets('a note deleted on another phone can be deleted here too', (
+  phoneTest('a note deleted on another phone can be deleted here too', (
     tester,
   ) async {
     final requests = <String>[];
@@ -583,7 +593,7 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     await tester.pumpAndSettle();
   });
-  testWidgets('a new note left empty is discarded', (tester) async {
+  phoneTest('a new note left empty is discarded', (tester) async {
     final methods = <String>[];
     final runtime = (await tester.runAsync(
       () async => AppRuntime(
@@ -637,7 +647,7 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     await tester.pumpAndSettle();
   });
-  testWidgets('the keyboard opening keeps the note text focused', (
+  phoneTest('the keyboard opening keeps the note text focused', (
     tester,
   ) async {
     // Galaxy S21 in portrait: with the keyboard up less than 400 points
@@ -700,7 +710,7 @@ void main() {
     expect(taskMarks(text).map((i) => text[i]), [' ', 'x']);
     expect(taskMarks(text).last, text.lastIndexOf('x'));
   });
-  testWidgets('a checkbox ticked in preview edits the Markdown', (
+  phoneTest('a checkbox ticked in preview edits the Markdown', (
     tester,
   ) async {
     var etag = 'etag1';
@@ -796,7 +806,7 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     await tester.pumpAndSettle();
   });
-  testWidgets('unsent notes show the offline row and a waiting line', (
+  phoneTest('unsent notes show the offline row and a waiting line', (
     tester,
   ) async {
     final runtime = (await tester.runAsync(

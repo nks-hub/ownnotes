@@ -705,11 +705,14 @@ The widget-content policy is defined in section 9.
 
 | Available width | Layout |
 |---|---|
-| Below 840 logical pixels | One primary pane |
-| 840–1279 | List and editor when minimum pane widths fit; categories in drawer |
+| Below 600 logical pixels | One primary pane |
+| 600–839 | List (45 %, 270–340 px) and editor; one pane from 130 % text |
+| 840–1279 | List and editor; categories in drawer |
 | 1280+ | Optional 300 px navigation (240 wrapped "All notes" in Czech), approximately 320 px list, remaining editor |
 
-Two-pane layout needs approximately 288 px for the list and 440 px for the editor after insets. These are minimum working widths, not device classifications.
+The 600 px step exists for the inner display of book-style foldables (about 670–830 px), which an open device does not always report as folded.
+
+Foldables: a vertical fold or hinge with at least 280 px on each side puts the list on one side and the editor on the other, so nothing crosses the fold. A half-open device lying like a laptop (horizontal fold) shows the note above the fold and the list below it, where the keyboard comes up.
 
 At larger text, collapse navigation first, then use one pane. Forms remain approximately 480–560 px wide.
 

@@ -186,11 +186,21 @@ void main() {
   group('notebookLayout', () {
     test('follows the width and gives way to large text', () {
       expect(notebookLayout(411, 1), NotebookLayout.phone);
-      expect(notebookLayout(839, 1), NotebookLayout.phone);
+      expect(notebookLayout(599, 1), NotebookLayout.phone);
+      // Inner display of a foldable.
+      expect(notebookLayout(673, 1), NotebookLayout.twoPane);
+      expect(notebookLayout(673, 1.3), NotebookLayout.phone);
+      expect(notebookLayout(673, 1.3, fold: true), NotebookLayout.twoPane);
       expect(notebookLayout(840, 1), NotebookLayout.twoPane);
       expect(notebookLayout(1280, 1), NotebookLayout.threePane);
       expect(notebookLayout(1280, 1.5), NotebookLayout.twoPane);
       expect(notebookLayout(1280, 2), NotebookLayout.phone);
+    });
+
+    test('the list shares a narrow window with the editor', () {
+      expect(listWidthFor(673), closeTo(302.85, 0.01));
+      expect(listWidthFor(600), 270);
+      expect(listWidthFor(900), listPaneWidth);
     });
   });
 
