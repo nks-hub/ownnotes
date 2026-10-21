@@ -34,6 +34,17 @@
 	<true/>
 	<key>FlutterDeepLinkingEnabled</key>
 	<false/>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.nkshub.nextcloudnotes</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>ownnotes</string>
+			</array>
+		</dict>
+	</array>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
