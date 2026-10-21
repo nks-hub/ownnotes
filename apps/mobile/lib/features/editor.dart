@@ -309,13 +309,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
   Future<String?> _attach(AttachKind kind) async {
     final markdown = await widget.onAttach!(kind);
     if (markdown != null && mounted) {
-      // An attachment goes on a line of its own, like the Notes web app puts it.
-      _apply((v) {
-        final at = v.selection.isValid ? v.selection.start : v.text.length;
-        final before = at == 0 || v.text[at - 1] == '\n' ? '' : '\n';
-        final after = at < v.text.length && v.text[at] != '\n' ? '\n' : '';
-        return insertAtSelection(v, '$before$markdown$after');
-      });
+      _apply((v) => insertAttachment(v, markdown));
     }
     return markdown;
   }

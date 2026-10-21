@@ -16,6 +16,20 @@ TextEditingValue v(String text, [int? start, int? end]) => TextEditingValue(
 );
 
 void main() {
+  group('attachment insertion', () {
+    const link = '![a.jpg](.attachments.7/a.jpg)';
+    test('a caret inside a link puts the attachment after that line', () {
+      final r = insertAttachment(v('text\n$link\nend', 10), '[b.m4a](x)');
+      expect(r.text, 'text\n$link\n[b.m4a](x)\nend');
+      expect(r.selection.baseOffset, 'text\n$link\n[b.m4a](x)'.length);
+    });
+    test('a caret at the end of a line starts a new line', () {
+      expect(insertAttachment(v('text'), 'X').text, 'text\nX');
+    });
+    test('an empty note gets the attachment alone', () {
+      expect(insertAttachment(v(''), 'X').text, 'X');
+    });
+  });
   group('formatting commands', () {
     test('bold wraps the selection and unwraps it again', () {
       final wrapped = toggleWrap(v('a word b', 2, 6), '**', '**');

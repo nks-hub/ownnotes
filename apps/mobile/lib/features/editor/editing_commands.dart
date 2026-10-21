@@ -286,6 +286,22 @@ TextEditingValue replaceRange(
 );
 
 /// Inserts [insert] at the selection, replacing it.
+/// Puts [markdown] on a line of its own after the line holding the caret, the
+/// way the Notes web app places attachments; it never splits that line, so a
+/// caret inside an existing link cannot break it.
+TextEditingValue insertAttachment(TextEditingValue v, String markdown) {
+  final text = v.text;
+  final caret = v.selection.isValid ? v.selection.end : text.length;
+  final lineEnd = text.indexOf('\n', caret.clamp(0, text.length));
+  final at = lineEnd < 0 ? text.length : lineEnd;
+  final before = at == 0 ? '' : '\n';
+  final inserted = '$before$markdown';
+  return TextEditingValue(
+    text: text.replaceRange(at, at, inserted),
+    selection: TextSelection.collapsed(offset: at + inserted.length),
+  );
+}
+
 TextEditingValue insertAtSelection(TextEditingValue v, String insert) {
   final sel = _valid(v);
   return replaceRange(v, sel.start, sel.end, insert);
