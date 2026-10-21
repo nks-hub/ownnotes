@@ -80,9 +80,9 @@ Future<void> finish(WidgetTester tester) async {
 }
 
 Future<void> until(WidgetTester tester, bool Function() done) async {
-  // Real file I/O; the full suite runs files in parallel, so allow wall time.
-  final clock = Stopwatch()..start();
-  while (!done() && clock.elapsed < const Duration(seconds: 20)) {
+  // Real file I/O, slower while the full suite runs files in parallel; the
+  // count bounds real waiting (15 ms each), fake time does not advance it.
+  for (var i = 0; i < 600 && !done(); i++) {
     await tester.runAsync(
       () => Future<void>.delayed(const Duration(milliseconds: 15)),
     );
@@ -206,7 +206,7 @@ void main() {
       expect(find.textContaining('Failed'), findsOneWidget);
       await tester.tap(find.byKey(Key('retry-${staged.single.id}')));
       await until(tester, () => env.server.uploads.isNotEmpty);
-      for (var i = 0; i < 50; i++) {
+      for (var i = 0; i < 500; i++) {
         // The retry may still be finishing; flush skips a file being uploaded.
         await tester.runAsync(() => env.service.flush(env.accountId));
         if ((await tester.runAsync(

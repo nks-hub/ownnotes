@@ -2,15 +2,18 @@ package com.nkshub.nextcloudnotes.widget
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.content.res.Configuration
 import es.antonborri.home_widget.HomeWidgetPlugin
 import org.json.JSONArray
 import org.json.JSONObject
+import java.util.Locale
 import java.util.UUID
 
 /** Keys of the home_widget preferences; the same names are used in `widget_storage.dart`. */
 object WidgetKeys {
     const val LOCKED = "locked"
     const val UNTITLED = "widget.untitled"
+    const val LANGUAGE = "widget.language"
     const val CONFIG_HANDLE = "widget.confighandle"
     const val LEGACY_ACCOUNT = "account"
     const val LEGACY_NOTES = "notes"
@@ -117,6 +120,19 @@ class WidgetSnapshot(
 
 object WidgetStore {
     fun prefs(context: Context): SharedPreferences = HomeWidgetPlugin.getData(context)
+
+    /**
+     * [context] with the app's own language (written by Dart with every publish),
+     * so widget texts follow the in-app setting on every Android version. The
+     * system language is kept while nothing is stored.
+     */
+    fun localized(context: Context): Context {
+        val tag = prefs(context).getString(WidgetKeys.LANGUAGE, null)?.takeIf { it.isNotEmpty() }
+            ?: return context
+        val configuration = Configuration(context.resources.configuration)
+        configuration.setLocale(Locale.forLanguageTag(tag))
+        return context.createConfigurationContext(configuration)
+    }
 
     fun locked(context: Context) = prefs(context).getBoolean(WidgetKeys.LOCKED, false)
     fun config(context: Context, id: Int) =

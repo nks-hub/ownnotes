@@ -140,6 +140,28 @@ void main() {
       expect(storage.refreshes, after);
     });
 
+    test('the language tag is stored and a change redraws the widgets', () async {
+      final storage = FakeStorage(['1']);
+      Future<WidgetSource?> source(String id) async => null;
+      Future<void> publish(String? language) => publishWidgets(
+        storage,
+        source: source,
+        locked: false,
+        untitled: '…',
+        language: language,
+      );
+      await publish('de');
+      expect(storage.data[WidgetKeys.language], 'de');
+      final after = storage.refreshes;
+      await publish('de');
+      expect(storage.refreshes, after);
+      await publish('en');
+      expect(storage.data[WidgetKeys.language], 'en');
+      expect(storage.refreshes, after + 1);
+      await publish(null);
+      expect(storage.data[WidgetKeys.language], 'en');
+    });
+
     test('an app publish without a label keeps the stored one', () async {
       final storage = FakeStorage(['1'])
         ..place(

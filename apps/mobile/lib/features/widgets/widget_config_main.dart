@@ -111,6 +111,7 @@ class _WidgetConfigAppState extends State<WidgetConfigApp> {
     await storage.write(WidgetKeys.config(config.instanceId), config.encode());
     await storage.write(WidgetKeys.snapshot(config.instanceId), snapshot.encode());
     await storage.write(WidgetKeys.untitled, l.untitled);
+    await storage.write(WidgetKeys.language, l.localeName);
     await HomeWidget.finishHomeWidgetConfigure();
   }
 

@@ -13,6 +13,7 @@ const _storage = HomeWidgetStorage();
 
 int? _published;
 bool? _lastLocked;
+String? _lastLanguage;
 bool _callbackRegistered = false;
 
 /// Removes what the widgets of a removed account showed; they ask to be
@@ -33,7 +34,8 @@ Future<void> clearNotesWidget(String accountId) async {
 /// With the app lock on every widget gets the redacted snapshot. Runs from the
 /// app; the background worker uses [publishAllWidgets].
 ///
-/// With [database] the first publish and every change of the lock state also
+/// With [database] the first publish and every change of the lock state or
+/// [language] also
 /// rebuild the widgets of the other accounts, so unlocking brings all of them
 /// back at once.
 Future<void> publishNotesWidget(
@@ -41,6 +43,7 @@ Future<void> publishNotesWidget(
   List<LocalNote> notes, {
   required bool locked,
   required String untitled,
+  required String language,
   NotesDatabase? database,
 }) async {
   if (Platform.isIOS) {
@@ -57,6 +60,7 @@ Future<void> publishNotesWidget(
     accountId,
     locked,
     untitled,
+    language,
     Object.hashAll([
       for (final n in notes)
         Object.hash(n.id, n.revision, n.title, n.category, n.favorite),
@@ -64,8 +68,10 @@ Future<void> publishNotesWidget(
   );
   if (key == _published) return;
   _published = key;
-  final everyAccount = database != null && _lastLocked != locked;
+  final everyAccount =
+      database != null && (_lastLocked != locked || _lastLanguage != language);
   _lastLocked = locked;
+  _lastLanguage = language;
   try {
     await _registerCallback();
     await publishWidgets(
@@ -82,6 +88,7 @@ Future<void> publishNotesWidget(
           : (id) async => WidgetSource(notes),
       locked: locked,
       untitled: untitled,
+      language: language,
       onlyAccount: everyAccount ? null : accountId,
     );
   } catch (_) {
@@ -109,6 +116,7 @@ Future<Set<String>> publishAllWidgets(NotesDatabase db) async {
     },
     locked: await _storage.isLocked(),
     untitled: await _storage.read(WidgetKeys.untitled) ?? '…',
+    language: await _storage.read(WidgetKeys.language),
   );
   return changed;
 }

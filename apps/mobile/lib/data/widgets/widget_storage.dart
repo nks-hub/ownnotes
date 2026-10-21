@@ -7,6 +7,9 @@ abstract final class WidgetKeys {
   static const locked = 'locked';
   static const untitled = 'widget.untitled';
 
+  /// Language tag the widgets draw their texts in (the app's language setting).
+  static const language = 'widget.language';
+
   /// Callback handle of `widgetConfigMain`, which the configuration activity
   /// starts its Flutter engine with.
   static const configHandle = 'widget.confighandle';
