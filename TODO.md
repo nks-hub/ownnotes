@@ -24,8 +24,9 @@ references: [docs/research/review-2026-10-20.md](docs/research/review-2026-10-20
       sources, quick actions and widget-link handling in `SceneDelegate` are
       not compiled yet; check a widget tap and a quick action with the app
       closed and open.
-- [ ] On real phones: QR login (needs a code shown on another screen and the
-      phone's camera); tablet layout on a large screen.
+- [ ] On a real phone: QR login (needs a code shown on another screen and
+      the phone's camera). Tablet layout was checked only on the S9 with a
+      tablet-sized display (`wm size`); a real tablet is still to do.
 - [ ] A note shared from the Notes folder has no "Shared" mark in the list
       (shares from other folders have one); decide how it should look.
 - [ ] S9 test phone: auto-rotate keeps switching itself back on

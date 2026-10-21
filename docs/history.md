@@ -20,6 +20,12 @@ Finished work with how it was verified. Newest first is not guaranteed; dates ar
   links through `SceneDelegate` and the share channel (not compiled yet).
   Galaxy S9: "Hledat" and `ownnotes://new` with the app in front, in the
   background and during a cold start; one note per link, no duplicates.
+- 2026-10-21 Tablet layout on the S9 set to tablet size (`wm size`): 800 dp
+  portrait keeps one list column, 1280 dp landscape shows navigation, list
+  and editor side by side. The navigation pane is 300 dp now, at 240 its
+  Czech labels wrapped (`8d168ab`).
+- 2026-10-21 Google Play closed testing: 0.2.0 (2) with the redesign, then
+  0.2.1 (3) with shortcuts, the quick settings tile and the fixes above.
 
 - 2026-10-21 Launcher shortcuts "New note" and "Search" (Android, dynamic, same
   `ownnotes://` links as the widgets, new `ownnotes://search`), quick settings tile
