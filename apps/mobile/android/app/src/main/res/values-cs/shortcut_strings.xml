@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="shortcut_new_short">Nová poznámka</string>
+    <string name="shortcut_search_short">Hledat</string>
+    <string name="tile_new_note">Nová poznámka</string>
+</resources>

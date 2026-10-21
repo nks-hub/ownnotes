@@ -2,6 +2,12 @@
 
 Finished work with how it was verified. Newest first is not guaranteed; dates are exact.
 
+- 2026-10-21 Launcher shortcuts "New note" and "Search" (Android, dynamic, same
+  `ownnotes://` links as the widgets, new `ownnotes://search`), quick settings tile
+  "New note" (Android) and iOS quick actions (Info.plist + SceneDelegate, not compiled:
+  the Mac was offline). Checked on emulators: shortcuts listed and opened from the
+  launcher (cold and warm, Android 16), tile added and opened a new note on Android 16
+  and 11; analyze clean, 327 tests.
 - 2026-10-21 Redesign from the specification worked out with Codex
   ([docs/design/redesign.md](design/redesign.md)), built by parallel agents
   and merged in waves; 323 widget/unit tests, store 73, protocol 93:

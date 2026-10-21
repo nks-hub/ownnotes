@@ -131,6 +131,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         }).ignore();
         // iOS: the share extension leaves text in the App Group meanwhile.
         _takeShared();
+        _takeQuickAction();
       },
     );
     shareChannel.setMethodCallHandler((_) => _takeShared());
@@ -168,6 +169,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     if (link == null || !mounted) return;
     Navigator.of(context).popUntil((route) => route.isFirst);
     if (link is OpenAppLink) return;
+    if (link is SearchLink) {
+      _openSearch();
+      return;
+    }
     final accounts = await ref.read(accountsProvider.future);
     final wanted = switch (link) {
       NewNoteLink(:final accountId) ||
@@ -198,8 +203,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         await _openById(accountId, noteId);
       case NewNoteLink(:final kind):
         await _createKind(accountId, NewKind.values.byName(kind.name));
-      case OpenAppLink():
+      case OpenAppLink() || SearchLink():
         break;
+    }
+  }
+
+  /// iOS: the home-screen quick action leaves its link in the Runner target.
+  Future<void> _takeQuickAction() async {
+    if (!Platform.isIOS) return;
+    try {
+      final raw = await shareChannel.invokeMethod<String>('takeLink');
+      if (raw != null) await _openLink(Uri.tryParse(raw));
+    } catch (_) {
+      // No quick action to take.
     }
   }
 
@@ -832,6 +848,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             _sync(account.id, quiet: true);
             _takeShared();
+            _takeQuickAction();
             if (Platform.isAndroid) {
               HomeWidget.initiallyLaunchedFromHomeWidget().then(_openLink);
             }

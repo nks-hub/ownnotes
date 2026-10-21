@@ -480,6 +480,7 @@ void main() {
 
     test('open and unrelated links', () {
       expect(parseWidgetLink(Uri.parse('ownnotes://open')), isA<OpenAppLink>());
+      expect(parseWidgetLink(Uri.parse('ownnotes://search')), isA<SearchLink>());
       expect(parseWidgetLink(Uri.parse('https://example.org/x')), isNull);
       expect(parseWidgetLink(Uri.parse('ownnotes://note')), isNull);
     });

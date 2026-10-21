@@ -1,6 +1,6 @@
 /// Deep links a home-screen widget opens: `ownnotes://new/<account>?kind=`,
-/// `ownnotes://note/<account>/<note>` and `ownnotes://open`. The pre-redesign
-/// forms `ownnotes://new` and `ownnotes://note/<note>` stay valid.
+/// `ownnotes://note/<account>/<note>`, `ownnotes://search` and `ownnotes://open`.
+/// The pre-redesign forms `ownnotes://new` and `ownnotes://note/<note>` stay valid.
 library;
 
 enum WidgetNewKind { note, checklist, daily, template }
@@ -12,6 +12,11 @@ sealed class WidgetLink {
 /// Open the app without a destination (used by the locked widget).
 final class OpenAppLink extends WidgetLink {
   const OpenAppLink();
+}
+
+/// Open the search field (launcher shortcut, quick action).
+final class SearchLink extends WidgetLink {
+  const SearchLink();
 }
 
 final class OpenNoteLink extends WidgetLink {
@@ -35,6 +40,8 @@ WidgetLink? parseWidgetLink(Uri? uri) {
   switch (uri.host) {
     case 'open':
       return const OpenAppLink();
+    case 'search':
+      return const SearchLink();
     case 'new':
       final kind = WidgetNewKind.values.asNameMap()[uri.queryParameters['kind']];
       return NewNoteLink(

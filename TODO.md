@@ -35,8 +35,6 @@ references: [docs/research/review-2026-10-20.md](docs/research/review-2026-10-20
 - [ ] Mention notification: the Notes web app notifies a mentioned user
       through a Text session (`PUT /apps/text/session/{documentId}/mention`);
       check whether the app can do that without opening a full Text session.
-- [ ] System integration: iOS quick actions, Android shortcuts and a quick
-      settings tile for a new note.
 - [ ] iOS background sync (BGTaskScheduler); needs a signed build on an
       iPhone, the simulator never runs it.
 - [ ] Remaining slices from [implementation plan](docs/architecture/implementation-plan.md).

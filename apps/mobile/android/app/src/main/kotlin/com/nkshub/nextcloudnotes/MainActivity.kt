@@ -40,21 +40,28 @@ class MainActivity : FlutterFragmentActivity() {
         // A recreated activity still carries the old intent; it was taken already.
         if (savedInstanceState == null) persistShare(intent)
         super.onCreate(savedInstanceState)
-        // Long press on the launcher icon: "New note", handled like the
-        // widget's "+" (home_widget launch intent with ownnotes://new).
-        ShortcutManagerCompat.pushDynamicShortcut(
+        // Long press on the launcher icon. Dynamic rather than res/xml, because a
+        // static shortcut cannot name the package of the candidate build.
+        // Same ownnotes:// links as the widgets; home_widget hands them to Flutter.
+        ShortcutManagerCompat.setDynamicShortcuts(
             this,
-            ShortcutInfoCompat.Builder(this, "new_note")
-                .setShortLabel(getString(R.string.widget_new))
-                .setIcon(IconCompat.createWithResource(this, R.mipmap.ic_launcher))
-                .setIntent(
-                    Intent(this, MainActivity::class.java)
-                        .setAction(HomeWidgetLaunchIntent.HOME_WIDGET_LAUNCH_ACTION)
-                        .setData(Uri.parse("ownnotes://new")),
-                )
-                .build(),
+            listOf(
+                launcherShortcut("new_note", R.string.shortcut_new_short, R.drawable.shortcut_ic_new, "ownnotes://new"),
+                launcherShortcut("search", R.string.shortcut_search_short, R.drawable.shortcut_ic_search, "ownnotes://search"),
+            ),
         )
     }
+
+    private fun launcherShortcut(id: String, label: Int, icon: Int, link: String) =
+        ShortcutInfoCompat.Builder(this, id)
+            .setShortLabel(getString(label))
+            .setIcon(IconCompat.createWithResource(this, icon))
+            .setIntent(
+                Intent(this, MainActivity::class.java)
+                    .setAction(HomeWidgetLaunchIntent.HOME_WIDGET_LAUNCH_ACTION)
+                    .setData(Uri.parse(link)),
+            )
+            .build()
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)

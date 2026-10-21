@@ -21,6 +21,9 @@ import UIKit
     ).setMethodCallHandler { call, result in
       if call.method == "takeShared" {
         result(ShareInbox.take())
+      } else if call.method == "takeLink" {
+        result(SceneDelegate.pendingLink)
+        SceneDelegate.pendingLink = nil
       } else {
         result(FlutterMethodNotImplemented)
       }
