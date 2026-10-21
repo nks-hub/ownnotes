@@ -20,11 +20,14 @@ references: [docs/research/review-2026-10-20.md](docs/research/review-2026-10-20
       `apps/mobile/ios/tool/add_widget_extension.rb`, give the bundle id
       `com.nkshub.nextcloudnotes.Widgets` the App Group in the developer
       portal, build and run on the simulator, signed archive, then a
-      TestFlight build. The Swift share extension changes and the
-      WidgetKit sources are not compiled yet.
-- [ ] On real phones: file attachments (camera and voice already work on
-      the S9); sharing a note with a second account and editing it from
-      both; QR login and "sign in again"; tablet layout on a large screen.
+      TestFlight build. The Swift share extension changes, the WidgetKit
+      sources, quick actions and widget-link handling in `SceneDelegate` are
+      not compiled yet; check a widget tap and a quick action with the app
+      closed and open.
+- [ ] On real phones: QR login (needs a code shown on another screen and the
+      phone's camera); tablet layout on a large screen.
+- [ ] A note shared from the Notes folder has no "Shared" mark in the list
+      (shares from other folders have one); decide how it should look.
 - [ ] S9 test phone: auto-rotate keeps switching itself back on
       (`accelerometer_rotation` returns to 1 within a minute), so the app
       opens in landscape. The app requests no orientation; the phone is

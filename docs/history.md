@@ -2,6 +2,25 @@
 
 Finished work with how it was verified. Newest first is not guaranteed; dates are exact.
 
+- 2026-10-21 Real-phone checks on the Docker test server. Galaxy S9: photo,
+  camera, voice and file attachments upload into `.attachments.<id>` and go on
+  their own line after the caret's line (`7a46696`); "sign in again" after the
+  app password was revoked keeps local notes, now syncs at once so the banner
+  goes away (`6774dac`) and reloads the display name (`4a9814e`). Galaxy S21
+  with a second account: a note shared from the Notes folder and a `.md`
+  shared from another folder both open, edits flow both ways (also into an
+  open editor), simultaneous edits end in the comparison screen with nothing
+  lost, removing the share hides or flags the note, sharing from the app works;
+  the undo snack bar of the comparison screen no longer outlives it
+  (`4da34ff`); a sync the user starts reads new shares at once (`264dcd6`).
+- 2026-10-21 Widget and launcher-shortcut links open in a running app
+  (`03d3b40`). Flutter's own deep linking pushed a second home screen over the
+  one that opened the note or search; it is off on Android and iOS, and a link
+  that arrives while Flutter starts is read once at start. iOS gets widget
+  links through `SceneDelegate` and the share channel (not compiled yet).
+  Galaxy S9: "Hledat" and `ownnotes://new` with the app in front, in the
+  background and during a cold start; one note per link, no duplicates.
+
 - 2026-10-21 Launcher shortcuts "New note" and "Search" (Android, dynamic, same
   `ownnotes://` links as the widgets, new `ownnotes://search`), quick settings tile
   "New note" (Android) and iOS quick actions (Info.plist + SceneDelegate, not compiled:
