@@ -92,6 +92,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   bool _checking = false;
   String? _again;
   StreamSubscription<Uri?>? _widgetClicks;
+  Uri? _clicked;
   final _autoSynced = <String>{};
   late final AppLifecycleListener _lifecycle;
 
@@ -134,9 +135,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         _takeQuickAction();
       },
     );
-    shareChannel.setMethodCallHandler((_) => _takeShared());
+    shareChannel.setMethodCallHandler(
+      (call) => call.method == 'link' ? _takeQuickAction() : _takeShared(),
+    );
     if (Platform.isAndroid) {
-      _widgetClicks = HomeWidget.widgetClicked.listen(_openLink);
+      _widgetClicks = HomeWidget.widgetClicked.listen((uri) {
+        _clicked = uri;
+        _openLink(uri);
+      });
     }
   }
 
@@ -208,7 +214,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
   }
 
-  /// iOS: the home-screen quick action leaves its link in the Runner target.
+  /// iOS: a quick action or widget tap leaves its link in the Runner target.
   Future<void> _takeQuickAction() async {
     if (!Platform.isIOS) return;
     try {
@@ -851,7 +857,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             _takeShared();
             _takeQuickAction();
             if (Platform.isAndroid) {
-              HomeWidget.initiallyLaunchedFromHomeWidget().then(_openLink);
+              // The activity keeps a link that came while Flutter started;
+              // one the stream already delivered is not opened twice.
+              HomeWidget.initiallyLaunchedFromHomeWidget().then((uri) {
+                if (uri != _clicked) _openLink(uri);
+              });
             }
           });
         }

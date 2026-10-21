@@ -169,6 +169,8 @@ class MainActivity : FlutterFragmentActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        // A link that arrives while Flutter is still starting is read at start.
+        if (intent.action == HomeWidgetLaunchIntent.HOME_WIDGET_LAUNCH_ACTION) setIntent(intent)
         persistShare(intent)
     }
 
