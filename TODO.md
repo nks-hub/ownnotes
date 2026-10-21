@@ -16,6 +16,10 @@ references: [docs/research/review-2026-10-20.md](docs/research/review-2026-10-20
 
 ## Now
 
+- [ ] Real Galaxy Fold: open flat, half open like a book and like a laptop
+      (Flex mode), folded to the cover screen with a note open. The
+      emulator reports the laptop posture as flat, so that layout was only
+      seen with the posture check bypassed.
 - [ ] TestFlight: submit build 4 for external beta review once build 3
       leaves review (Apple allows one build of a train in review; build 3
       lacks the `ownnotes://` scheme). Script: `tf_release` with version 4.

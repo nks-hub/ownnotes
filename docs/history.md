@@ -2,6 +2,16 @@
 
 Finished work with how it was verified. Newest first is not guaranteed; dates are exact.
 
+- 2026-10-21 Foldables: list and editor side by side from 600 dp (the inner
+  display of a book foldable is about 670–830 dp), split exactly at a
+  vertical fold or hinge, and in the half-open laptop posture the note sits
+  above the fold with the list below, where the keyboard comes up. The new
+  note button stays on the list pane. Checked on an Android emulator
+  "7.6in Foldable" (API 34): flat, half open as a book, landscape half open
+  with the note above the fold and the keyboard below; the emulator reports
+  that posture as flat, so the posture check was bypassed for that run.
+  Widget tests cover the fold split, the laptop posture and the cover screen.
+
 - 2026-10-21 Real-phone checks on the Docker test server. Galaxy S9: photo,
   camera, voice and file attachments upload into `.attachments.<id>` and go on
   their own line after the caret's line (`7a46696`); "sign in again" after the
