@@ -22,10 +22,9 @@ references: [docs/research/review-2026-10-20.md](docs/research/review-2026-10-20
       portal, build and run on the simulator, signed archive, then a
       TestFlight build. The Swift share extension changes and the
       WidgetKit sources are not compiled yet.
-- [ ] On real phones: camera, microphone and file attachments; sharing a
-      note with a second account and editing it from both; QR login and
-      "sign in again"; widgets on Android 10 (S9) with the fallback colours;
-      tablet layout on a large screen.
+- [ ] On real phones: file attachments (camera and voice already work on
+      the S9); sharing a note with a second account and editing it from
+      both; QR login and "sign in again"; tablet layout on a large screen.
 - [ ] S9 test phone: auto-rotate keeps switching itself back on
       (`accelerometer_rotation` returns to 1 within a minute), so the app
       opens in landscape. The app requests no orientation; the phone is
