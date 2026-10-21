@@ -2,6 +2,14 @@
 
 Finished work with how it was verified. Newest first is not guaranteed; dates are exact.
 
+- 2026-10-21 About screen instead of the bare licence page: version and
+  build (`package_info_plus`), what the app does and that notes stay plain
+  Markdown files, the account's server with its Nextcloud and Notes versions
+  (from the capabilities, `AttachmentsClient.versions()`), website, privacy
+  policy, support e-mail with the version in the subject, open source
+  licences. Settings show the version under the app name. Widget tests for
+  both a reachable and an unreachable server and at 200 % text.
+
 - 2026-10-21 Foldables: list and editor side by side from 600 dp (the inner
   display of a book foldable is about 670–830 dp), split exactly at a
   vertical fold or hinge, and in the half-open laptop posture the note sits
