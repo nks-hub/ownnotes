@@ -707,7 +707,7 @@ The widget-content policy is defined in section 9.
 |---|---|
 | Below 840 logical pixels | One primary pane |
 | 840–1279 | List and editor when minimum pane widths fit; categories in drawer |
-| 1280+ | Optional 240 px navigation, approximately 320 px list, remaining editor |
+| 1280+ | Optional 300 px navigation (240 wrapped "All notes" in Czech), approximately 320 px list, remaining editor |
 
 Two-pane layout needs approximately 288 px for the list and 440 px for the editor after insets. These are minimum working widths, not device classifications.
 

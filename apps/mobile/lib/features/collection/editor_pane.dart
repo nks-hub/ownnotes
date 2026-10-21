@@ -15,7 +15,7 @@ NotebookLayout notebookLayout(double width, double textScale) {
   return NotebookLayout.twoPane;
 }
 
-const navigationPaneWidth = 240.0;
+const navigationPaneWidth = 300.0;
 const listPaneWidth = 340.0;
 
 /// Owns the editor shown beside the list on wide windows. The editor is a
