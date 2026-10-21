@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -245,6 +247,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         await runtime.accounts.add(credentials);
       } else {
         await runtime.accounts.reauthenticate(target.id, credentials);
+        // The last failed pass keeps asking to sign in until a new one runs.
+        unawaited(runtime.sync.sync(target.id).catchError((Object _) {}));
       }
     } catch (_) {
       if (revokeOnFailure) {

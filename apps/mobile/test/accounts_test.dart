@@ -278,8 +278,13 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     vault = Vault();
+    late final MockClient server;
     runtime = (await tester.runAsync(
-      () async => AppRuntime(NotesDatabase(NativeDatabase.memory()), vault),
+      () async => AppRuntime(
+        NotesDatabase(NativeDatabase.memory()),
+        vault,
+        transport: () => server,
+      ),
     ))!;
     addTearDown(runtime.close);
     final id = (await tester.runAsync(
@@ -288,8 +293,15 @@ void main() {
     final account = (await tester.runAsync(
       () => runtime.database.account(id),
     ))!;
+    await tester.runAsync(
+      () => runtime.database.recordSyncResult(
+        id,
+        completed: false,
+        problem: 'auth',
+      ),
+    );
     var user = 'anna';
-    final server = MockClient((r) async {
+    server = MockClient((r) async {
       if (r.url.path == '/index.php/login/v2') {
         return http.Response(
           jsonEncode({
@@ -363,6 +375,11 @@ void main() {
       () => runtime.database.watchAccounts().first,
     );
     expect(accounts!.single.id, id);
+    // A new pass runs at once, so the old password problem goes away.
+    final problems = await tester.runAsync(
+      () => runtime.database.storedProblems(),
+    );
+    expect(problems, isNot(contains(id)));
     await close(tester);
   });
 }
