@@ -195,6 +195,26 @@ void main() {
     });
   });
 
+  testWidgets('the undo snack bar does not outlive the screen', (tester) async {
+    await start(tester);
+    await tester.tap(find.text('Result').first);
+    await settle(tester);
+    await tester.tap(find.text('Put both in Result'));
+    await tester.pump();
+    expect(find.text('Result replaced'), findsOneWidget);
+
+    tester
+        .state<NavigatorState>(find.byType(Navigator))
+        .pushReplacement(
+          MaterialPageRoute<void>(
+            builder: (_) => const Scaffold(body: Text('elsewhere')),
+          ),
+        );
+    await settle(tester);
+    expect(find.text('elsewhere'), findsOneWidget);
+    expect(find.text('Result replaced'), findsNothing);
+  });
+
   testWidgets('leaving keeps the unfinished Result for the next visit', (
     tester,
   ) async {

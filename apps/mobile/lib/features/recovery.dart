@@ -44,8 +44,17 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
     unawaited(_open());
   }
 
+  late ScaffoldMessengerState _messenger;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _messenger = ScaffoldMessenger.of(context);
+  }
+
   @override
   void dispose() {
+    _messenger.hideCurrentSnackBar();
     _result.dispose();
     super.dispose();
   }
@@ -205,7 +214,7 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
     final before = _result.text;
     if (before == text) return;
     setState(() => _result.text = text);
-    ScaffoldMessenger.of(context)
+    _messenger
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
