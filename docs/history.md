@@ -26,6 +26,13 @@ Finished work with how it was verified. Newest first is not guaranteed; dates ar
   Czech labels wrapped (`8d168ab`).
 - 2026-10-21 Google Play closed testing: 0.2.0 (2) with the redesign, then
   0.2.1 (3) with shortcuts, the quick settings tile and the fixes above.
+- 2026-10-21 iOS: WidgetKit extension added to the Xcode project
+  (`b71a567`, two compile errors fixed), `ownnotes://` scheme registered
+  (`04885a7`). The widget App ID had App Groups on but no group, so its
+  profiles carried none and Xcode failed with a misleading "Authentication
+  failed"; the group was assigned in the developer portal. Release build,
+  simulator start-up and `simctl openurl ownnotes://search` checked;
+  TestFlight builds 3 and 4 uploaded with cs/en/de notes.
 
 - 2026-10-21 Launcher shortcuts "New note" and "Search" (Android, dynamic, same
   `ownnotes://` links as the widgets, new `ownnotes://search`), quick settings tile

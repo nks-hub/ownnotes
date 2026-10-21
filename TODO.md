@@ -16,14 +16,13 @@ references: [docs/research/review-2026-10-20.md](docs/research/review-2026-10-20
 
 ## Now
 
-- [ ] Finish the redesign on iOS on the Mac (the build Mac was offline): run
-      `apps/mobile/ios/tool/add_widget_extension.rb`, give the bundle id
-      `com.nkshub.nextcloudnotes.Widgets` the App Group in the developer
-      portal, build and run on the simulator, signed archive, then a
-      TestFlight build. The Swift share extension changes, the WidgetKit
-      sources, quick actions and widget-link handling in `SceneDelegate` are
-      not compiled yet; check a widget tap and a quick action with the app
-      closed and open.
+- [ ] TestFlight: submit build 4 for external beta review once build 3
+      leaves review (Apple allows one build of a train in review; build 3
+      lacks the `ownnotes://` scheme). Script: `tf_release` with version 4.
+- [ ] iOS on a real iPhone (TestFlight build 4): add each widget, tap it
+      with the app closed and open, tick a task in the checklist widget,
+      quick actions on the app icon, share text from another app. The
+      simulator run covered only start-up and the `ownnotes://` scheme.
 - [ ] On a real phone: QR login (needs a code shown on another screen and
       the phone's camera). Tablet layout was checked only on the S9 with a
       tablet-sized display (`wm size`); a real tablet is still to do.
