@@ -10,6 +10,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../data/account_api.dart';
 import '../data/runtime.dart';
 import '../l10n/app_localizations.dart';
+import 'accounts.dart';
 import 'qr_login.dart';
 import 'server_address.dart';
 
@@ -249,6 +250,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         await runtime.accounts.reauthenticate(target.id, credentials);
         // The last failed pass keeps asking to sign in until a new one runs.
         unawaited(runtime.sync.sync(target.id).catchError((Object _) {}));
+        // A name read while the old password was refused stays empty otherwise.
+        if (mounted) ref.invalidate(accountDisplayNameProvider);
       }
     } catch (_) {
       if (revokeOnFailure) {
