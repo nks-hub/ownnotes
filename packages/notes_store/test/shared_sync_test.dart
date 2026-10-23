@@ -426,7 +426,7 @@ void main() {
       expect(note.syncState, 'draft');
       expect(note.sharedWithMe, isNull);
       expect(note.sharedByMe, isNull);
-      expect(upgraded.schemaVersion, 6);
+      expect(upgraded.schemaVersion, 7);
     } finally {
       await upgraded.close();
       await dir.delete(recursive: true);

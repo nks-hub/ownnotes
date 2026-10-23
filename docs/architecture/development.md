@@ -30,12 +30,14 @@ používá stejné řadiče textu, historii změn a navigaci. Místní příkazy
 jsou v `editor/local_commands.dart`, výpočet řádků a kategorií v
 `collection/note_index.dart`.
 
-Databáze ve verzi 6 ukládá dokončený bod synchronizace pro každý účet.
+Databáze od verze 6 ukládá dokončený bod synchronizace pro každý účet.
 `notes_pull.dart` řídí stahování, `pull_checkpoint.dart` ověřuje uložený stav.
 ETag se používá jen pro celý seznam se stejnými parametry; při překročení
 limitu odpovědi se klient vrátí ke stránkám po 100 položkách. Neodeslané
 změny, neověřená složka nebo neúplné stahování neposunou uložený bod.
 Ruční obnovení načte celý seznam. Markdown na serveru se tímto nemění.
+Verze 7 uvolňuje staré vazby archivovaných konfliktů na serverové poznámky;
+text archivu i záznamy o operacích zachovává.
 
 Run formatter, analyzer and meaningful tests before a commit. Verify changed
 mobile flows with a fresh application run, not only hot reload. Track analyzed,

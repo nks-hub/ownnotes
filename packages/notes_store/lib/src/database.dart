@@ -194,7 +194,7 @@ final class AccountSyncStatus {
 class NotesDatabase extends _$NotesDatabase {
   NotesDatabase(super.executor);
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) => m.createAll(),
@@ -216,6 +216,13 @@ class NotesDatabase extends _$NotesDatabase {
         await m.addColumn(localNotes, localNotes.sharedByMe);
       }
       if (from < 6) await m.createTable(pullCheckpoints);
+      if (from < 7) {
+        // Older copyAsNew archives still owned the remote ID, hiding its live note.
+        await customStatement(
+          "UPDATE local_notes SET remote_id = NULL, etag = NULL "
+          "WHERE sync_state = 'recoveryArchived'",
+        );
+      }
     },
     beforeOpen: (_) async {
       await customStatement('PRAGMA foreign_keys = ON');
