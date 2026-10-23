@@ -109,6 +109,22 @@ class SyncStatuses extends Table {
   Set<Column<Object>> get primaryKey => {accountId};
 }
 
+/// Only a completed listing can replace this account-scoped checkpoint.
+@DataClassName('PullCheckpoint')
+class PullCheckpoints extends Table {
+  TextColumn get accountId =>
+      text().references(Accounts, #id, onDelete: KeyAction.cascade)();
+  IntColumn get epoch => integer()();
+  IntColumn get generation => integer()();
+  TextColumn get scope => text().nullable()();
+  IntColumn get watermark => integer()();
+  TextColumn get listEtag => text().nullable()();
+  IntColumn get etagPruneBefore => integer().nullable()();
+  TextColumn get remoteIds => text()();
+  @override
+  Set<Column<Object>> get primaryKey => {accountId};
+}
+
 /// Text kept off to the side until the owner discards it: the two versions
 /// of a conflict, a note deleted here, a note the server stopped listing.
 /// No foreign key to the note, a copy outlives its row.
@@ -172,12 +188,13 @@ final class AccountSyncStatus {
     SyncLeases,
     SyncStatuses,
     RecoveryCopies,
+    PullCheckpoints,
   ],
 )
 class NotesDatabase extends _$NotesDatabase {
   NotesDatabase(super.executor);
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) => m.createAll(),
@@ -198,6 +215,7 @@ class NotesDatabase extends _$NotesDatabase {
         await m.addColumn(localNotes, localNotes.sharedWithMe);
         await m.addColumn(localNotes, localNotes.sharedByMe);
       }
+      if (from < 6) await m.createTable(pullCheckpoints);
     },
     beforeOpen: (_) async {
       await customStatement('PRAGMA foreign_keys = ON');

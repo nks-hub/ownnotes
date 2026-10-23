@@ -5,6 +5,7 @@ import 'package:uuid/uuid.dart';
 import 'database.dart';
 import 'recovery.dart';
 import 'shared_listing.dart';
+import 'notes_pull.dart';
 
 /// One coordinator per process (the app, a background worker). They share
 /// the database and take turns through a per-account lease, renewed before
@@ -38,6 +39,7 @@ final class SyncCoordinator {
   final Future<NotesClient> Function(Account account) clientFor;
   final Map<String, Future<void>> _running = {};
   final Map<String, String> _problems = {};
+  final _fullPullRequested = <String>{};
 
   /// Why the last sync of [accountId] left notes unsent: `offline`, `auth`,
   /// `locked`, `storage_full` or `server`; null when nothing went wrong.
@@ -45,9 +47,12 @@ final class SyncCoordinator {
   /// restart, this map is filled from it by [recoverInterruptedWrites].
   String? problem(String accountId) => _problems[accountId];
 
-  /// [relist] reads the incoming shares now, e.g. right after accepting one.
+  /// [relist] requests a full note listing and refreshes incoming shares now.
   Future<void> sync(String accountId, {bool relist = false}) {
-    if (relist) _sharesListed.remove(accountId);
+    if (relist) {
+      _sharesListed.remove(accountId);
+      _fullPullRequested.add(accountId);
+    }
     final existing = _running[accountId];
     if (existing != null) return existing;
     final result = _sync(accountId);
@@ -89,7 +94,9 @@ final class SyncCoordinator {
     if (!await database.holdLease(accountId, _owner, lease)) return;
     try {
       await _recover(accountId);
-      await _pass(accountId);
+      do {
+        await _pass(accountId, forceFull: _fullPullRequested.remove(accountId));
+      } while (_fullPullRequested.contains(accountId));
       await database.recordSyncResult(
         accountId,
         completed: true,
@@ -123,7 +130,7 @@ final class SyncCoordinator {
     _ => 'server',
   };
 
-  Future<void> _pass(String accountId) async {
+  Future<void> _pass(String accountId, {required bool forceFull}) async {
     final account = await database.account(accountId);
     if (account == null) return;
     final client = await clientFor(account);
@@ -173,72 +180,15 @@ final class SyncCoordinator {
               )
               ..limit(1))
             .get();
-    if (!await _pull(
-      client,
-      accountId,
-      suspect.isEmpty ? _watermarks[accountId] : null,
-    )) {
-      _watermarks.remove(accountId);
-      await _pull(client, accountId, null);
-    }
+    await pullNotes(
+      database: database,
+      client: client,
+      accountId: accountId,
+      keepLease: () => _keepLease(accountId),
+      scopeFor: scopeFor,
+      forceFull: forceFull || suspect.isNotEmpty,
+    );
     await _shared(account);
-  }
-
-  // shortcut: kept in memory, so the first sync after start is a full pull;
-  // persist it per account if full pulls of large accounts become slow.
-  final Map<String, int> _watermarks = {};
-
-  /// With [pruneBefore] the server sends notes unchanged since then as id
-  /// only. Returns false when such an id has no local row, so the caller
-  /// repeats the pull in full instead of missing that note.
-  Future<bool> _pull(
-    NotesClient client,
-    String accountId,
-    int? pruneBefore,
-  ) async {
-    final epoch = await database.readEpoch(accountId);
-    String? scope;
-    final account = await database.account(accountId);
-    if (scopeFor != null && account != null) {
-      try {
-        scope = await scopeFor!(account);
-      } catch (_) {
-        // Unknown scope: the census still protects an empty listing.
-      }
-    }
-    String? cursor;
-    DateTime? watermark;
-    final seenCursors = <String>{};
-    final listed = <int>{};
-    final sent = <int>{};
-    do {
-      await _keepLease(accountId);
-      final page = await client.list(cursor: cursor, pruneBefore: pruneBefore);
-      // The first chunk's Last-Modified is when the whole listing started.
-      if (cursor == null) watermark = page.lastModified;
-      if (!await database.applyPull(accountId, epoch, page.notes)) return true;
-      listed.addAll(page.notes.map((n) => n.id));
-      sent.addAll(page.notes.where((n) => n is! NoteIdOnly).map((n) => n.id));
-      cursor = page.cursor;
-      if (cursor != null && !seenCursors.add(cursor)) {
-        throw const NotesProtocolException('repeated_chunk_cursor');
-      }
-    } while (cursor != null);
-    // The last chunk repeats notes of earlier chunks as id only, too.
-    final pruned = listed.difference(sent);
-    if (pruneBefore != null && pruned.isNotEmpty) {
-      final known =
-          await (database.select(database.localNotes)..where(
-                (n) => n.accountId.equals(accountId) & n.remoteId.isIn(pruned),
-              ))
-              .get();
-      if (known.length != pruned.length) return false;
-    }
-    await database.census(accountId, epoch, listed, scope: scope);
-    if (watermark != null) {
-      _watermarks[accountId] = watermark.millisecondsSinceEpoch ~/ 1000;
-    }
-    return true;
   }
 
   /// DELETE has no If-Match on the server, so the note is read first: a
@@ -583,7 +533,6 @@ final class SyncCoordinator {
 
   // --- Notes shared with this account, synced over WebDAV ---
 
-
   /// The note as the file holds it now; for the conflict screen.
   Future<RemoteNote> readShared(LocalNote note) async {
     final account = await database.account(note.accountId);
@@ -615,8 +564,12 @@ final class SyncCoordinator {
     final listed = _sharesListed[account.id];
     if (listed == null ||
         DateTime.now().difference(listed) >= shareListInterval) {
-      await refreshSharedNotes(database, sharing, account.id,
-        keepLease: () => _keepLease(account.id));
+      await refreshSharedNotes(
+        database,
+        sharing,
+        account.id,
+        keepLease: () => _keepLease(account.id),
+      );
       _sharesListed[account.id] = DateTime.now();
     }
     final rows =

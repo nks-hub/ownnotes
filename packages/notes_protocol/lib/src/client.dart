@@ -66,8 +66,34 @@ final class NotesClient {
     int? pruneBefore,
     int chunkSize = 100,
     String? cursor,
+  }) async =>
+      await _list(
+            pruneBefore: pruneBefore,
+            chunkSize: chunkSize,
+            cursor: cursor,
+          )
+          as NotesPage;
+
+  /// Conditional reads are unchunked: a page ETag cannot validate later pages.
+  Future<NotesListResult> listIfChanged({
+    required String ifNoneMatch,
+    int? pruneBefore,
+  }) {
+    if (!isListEtag(ifNoneMatch)) throw ArgumentError('Invalid list ETag');
+    return _list(
+      pruneBefore: pruneBefore,
+      chunkSize: 0,
+      ifNoneMatch: ifNoneMatch,
+    );
+  }
+
+  Future<NotesListResult> _list({
+    int? pruneBefore,
+    required int chunkSize,
+    String? cursor,
+    String? ifNoneMatch,
   }) async {
-    if (chunkSize <= 0 ||
+    if (chunkSize < 0 ||
         (pruneBefore != null && pruneBefore < 0) ||
         (cursor != null && cursor.isEmpty)) {
       throw ArgumentError('Invalid list parameters');
@@ -75,12 +101,23 @@ final class NotesClient {
     final response = await _request(
       'GET',
       ['notes'],
+      headers: {'If-None-Match': ?ifNoneMatch},
       query: {
         'chunkSize': '$chunkSize',
         if (pruneBefore != null) 'pruneBefore': '$pruneBefore',
         'chunkCursor': ?cursor,
       },
     );
+    if (response.statusCode == 304 && ifNoneMatch != null) {
+      final returned = response.headers['etag'];
+      if (response.headers.containsKey('x-notes-chunk-cursor') ||
+          (returned != null &&
+              returned.replaceFirst(RegExp(r'^W/'), '') !=
+                  ifNoneMatch.replaceFirst(RegExp(r'^W/'), ''))) {
+        throw const NotesProtocolException('invalid_list_304');
+      }
+      return const NotesListNotModified();
+    }
     _expectOk(response, mutation: false);
     final body = _json(response);
     if (body is! List<Object?>) {

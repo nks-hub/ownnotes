@@ -3635,6 +3635,534 @@ class RecoveryCopiesCompanion extends UpdateCompanion<RecoveryCopy> {
   }
 }
 
+class $PullCheckpointsTable extends PullCheckpoints
+    with TableInfo<$PullCheckpointsTable, PullCheckpoint> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $PullCheckpointsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _accountIdMeta = const VerificationMeta(
+    'accountId',
+  );
+  @override
+  late final GeneratedColumn<String> accountId = GeneratedColumn<String>(
+    'account_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES accounts (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _epochMeta = const VerificationMeta('epoch');
+  @override
+  late final GeneratedColumn<int> epoch = GeneratedColumn<int>(
+    'epoch',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _generationMeta = const VerificationMeta(
+    'generation',
+  );
+  @override
+  late final GeneratedColumn<int> generation = GeneratedColumn<int>(
+    'generation',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _scopeMeta = const VerificationMeta('scope');
+  @override
+  late final GeneratedColumn<String> scope = GeneratedColumn<String>(
+    'scope',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _watermarkMeta = const VerificationMeta(
+    'watermark',
+  );
+  @override
+  late final GeneratedColumn<int> watermark = GeneratedColumn<int>(
+    'watermark',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _listEtagMeta = const VerificationMeta(
+    'listEtag',
+  );
+  @override
+  late final GeneratedColumn<String> listEtag = GeneratedColumn<String>(
+    'list_etag',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _etagPruneBeforeMeta = const VerificationMeta(
+    'etagPruneBefore',
+  );
+  @override
+  late final GeneratedColumn<int> etagPruneBefore = GeneratedColumn<int>(
+    'etag_prune_before',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _remoteIdsMeta = const VerificationMeta(
+    'remoteIds',
+  );
+  @override
+  late final GeneratedColumn<String> remoteIds = GeneratedColumn<String>(
+    'remote_ids',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    accountId,
+    epoch,
+    generation,
+    scope,
+    watermark,
+    listEtag,
+    etagPruneBefore,
+    remoteIds,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'pull_checkpoints';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<PullCheckpoint> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('account_id')) {
+      context.handle(
+        _accountIdMeta,
+        accountId.isAcceptableOrUnknown(data['account_id']!, _accountIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_accountIdMeta);
+    }
+    if (data.containsKey('epoch')) {
+      context.handle(
+        _epochMeta,
+        epoch.isAcceptableOrUnknown(data['epoch']!, _epochMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_epochMeta);
+    }
+    if (data.containsKey('generation')) {
+      context.handle(
+        _generationMeta,
+        generation.isAcceptableOrUnknown(data['generation']!, _generationMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_generationMeta);
+    }
+    if (data.containsKey('scope')) {
+      context.handle(
+        _scopeMeta,
+        scope.isAcceptableOrUnknown(data['scope']!, _scopeMeta),
+      );
+    }
+    if (data.containsKey('watermark')) {
+      context.handle(
+        _watermarkMeta,
+        watermark.isAcceptableOrUnknown(data['watermark']!, _watermarkMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_watermarkMeta);
+    }
+    if (data.containsKey('list_etag')) {
+      context.handle(
+        _listEtagMeta,
+        listEtag.isAcceptableOrUnknown(data['list_etag']!, _listEtagMeta),
+      );
+    }
+    if (data.containsKey('etag_prune_before')) {
+      context.handle(
+        _etagPruneBeforeMeta,
+        etagPruneBefore.isAcceptableOrUnknown(
+          data['etag_prune_before']!,
+          _etagPruneBeforeMeta,
+        ),
+      );
+    }
+    if (data.containsKey('remote_ids')) {
+      context.handle(
+        _remoteIdsMeta,
+        remoteIds.isAcceptableOrUnknown(data['remote_ids']!, _remoteIdsMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_remoteIdsMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {accountId};
+  @override
+  PullCheckpoint map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return PullCheckpoint(
+      accountId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}account_id'],
+      )!,
+      epoch: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}epoch'],
+      )!,
+      generation: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}generation'],
+      )!,
+      scope: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}scope'],
+      ),
+      watermark: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}watermark'],
+      )!,
+      listEtag: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}list_etag'],
+      ),
+      etagPruneBefore: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}etag_prune_before'],
+      ),
+      remoteIds: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}remote_ids'],
+      )!,
+    );
+  }
+
+  @override
+  $PullCheckpointsTable createAlias(String alias) {
+    return $PullCheckpointsTable(attachedDatabase, alias);
+  }
+}
+
+class PullCheckpoint extends DataClass implements Insertable<PullCheckpoint> {
+  final String accountId;
+  final int epoch;
+  final int generation;
+  final String? scope;
+  final int watermark;
+  final String? listEtag;
+  final int? etagPruneBefore;
+  final String remoteIds;
+  const PullCheckpoint({
+    required this.accountId,
+    required this.epoch,
+    required this.generation,
+    this.scope,
+    required this.watermark,
+    this.listEtag,
+    this.etagPruneBefore,
+    required this.remoteIds,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['account_id'] = Variable<String>(accountId);
+    map['epoch'] = Variable<int>(epoch);
+    map['generation'] = Variable<int>(generation);
+    if (!nullToAbsent || scope != null) {
+      map['scope'] = Variable<String>(scope);
+    }
+    map['watermark'] = Variable<int>(watermark);
+    if (!nullToAbsent || listEtag != null) {
+      map['list_etag'] = Variable<String>(listEtag);
+    }
+    if (!nullToAbsent || etagPruneBefore != null) {
+      map['etag_prune_before'] = Variable<int>(etagPruneBefore);
+    }
+    map['remote_ids'] = Variable<String>(remoteIds);
+    return map;
+  }
+
+  PullCheckpointsCompanion toCompanion(bool nullToAbsent) {
+    return PullCheckpointsCompanion(
+      accountId: Value(accountId),
+      epoch: Value(epoch),
+      generation: Value(generation),
+      scope: scope == null && nullToAbsent
+          ? const Value.absent()
+          : Value(scope),
+      watermark: Value(watermark),
+      listEtag: listEtag == null && nullToAbsent
+          ? const Value.absent()
+          : Value(listEtag),
+      etagPruneBefore: etagPruneBefore == null && nullToAbsent
+          ? const Value.absent()
+          : Value(etagPruneBefore),
+      remoteIds: Value(remoteIds),
+    );
+  }
+
+  factory PullCheckpoint.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return PullCheckpoint(
+      accountId: serializer.fromJson<String>(json['accountId']),
+      epoch: serializer.fromJson<int>(json['epoch']),
+      generation: serializer.fromJson<int>(json['generation']),
+      scope: serializer.fromJson<String?>(json['scope']),
+      watermark: serializer.fromJson<int>(json['watermark']),
+      listEtag: serializer.fromJson<String?>(json['listEtag']),
+      etagPruneBefore: serializer.fromJson<int?>(json['etagPruneBefore']),
+      remoteIds: serializer.fromJson<String>(json['remoteIds']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'accountId': serializer.toJson<String>(accountId),
+      'epoch': serializer.toJson<int>(epoch),
+      'generation': serializer.toJson<int>(generation),
+      'scope': serializer.toJson<String?>(scope),
+      'watermark': serializer.toJson<int>(watermark),
+      'listEtag': serializer.toJson<String?>(listEtag),
+      'etagPruneBefore': serializer.toJson<int?>(etagPruneBefore),
+      'remoteIds': serializer.toJson<String>(remoteIds),
+    };
+  }
+
+  PullCheckpoint copyWith({
+    String? accountId,
+    int? epoch,
+    int? generation,
+    Value<String?> scope = const Value.absent(),
+    int? watermark,
+    Value<String?> listEtag = const Value.absent(),
+    Value<int?> etagPruneBefore = const Value.absent(),
+    String? remoteIds,
+  }) => PullCheckpoint(
+    accountId: accountId ?? this.accountId,
+    epoch: epoch ?? this.epoch,
+    generation: generation ?? this.generation,
+    scope: scope.present ? scope.value : this.scope,
+    watermark: watermark ?? this.watermark,
+    listEtag: listEtag.present ? listEtag.value : this.listEtag,
+    etagPruneBefore: etagPruneBefore.present
+        ? etagPruneBefore.value
+        : this.etagPruneBefore,
+    remoteIds: remoteIds ?? this.remoteIds,
+  );
+  PullCheckpoint copyWithCompanion(PullCheckpointsCompanion data) {
+    return PullCheckpoint(
+      accountId: data.accountId.present ? data.accountId.value : this.accountId,
+      epoch: data.epoch.present ? data.epoch.value : this.epoch,
+      generation: data.generation.present
+          ? data.generation.value
+          : this.generation,
+      scope: data.scope.present ? data.scope.value : this.scope,
+      watermark: data.watermark.present ? data.watermark.value : this.watermark,
+      listEtag: data.listEtag.present ? data.listEtag.value : this.listEtag,
+      etagPruneBefore: data.etagPruneBefore.present
+          ? data.etagPruneBefore.value
+          : this.etagPruneBefore,
+      remoteIds: data.remoteIds.present ? data.remoteIds.value : this.remoteIds,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PullCheckpoint(')
+          ..write('accountId: $accountId, ')
+          ..write('epoch: $epoch, ')
+          ..write('generation: $generation, ')
+          ..write('scope: $scope, ')
+          ..write('watermark: $watermark, ')
+          ..write('listEtag: $listEtag, ')
+          ..write('etagPruneBefore: $etagPruneBefore, ')
+          ..write('remoteIds: $remoteIds')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    accountId,
+    epoch,
+    generation,
+    scope,
+    watermark,
+    listEtag,
+    etagPruneBefore,
+    remoteIds,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is PullCheckpoint &&
+          other.accountId == this.accountId &&
+          other.epoch == this.epoch &&
+          other.generation == this.generation &&
+          other.scope == this.scope &&
+          other.watermark == this.watermark &&
+          other.listEtag == this.listEtag &&
+          other.etagPruneBefore == this.etagPruneBefore &&
+          other.remoteIds == this.remoteIds);
+}
+
+class PullCheckpointsCompanion extends UpdateCompanion<PullCheckpoint> {
+  final Value<String> accountId;
+  final Value<int> epoch;
+  final Value<int> generation;
+  final Value<String?> scope;
+  final Value<int> watermark;
+  final Value<String?> listEtag;
+  final Value<int?> etagPruneBefore;
+  final Value<String> remoteIds;
+  final Value<int> rowid;
+  const PullCheckpointsCompanion({
+    this.accountId = const Value.absent(),
+    this.epoch = const Value.absent(),
+    this.generation = const Value.absent(),
+    this.scope = const Value.absent(),
+    this.watermark = const Value.absent(),
+    this.listEtag = const Value.absent(),
+    this.etagPruneBefore = const Value.absent(),
+    this.remoteIds = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  PullCheckpointsCompanion.insert({
+    required String accountId,
+    required int epoch,
+    required int generation,
+    this.scope = const Value.absent(),
+    required int watermark,
+    this.listEtag = const Value.absent(),
+    this.etagPruneBefore = const Value.absent(),
+    required String remoteIds,
+    this.rowid = const Value.absent(),
+  }) : accountId = Value(accountId),
+       epoch = Value(epoch),
+       generation = Value(generation),
+       watermark = Value(watermark),
+       remoteIds = Value(remoteIds);
+  static Insertable<PullCheckpoint> custom({
+    Expression<String>? accountId,
+    Expression<int>? epoch,
+    Expression<int>? generation,
+    Expression<String>? scope,
+    Expression<int>? watermark,
+    Expression<String>? listEtag,
+    Expression<int>? etagPruneBefore,
+    Expression<String>? remoteIds,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (accountId != null) 'account_id': accountId,
+      if (epoch != null) 'epoch': epoch,
+      if (generation != null) 'generation': generation,
+      if (scope != null) 'scope': scope,
+      if (watermark != null) 'watermark': watermark,
+      if (listEtag != null) 'list_etag': listEtag,
+      if (etagPruneBefore != null) 'etag_prune_before': etagPruneBefore,
+      if (remoteIds != null) 'remote_ids': remoteIds,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  PullCheckpointsCompanion copyWith({
+    Value<String>? accountId,
+    Value<int>? epoch,
+    Value<int>? generation,
+    Value<String?>? scope,
+    Value<int>? watermark,
+    Value<String?>? listEtag,
+    Value<int?>? etagPruneBefore,
+    Value<String>? remoteIds,
+    Value<int>? rowid,
+  }) {
+    return PullCheckpointsCompanion(
+      accountId: accountId ?? this.accountId,
+      epoch: epoch ?? this.epoch,
+      generation: generation ?? this.generation,
+      scope: scope ?? this.scope,
+      watermark: watermark ?? this.watermark,
+      listEtag: listEtag ?? this.listEtag,
+      etagPruneBefore: etagPruneBefore ?? this.etagPruneBefore,
+      remoteIds: remoteIds ?? this.remoteIds,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (accountId.present) {
+      map['account_id'] = Variable<String>(accountId.value);
+    }
+    if (epoch.present) {
+      map['epoch'] = Variable<int>(epoch.value);
+    }
+    if (generation.present) {
+      map['generation'] = Variable<int>(generation.value);
+    }
+    if (scope.present) {
+      map['scope'] = Variable<String>(scope.value);
+    }
+    if (watermark.present) {
+      map['watermark'] = Variable<int>(watermark.value);
+    }
+    if (listEtag.present) {
+      map['list_etag'] = Variable<String>(listEtag.value);
+    }
+    if (etagPruneBefore.present) {
+      map['etag_prune_before'] = Variable<int>(etagPruneBefore.value);
+    }
+    if (remoteIds.present) {
+      map['remote_ids'] = Variable<String>(remoteIds.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PullCheckpointsCompanion(')
+          ..write('accountId: $accountId, ')
+          ..write('epoch: $epoch, ')
+          ..write('generation: $generation, ')
+          ..write('scope: $scope, ')
+          ..write('watermark: $watermark, ')
+          ..write('listEtag: $listEtag, ')
+          ..write('etagPruneBefore: $etagPruneBefore, ')
+          ..write('remoteIds: $remoteIds, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$NotesDatabase extends GeneratedDatabase {
   _$NotesDatabase(QueryExecutor e) : super(e);
   $NotesDatabaseManager get managers => $NotesDatabaseManager(this);
@@ -3644,6 +4172,9 @@ abstract class _$NotesDatabase extends GeneratedDatabase {
   late final $SyncLeasesTable syncLeases = $SyncLeasesTable(this);
   late final $SyncStatusesTable syncStatuses = $SyncStatusesTable(this);
   late final $RecoveryCopiesTable recoveryCopies = $RecoveryCopiesTable(this);
+  late final $PullCheckpointsTable pullCheckpoints = $PullCheckpointsTable(
+    this,
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -3655,6 +4186,7 @@ abstract class _$NotesDatabase extends GeneratedDatabase {
     syncLeases,
     syncStatuses,
     recoveryCopies,
+    pullCheckpoints,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -3699,6 +4231,13 @@ abstract class _$NotesDatabase extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('recovery_copies', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'accounts',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('pull_checkpoints', kind: UpdateKind.delete)],
     ),
   ]);
 }
@@ -3815,6 +4354,27 @@ final class $$AccountsTableReferences
     ).filter((f) => f.accountId.id.sqlEquals($_itemColumn<String>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_recoveryCopiesRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$PullCheckpointsTable, List<PullCheckpoint>>
+  _pullCheckpointsRefsTable(_$NotesDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.pullCheckpoints,
+        aliasName: 'accounts__id__pull_checkpoints__account_id',
+      );
+
+  $$PullCheckpointsTableProcessedTableManager get pullCheckpointsRefs {
+    final manager = $$PullCheckpointsTableTableManager(
+      $_db,
+      $_db.pullCheckpoints,
+    ).filter((f) => f.accountId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _pullCheckpointsRefsTable($_db),
+    );
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -3981,6 +4541,31 @@ class $$AccountsTableFilterComposer
           }) => $$RecoveryCopiesTableFilterComposer(
             $db: $db,
             $table: $db.recoveryCopies,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> pullCheckpointsRefs(
+    Expression<bool> Function($$PullCheckpointsTableFilterComposer f) f,
+  ) {
+    final $$PullCheckpointsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.pullCheckpoints,
+      getReferencedColumn: (t) => t.accountId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$PullCheckpointsTableFilterComposer(
+            $db: $db,
+            $table: $db.pullCheckpoints,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -4196,6 +4781,31 @@ class $$AccountsTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> pullCheckpointsRefs<T extends Object>(
+    Expression<T> Function($$PullCheckpointsTableAnnotationComposer a) f,
+  ) {
+    final $$PullCheckpointsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.pullCheckpoints,
+      getReferencedColumn: (t) => t.accountId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$PullCheckpointsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.pullCheckpoints,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$AccountsTableTableManager
@@ -4217,6 +4827,7 @@ class $$AccountsTableTableManager
             bool syncLeasesRefs,
             bool syncStatusesRefs,
             bool recoveryCopiesRefs,
+            bool pullCheckpointsRefs,
           })
         > {
   $$AccountsTableTableManager(_$NotesDatabase db, $AccountsTable table)
@@ -4285,6 +4896,7 @@ class $$AccountsTableTableManager
                 syncLeasesRefs = false,
                 syncStatusesRefs = false,
                 recoveryCopiesRefs = false,
+                pullCheckpointsRefs = false,
               }) {
                 return PrefetchHooks(
                   db: db,
@@ -4294,6 +4906,7 @@ class $$AccountsTableTableManager
                     if (syncLeasesRefs) db.syncLeases,
                     if (syncStatusesRefs) db.syncStatuses,
                     if (recoveryCopiesRefs) db.recoveryCopies,
+                    if (pullCheckpointsRefs) db.pullCheckpoints,
                   ],
                   addJoins: null,
                   getPrefetchedDataCallback: (items) async {
@@ -4403,6 +5016,27 @@ class $$AccountsTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (pullCheckpointsRefs)
+                        await $_getPrefetchedData<
+                          Account,
+                          $AccountsTable,
+                          PullCheckpoint
+                        >(
+                          currentTable: table,
+                          referencedTable: $$AccountsTableReferences
+                              ._pullCheckpointsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$AccountsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).pullCheckpointsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.accountId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -4429,6 +5063,7 @@ typedef $$AccountsTableProcessedTableManager =
         bool syncLeasesRefs,
         bool syncStatusesRefs,
         bool recoveryCopiesRefs,
+        bool pullCheckpointsRefs,
       })
     >;
 typedef $$LocalNotesTableCreateCompanionBuilder =
@@ -6710,6 +7345,393 @@ typedef $$RecoveryCopiesTableProcessedTableManager =
       RecoveryCopy,
       PrefetchHooks Function({bool accountId})
     >;
+typedef $$PullCheckpointsTableCreateCompanionBuilder =
+    PullCheckpointsCompanion Function({
+      required String accountId,
+      required int epoch,
+      required int generation,
+      Value<String?> scope,
+      required int watermark,
+      Value<String?> listEtag,
+      Value<int?> etagPruneBefore,
+      required String remoteIds,
+      Value<int> rowid,
+    });
+typedef $$PullCheckpointsTableUpdateCompanionBuilder =
+    PullCheckpointsCompanion Function({
+      Value<String> accountId,
+      Value<int> epoch,
+      Value<int> generation,
+      Value<String?> scope,
+      Value<int> watermark,
+      Value<String?> listEtag,
+      Value<int?> etagPruneBefore,
+      Value<String> remoteIds,
+      Value<int> rowid,
+    });
+
+final class $$PullCheckpointsTableReferences
+    extends
+        BaseReferences<_$NotesDatabase, $PullCheckpointsTable, PullCheckpoint> {
+  $$PullCheckpointsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $AccountsTable _accountIdTable(_$NotesDatabase db) =>
+      db.accounts.createAlias('pull_checkpoints__account_id__accounts__id');
+
+  $$AccountsTableProcessedTableManager get accountId {
+    final $_column = $_itemColumn<String>('account_id')!;
+
+    final manager = $$AccountsTableTableManager(
+      $_db,
+      $_db.accounts,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_accountIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$PullCheckpointsTableFilterComposer
+    extends Composer<_$NotesDatabase, $PullCheckpointsTable> {
+  $$PullCheckpointsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get epoch => $composableBuilder(
+    column: $table.epoch,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get generation => $composableBuilder(
+    column: $table.generation,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get scope => $composableBuilder(
+    column: $table.scope,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get watermark => $composableBuilder(
+    column: $table.watermark,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get listEtag => $composableBuilder(
+    column: $table.listEtag,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get etagPruneBefore => $composableBuilder(
+    column: $table.etagPruneBefore,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get remoteIds => $composableBuilder(
+    column: $table.remoteIds,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$AccountsTableFilterComposer get accountId {
+    final $$AccountsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.accountId,
+      referencedTable: $db.accounts,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AccountsTableFilterComposer(
+            $db: $db,
+            $table: $db.accounts,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$PullCheckpointsTableOrderingComposer
+    extends Composer<_$NotesDatabase, $PullCheckpointsTable> {
+  $$PullCheckpointsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get epoch => $composableBuilder(
+    column: $table.epoch,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get generation => $composableBuilder(
+    column: $table.generation,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get scope => $composableBuilder(
+    column: $table.scope,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get watermark => $composableBuilder(
+    column: $table.watermark,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get listEtag => $composableBuilder(
+    column: $table.listEtag,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get etagPruneBefore => $composableBuilder(
+    column: $table.etagPruneBefore,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get remoteIds => $composableBuilder(
+    column: $table.remoteIds,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$AccountsTableOrderingComposer get accountId {
+    final $$AccountsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.accountId,
+      referencedTable: $db.accounts,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AccountsTableOrderingComposer(
+            $db: $db,
+            $table: $db.accounts,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$PullCheckpointsTableAnnotationComposer
+    extends Composer<_$NotesDatabase, $PullCheckpointsTable> {
+  $$PullCheckpointsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get epoch =>
+      $composableBuilder(column: $table.epoch, builder: (column) => column);
+
+  GeneratedColumn<int> get generation => $composableBuilder(
+    column: $table.generation,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get scope =>
+      $composableBuilder(column: $table.scope, builder: (column) => column);
+
+  GeneratedColumn<int> get watermark =>
+      $composableBuilder(column: $table.watermark, builder: (column) => column);
+
+  GeneratedColumn<String> get listEtag =>
+      $composableBuilder(column: $table.listEtag, builder: (column) => column);
+
+  GeneratedColumn<int> get etagPruneBefore => $composableBuilder(
+    column: $table.etagPruneBefore,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get remoteIds =>
+      $composableBuilder(column: $table.remoteIds, builder: (column) => column);
+
+  $$AccountsTableAnnotationComposer get accountId {
+    final $$AccountsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.accountId,
+      referencedTable: $db.accounts,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AccountsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.accounts,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$PullCheckpointsTableTableManager
+    extends
+        RootTableManager<
+          _$NotesDatabase,
+          $PullCheckpointsTable,
+          PullCheckpoint,
+          $$PullCheckpointsTableFilterComposer,
+          $$PullCheckpointsTableOrderingComposer,
+          $$PullCheckpointsTableAnnotationComposer,
+          $$PullCheckpointsTableCreateCompanionBuilder,
+          $$PullCheckpointsTableUpdateCompanionBuilder,
+          (PullCheckpoint, $$PullCheckpointsTableReferences),
+          PullCheckpoint,
+          PrefetchHooks Function({bool accountId})
+        > {
+  $$PullCheckpointsTableTableManager(
+    _$NotesDatabase db,
+    $PullCheckpointsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$PullCheckpointsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$PullCheckpointsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$PullCheckpointsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> accountId = const Value.absent(),
+                Value<int> epoch = const Value.absent(),
+                Value<int> generation = const Value.absent(),
+                Value<String?> scope = const Value.absent(),
+                Value<int> watermark = const Value.absent(),
+                Value<String?> listEtag = const Value.absent(),
+                Value<int?> etagPruneBefore = const Value.absent(),
+                Value<String> remoteIds = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => PullCheckpointsCompanion(
+                accountId: accountId,
+                epoch: epoch,
+                generation: generation,
+                scope: scope,
+                watermark: watermark,
+                listEtag: listEtag,
+                etagPruneBefore: etagPruneBefore,
+                remoteIds: remoteIds,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String accountId,
+                required int epoch,
+                required int generation,
+                Value<String?> scope = const Value.absent(),
+                required int watermark,
+                Value<String?> listEtag = const Value.absent(),
+                Value<int?> etagPruneBefore = const Value.absent(),
+                required String remoteIds,
+                Value<int> rowid = const Value.absent(),
+              }) => PullCheckpointsCompanion.insert(
+                accountId: accountId,
+                epoch: epoch,
+                generation: generation,
+                scope: scope,
+                watermark: watermark,
+                listEtag: listEtag,
+                etagPruneBefore: etagPruneBefore,
+                remoteIds: remoteIds,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$PullCheckpointsTable, PullCheckpoint>(table),
+                  $$PullCheckpointsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({accountId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (accountId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.accountId,
+                                referencedTable:
+                                    $$PullCheckpointsTableReferences
+                                        ._accountIdTable(db),
+                                referencedColumn:
+                                    $$PullCheckpointsTableReferences
+                                        ._accountIdTable(db)
+                                        .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$PullCheckpointsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$NotesDatabase,
+      $PullCheckpointsTable,
+      PullCheckpoint,
+      $$PullCheckpointsTableFilterComposer,
+      $$PullCheckpointsTableOrderingComposer,
+      $$PullCheckpointsTableAnnotationComposer,
+      $$PullCheckpointsTableCreateCompanionBuilder,
+      $$PullCheckpointsTableUpdateCompanionBuilder,
+      (PullCheckpoint, $$PullCheckpointsTableReferences),
+      PullCheckpoint,
+      PrefetchHooks Function({bool accountId})
+    >;
 
 class $NotesDatabaseManager {
   final _$NotesDatabase _db;
@@ -6726,4 +7748,6 @@ class $NotesDatabaseManager {
       $$SyncStatusesTableTableManager(_db, _db.syncStatuses);
   $$RecoveryCopiesTableTableManager get recoveryCopies =>
       $$RecoveryCopiesTableTableManager(_db, _db.recoveryCopies);
+  $$PullCheckpointsTableTableManager get pullCheckpoints =>
+      $$PullCheckpointsTableTableManager(_db, _db.pullCheckpoints);
 }

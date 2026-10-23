@@ -416,6 +416,7 @@ void main() {
     await old.customStatement(
       'ALTER TABLE local_notes DROP COLUMN shared_by_me',
     );
+    await old.customStatement('DROP TABLE pull_checkpoints');
     await old.customStatement('PRAGMA user_version = 4');
     await old.close();
     final upgraded = NotesDatabase(NativeDatabase(file));
@@ -425,7 +426,7 @@ void main() {
       expect(note.syncState, 'draft');
       expect(note.sharedWithMe, isNull);
       expect(note.sharedByMe, isNull);
-      expect(upgraded.schemaVersion, 5);
+      expect(upgraded.schemaVersion, 6);
     } finally {
       await upgraded.close();
       await dir.delete(recursive: true);
@@ -450,6 +451,7 @@ void main() {
     await first.customStatement(
       'ALTER TABLE local_notes DROP COLUMN shared_by_me',
     );
+    await first.customStatement('DROP TABLE pull_checkpoints');
     await first.customStatement('PRAGMA user_version = 2');
     await first.close();
     final upgraded = NotesDatabase(NativeDatabase(file));

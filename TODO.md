@@ -51,7 +51,7 @@ references: [docs/research/review-2026-10-20.md](docs/research/review-2026-10-20
 - [ ] Android sync settings (interval, Wi-Fi only).
 - [ ] Backups that can be restored: ZIP with metadata and attachments.
 - [ ] File versions and trash from Nextcloud (DAV), restore keeps the draft.
-- [ ] Keep the incremental-pull marker across restarts; use the list ETag.
+- [ ] Staré archivované konflikty na S9 mohou stále držet vzdálené ID. Při jejich migraci zachovat archivovaný text a uvolnit vazbu na server stejně jako současné `copyAsNew`; nyní tento stav brání uložení bodu synchronizace.
 - [ ] Instant updates through notify_push when the server has it, instead
       of asking every 4 s while a note is open.
 - [ ] Desktop builds (Windows, macOS) like OwnTalk.

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -47,10 +48,12 @@ void main() {
   late AttachmentService service;
   late http.Client transport;
   var offline = false;
+  Completer<void>? pendingImage;
   final requests = <String>[];
 
   setUp(() {
     offline = false;
+    pendingImage = null;
     requests.clear();
     SharedPreferencesAsyncPlatform.instance =
         InMemorySharedPreferencesAsync.empty();
@@ -89,6 +92,7 @@ void main() {
           );
         }
         requests.add(request.url.queryParameters['path']!);
+        await pendingImage?.future;
         if (offline) throw const SocketException('offline');
         return http.Response.bytes(
           _png,
@@ -153,7 +157,10 @@ void main() {
 
   Future<void> attachments(WidgetTester tester) async {
     await tester.tap(find.byTooltip('More options'));
-    await tester.pumpAndSettle();
+    // A preview can still be reading its image; its spinner need not settle.
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('Attachments'), findsOneWidget);
     await tester.tap(find.text('Attachments'));
     await _settle(tester);
     expect(find.byType(AttachmentsPanel), findsOneWidget);
@@ -327,13 +334,28 @@ void main() {
   phoneTest('read-only attachments can be viewed without removal actions', (
     tester,
   ) async {
+    pendingImage = Completer<void>();
     await setup(tester, readonly: true);
+    addTearDown(() {
+      if (!pendingImage!.isCompleted) pendingImage!.complete();
+    });
     await open(tester);
+    expect(find.byType(CircularProgressIndicator), findsWidgets);
     await attachments(tester);
     expect(find.text('photo 1.png'), findsOneWidget);
-    expect(find.byType(PopupMenuButton<String>), findsNothing);
+    await tester.tap(
+      find.descendant(
+        of: find.byType(AttachmentsPanel),
+        matching: find.byTooltip('More options'),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('Keep offline'), findsOneWidget);
     expect(find.text('Remove link from note'), findsNothing);
     expect(find.text('Delete file on server'), findsNothing);
+    await tester.binding.handlePopRoute();
+    pendingImage!.complete();
     await close(tester);
   });
 
@@ -376,11 +398,18 @@ void main() {
     await setup(tester);
     offline = true;
     await open(tester);
+    await until(
+      tester,
+      () => find.text('Image not loaded. Retry').evaluate().isNotEmpty,
+    );
     expect(find.text('Image not loaded. Retry'), findsOneWidget);
     expect(requests, [_path]);
     offline = false;
     await tester.tap(find.text('Image not loaded. Retry'));
-    await _settle(tester);
+    await until(
+      tester,
+      () => find.bySemanticsLabel('photo').evaluate().isNotEmpty,
+    );
     expect(requests, [_path, _path]);
     expect(find.text('Image not loaded. Retry'), findsNothing);
     expect(find.bySemanticsLabel('photo'), findsOneWidget);

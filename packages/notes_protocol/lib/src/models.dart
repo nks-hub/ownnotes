@@ -123,7 +123,21 @@ final class NotePatch {
   final Map<String, Object> fields;
 }
 
-final class NotesPage {
+sealed class NotesListResult {
+  const NotesListResult();
+}
+
+final class NotesListNotModified extends NotesListResult {
+  const NotesListNotModified();
+}
+
+/// One HTTP entity tag, including its quotes; lists may use weak validators.
+bool isListEtag(String value) {
+  final match = RegExp(r'(W/)?"[\x21\x23-\x7e]*"').matchAsPrefix(value);
+  return match != null && match.end == value.length;
+}
+
+final class NotesPage extends NotesListResult {
   NotesPage({
     required List<NoteRecord> notes,
     required this.cursor,
