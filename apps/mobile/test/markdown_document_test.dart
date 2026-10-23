@@ -174,6 +174,13 @@ void main() {
   });
 
   group('attachments and code', () {
+    test('invalid UTF-8 in a destination keeps its source range', () {
+      const text = 'before ![broken](.attachments.7/%FF.png) after';
+      final attachment = parse(text).attachments.single;
+      expect(attachment.path, '.attachments.7/%FF.png');
+      expect(attachment.range.of(text), '![broken](.attachments.7/%FF.png)');
+    });
+
     test('references in links and images are found outside code', () {
       const text =
           '![photo](.attachments.7/photo%201.png)\n'
@@ -189,6 +196,8 @@ void main() {
       expect(refs.map((r) => r.isImage), [true, false]);
       expect(refs[0].alt, 'photo');
       expect(refs[0].destination.of(text), '.attachments.7/photo%201.png');
+      expect(refs[0].range.of(text), '![photo](.attachments.7/photo%201.png)');
+      expect(refs[1].range.of(text), '[file](.attachments.7/a.pdf "title")');
     });
 
     test('isInCode sees fences and inline code', () {

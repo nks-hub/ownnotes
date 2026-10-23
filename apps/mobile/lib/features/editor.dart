@@ -17,6 +17,7 @@ import '../design/design.dart';
 import '../l10n/app_localizations.dart';
 import 'checklist/checklist_screen.dart';
 import 'editor/document_header.dart';
+import 'editor/attachment_actions.dart';
 import 'editor/edit_history.dart';
 import 'editor/editing_commands.dart';
 import 'editor/find_bar.dart';
@@ -914,13 +915,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
     );
   }
 
-  Future<void> _openAttachments() {
-    final l = AppLocalizations.of(context)!;
-    return showOwnSheet<void>(
-      context: context,
-      title: l.attachments,
-      builder: (_) => AttachmentsList(document: _text.document),
-    );
+  Future<void> _openAttachments() async {
+    await _save();
+    if (!mounted || _failed) return;
+    await showEditorAttachments(context, ref, _row, _text, _history, _save);
   }
 
   Future<void> _openChecklist() async {

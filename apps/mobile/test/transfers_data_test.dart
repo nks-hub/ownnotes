@@ -153,6 +153,29 @@ void main() {
     setUp(() async => env = await TransferEnv.create());
     tearDown(() => env.dispose());
 
+    test('concurrent retries upload once and retain the receipt', () async {
+      await env.addNote();
+      final item = await env.service.stage(
+        accountId: env.accountId,
+        noteId: 'n1',
+        source: await env.file('retry.png'),
+        name: 'retry.png',
+      );
+      env.server.failures.add(403);
+      expect(await env.service.upload(item.id), isA<UploadFailed>());
+
+      final outcomes = await Future.wait([
+        env.service.retry(item.id),
+        env.service.retry(item.id),
+      ]);
+      expect(outcomes.whereType<Uploaded>(), hasLength(1));
+      expect(outcomes.whereType<UploadFailed>().single.code, 'busy');
+      expect(env.server.uploads, ['retry.png']);
+      final pending = (await env.service.pending(env.accountId, 'n1')).single;
+      expect(pending.state, StagedState.uploaded);
+      expect(pending.remotePath, '.attachments.42/retry.png');
+    });
+
     test('uploads and returns the markdown for the returned path', () async {
       await env.addNote();
       final item = await env.service.stage(

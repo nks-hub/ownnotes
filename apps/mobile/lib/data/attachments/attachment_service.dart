@@ -251,17 +251,8 @@ final class AttachmentService {
     return false;
   }
 
-  /// Puts a failed file back in the queue and uploads it again.
-  Future<UploadOutcome> retry(String id) async {
-    await _ready();
-    final item = await staging.get(id);
-    if (item != null && item.state == StagedState.failed) {
-      await staging.update(
-        item.copyWith(state: StagedState.stored, clearError: true),
-      );
-    }
-    return upload(id);
-  }
+  /// Upload already clears the error while holding the file's busy guard.
+  Future<UploadOutcome> retry(String id) => upload(id);
 
   /// Whether the account's server can delete attachments (Notes 6.1+).
   Future<bool> canDelete(String accountId) async {

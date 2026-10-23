@@ -206,18 +206,6 @@ void main() {
       expect(find.textContaining('Failed'), findsOneWidget);
       await tester.tap(find.byKey(Key('retry-${staged.single.id}')));
       await until(tester, () => env.server.uploads.isNotEmpty);
-      for (var i = 0; i < 500; i++) {
-        // The retry may still be finishing; flush skips a file being uploaded.
-        await tester.runAsync(() => env.service.flush(env.accountId));
-        if ((await tester.runAsync(
-          () => env.service.pending(env.accountId, 'n1'),
-        ))!.isEmpty) {
-          break;
-        }
-        await tester.runAsync(
-          () => Future<void>.delayed(const Duration(milliseconds: 20)),
-        );
-      }
       await until(
         tester,
         () => find.byKey(Key('staged-${staged.single.id}')).evaluate().isEmpty,

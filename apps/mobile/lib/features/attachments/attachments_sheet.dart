@@ -52,6 +52,8 @@ class _PanelState extends ConsumerState<AttachmentsPanel> {
   StreamSubscription<void>? _changes;
   List<StagedAttachment> _staged = const [];
   bool _canDelete = false;
+  bool _loadFailed = false;
+  final _retrying = <String>{};
 
   @override
   void initState() {
@@ -60,11 +62,33 @@ class _PanelState extends ConsumerState<AttachmentsPanel> {
   }
 
   Future<void> _open() async {
-    final service = await ref.read(attachmentServiceProvider.future);
-    _changes = service.staging.changes.listen((_) => _reload());
-    _service = service;
-    _canDelete = await service.canDelete(widget.note.accountId);
-    await _reload();
+    setState(() => _loadFailed = false);
+    try {
+      final service = await ref.read(attachmentServiceProvider.future);
+      if (!mounted) return;
+      _changes ??= service.staging.changes.listen((_) => _reload());
+      _service = service;
+      _canDelete = await service.canDelete(widget.note.accountId);
+      await _reload();
+    } on Object {
+      if (mounted) setState(() => _loadFailed = true);
+    }
+  }
+
+  Future<void> _retry(StagedAttachment item) async {
+    final service = _service;
+    if (service == null || _retrying.contains(item.id)) return;
+    final failure = AppLocalizations.of(context)!.saveFailedTitle;
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() => _retrying.add(item.id));
+    try {
+      final result = await service.retry(item.id);
+      if (result is Uploaded) await service.flush(item.accountId);
+    } on Object {
+      messenger.showSnackBar(SnackBar(content: Text(failure)));
+    } finally {
+      if (mounted) setState(() => _retrying.remove(item.id));
+    }
   }
 
   int _loads = 0;
@@ -95,6 +119,19 @@ class _PanelState extends ConsumerState<AttachmentsPanel> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
+    if (_loadFailed) {
+      return TextButton.icon(
+        onPressed: () {
+          if (_service == null) ref.invalidate(attachmentServiceProvider);
+          _open();
+        },
+        icon: const Icon(Icons.refresh),
+        label: Text('${l.attachReadFailed} ${l.retry}'),
+      );
+    }
+    if (_service == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
     final note = _note;
     final seen = <String>{};
     final refs = [
@@ -143,20 +180,24 @@ class _PanelState extends ConsumerState<AttachmentsPanel> {
       ),
       trailing: Wrap(
         children: [
-          if (failed || item.state == StagedState.stored)
+          if (!note.readonly && item.state != StagedState.uploading)
             IconButton(
               key: Key('retry-${item.id}'),
               tooltip: l.retry,
               icon: const Icon(Icons.refresh),
-              onPressed: item.state == StagedState.uploading
+              onPressed: _retrying.contains(item.id)
                   ? null
-                  : () => _service?.retry(item.id),
+                  : () => _retry(item),
             ),
           IconButton(
             key: Key('unqueue-${item.id}'),
             tooltip: l.attachRemoveQueue,
             icon: const Icon(Icons.close),
-            onPressed: () => _service?.discard(item.id),
+            onPressed:
+                item.state == StagedState.uploading ||
+                    _retrying.contains(item.id)
+                ? null
+                : () => _service?.discard(item.id),
           ),
         ],
       ),
@@ -178,20 +219,29 @@ class _PanelState extends ConsumerState<AttachmentsPanel> {
               : Icon(_icon(ref0.isImage ? 'image/' : '')),
           title: Text(name),
           subtitle: Text(offline ? l.attachOffline : l.attachOnServer),
-          trailing: PopupMenuButton<String>(
-            tooltip: l.attachMoreOptions,
-            onSelected: (v) => _act(v, note, ref0),
-            itemBuilder: (_) => [
-              if (!offline && note.remoteId != null)
-                PopupMenuItem(
-                  value: 'offline',
-                  child: Text(l.attachKeepOffline),
+          trailing: note.readonly && offline
+              ? null
+              : PopupMenuButton<String>(
+                  tooltip: l.attachMoreOptions,
+                  onSelected: (v) => _act(v, note, ref0),
+                  itemBuilder: (_) => [
+                    if (!offline && note.remoteId != null)
+                      PopupMenuItem(
+                        value: 'offline',
+                        child: Text(l.attachKeepOffline),
+                      ),
+                    if (!note.readonly && widget.onRemoveReference != null)
+                      PopupMenuItem(
+                        value: 'link',
+                        child: Text(l.attachRemoveLink),
+                      ),
+                    if (!note.readonly)
+                      PopupMenuItem(
+                        value: 'delete',
+                        child: Text(l.attachDeleteFile),
+                      ),
+                  ],
                 ),
-              if (widget.onRemoveReference != null)
-                PopupMenuItem(value: 'link', child: Text(l.attachRemoveLink)),
-              PopupMenuItem(value: 'delete', child: Text(l.attachDeleteFile)),
-            ],
-          ),
         );
       },
     );

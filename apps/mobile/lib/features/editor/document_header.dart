@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../core/markdown/markdown_document.dart';
 import '../../design/design.dart';
 import '../../l10n/app_localizations.dart';
 
@@ -117,30 +116,6 @@ class DocumentHeader extends StatelessWidget {
         heightFactor: collapsed ? 0 : 1,
         child: ExcludeFocus(excluding: collapsed, child: collapsed ? ExcludeSemantics(child: content) : content),
       ),
-    );
-  }
-}
-
-/// Attachments referenced by the Markdown text of a note.
-class AttachmentsList extends StatelessWidget {
-  const AttachmentsList({required this.document, super.key});
-  final MarkdownDocument document;
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
-    final refs = document.attachments;
-    if (refs.isEmpty) return Text(l.attachmentsNone);
-    return Column(
-      children: [
-        for (final r in refs)
-          ListTile(
-            minTileHeight: OwnShape.target,
-            leading: Icon(r.isImage ? Icons.image_outlined : Icons.attach_file),
-            title: Text(r.path.split('/').last, maxLines: 2, overflow: TextOverflow.ellipsis),
-            subtitle: Text(r.isImage ? l.attachmentImage : l.attachmentFile),
-          ),
-      ],
     );
   }
 }

@@ -111,6 +111,7 @@ final class AttachmentRef {
     required this.isImage,
     required this.alt,
     required this.destination,
+    required this.range,
   });
 
   /// Percent-decoded destination, for example `.attachments.7/photo 1.png`.
@@ -120,6 +121,7 @@ final class AttachmentRef {
 
   /// Source range of the raw destination inside the parentheses.
   final SourceRange destination;
+  final SourceRange range;
 }
 
 final class TaskSummary {
@@ -233,6 +235,8 @@ final class MarkdownDocument {
         var path = dest;
         try {
           path = Uri.decodeFull(dest);
+        } on FormatException {
+          // Invalid UTF-8 keeps the raw destination.
         } on ArgumentError {
           // A stray % keeps the raw destination.
         }
@@ -242,6 +246,7 @@ final class MarkdownDocument {
             isImage: m[1] == '!',
             alt: m[2]!,
             destination: SourceRange(at, at + dest.length),
+            range: SourceRange(line.start + m.start, line.start + m.end),
           ),
         );
       }
