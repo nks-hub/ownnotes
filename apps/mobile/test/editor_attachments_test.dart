@@ -14,6 +14,7 @@ import 'package:nextcloudnotes/data/attachments/staging.dart';
 import 'package:nextcloudnotes/data/runtime.dart';
 import 'package:nextcloudnotes/features/editor/preview.dart';
 import 'package:nextcloudnotes/features/attachments/attachments_sheet.dart';
+import 'package:nextcloudnotes/features/attachments/attach_sources.dart';
 import 'package:nextcloudnotes/l10n/app_localizations.dart';
 import 'package:nextcloudnotes/main.dart';
 import 'package:notes_protocol/notes_protocol.dart';
@@ -23,6 +24,7 @@ import 'package:shared_preferences_platform_interface/shared_preferences_async_p
 
 import 'app_test.dart' show Vault, phoneTest;
 import 'transfers_ui_test.dart' show until;
+import 'support/transfer_fixtures.dart' show FileSources;
 
 final _png = base64Decode(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
@@ -121,12 +123,16 @@ void main() {
     });
   }
 
-  Future<void> open(WidgetTester tester) async {
+  Future<void> open(
+    WidgetTester tester, {
+    List<Override> overrides = const [],
+  }) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
           runtimeProvider.overrideWithValue(runtime),
           attachmentServiceProvider.overrideWith((_) => service),
+          ...overrides,
         ],
         child: const OwnNotesApp(),
       ),
@@ -151,6 +157,96 @@ void main() {
     await tester.tap(find.text('Attachments'));
     await _settle(tester);
     expect(find.byType(AttachmentsPanel), findsOneWidget);
+  }
+
+  for (final failWrite in [false, true]) {
+    phoneTest(
+      'attachment insertion commits before acknowledgment; failed write: $failWrite',
+      (tester) async {
+        await setup(tester);
+        final file = (await tester.runAsync(() async {
+          final f = File('${dir.path}/later.png');
+          await f.writeAsBytes(_png);
+          return f;
+        }))!;
+        await open(
+          tester,
+          overrides: [
+            attachmentSourcesProvider.overrideWithValue(
+              FileSources([PickedFile(path: file.path, name: 'later.png')]),
+            ),
+          ],
+        );
+        final note = (await tester.runAsync(
+          () => runtime.database.select(runtime.database.localNotes).get(),
+        ))!.single;
+        if (failWrite) {
+          await tester.runAsync(
+            () => runtime.database.customStatement(
+              "CREATE TRIGGER reject_content BEFORE UPDATE OF content ON local_notes "
+              "BEGIN SELECT RAISE(FAIL, 'test write failure'); END",
+            ),
+          );
+        }
+        await tester.tap(find.byTooltip('Edit source'));
+        await tester.pumpAndSettle();
+        final source = tester
+            .widget<TextField>(
+              find.byWidgetPredicate((w) => w is TextField && w.expands),
+            )
+            .controller!;
+        source.selection = const TextSelection.collapsed(offset: 0);
+        await tester.tap(find.byTooltip('Attach'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('File'));
+        if (failWrite) {
+          await until(
+            tester,
+            () => find
+                .text('Could not save on this device')
+                .evaluate()
+                .isNotEmpty,
+          );
+          expect(
+            (await tester.runAsync(
+              () => service.pending(note.accountId, note.id),
+            ))!.single.state,
+            StagedState.uploaded,
+          );
+          expect(await tester.runAsync(() => service.flush(note.accountId)), 0);
+          await tester.runAsync(
+            () =>
+                runtime.database.customStatement('DROP TRIGGER reject_content'),
+          );
+          await tester.tap(find.text('Retry').first);
+        }
+        await until(
+          tester,
+          () =>
+              source.text.contains('later.png') &&
+              find.text('Saved locally').evaluate().isNotEmpty,
+        );
+        await _settle(tester);
+        expect(
+          source.text,
+          '$_markdown\n![later.png](.attachments.7/later.png)',
+        );
+        final saved = (await tester.runAsync(
+          () => runtime.database.note(note.accountId, note.id),
+        ))!;
+        expect(saved.content, source.text);
+        expect(
+          await tester.runAsync(() => service.pending(note.accountId, note.id)),
+          isEmpty,
+        );
+        await tester.tap(find.byTooltip('Undo'));
+        await tester.pump(const Duration(milliseconds: 400));
+        await _settle(tester);
+        expect(source.text, _markdown);
+        expect(await tester.runAsync(() => service.flush(note.accountId)), 0);
+        await close(tester);
+      },
+    );
   }
 
   phoneTest('editor menu retries a staged file and inserts its link', (

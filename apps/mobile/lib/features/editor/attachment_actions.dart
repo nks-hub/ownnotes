@@ -4,8 +4,50 @@ import 'package:notes_store/notes_store.dart';
 
 import '../../core/markdown/live_controller.dart';
 import '../../data/runtime.dart';
+import '../../data/attachments/attachment_insertion.dart';
 import '../attachments/attachments_sheet.dart';
 import 'edit_history.dart';
+import 'format_dock.dart';
+
+class EditorAttachmentDelivery {
+  final _pending = <AttachmentInsertion>{};
+
+  Future<void> insert(
+    AttachKind kind,
+    AttachHandler pick, {
+    required bool Function() editable,
+    required void Function(String) apply,
+    required Future<void> Function() save,
+  }) async {
+    final insertion = await pick(kind);
+    if (insertion == null) return;
+    if (!editable()) {
+      insertion.release();
+      return;
+    }
+    _pending.add(insertion);
+    apply(insertion.markdown);
+    await save();
+  }
+
+  /// A write may finish after another file was inserted; confirm only its snapshot.
+  List<AttachmentInsertion> snapshot() => _pending.toList();
+
+  Future<void> saved(List<AttachmentInsertion> snapshot) async {
+    for (final insertion in snapshot) {
+      if (!_pending.contains(insertion)) continue;
+      await insertion.acknowledge();
+      _pending.remove(insertion);
+    }
+  }
+
+  void dispose() {
+    for (final insertion in _pending) {
+      insertion.release();
+    }
+    _pending.clear();
+  }
+}
 
 Future<void> showEditorAttachments(
   BuildContext context,

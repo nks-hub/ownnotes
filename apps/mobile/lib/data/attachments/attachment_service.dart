@@ -52,6 +52,7 @@ final class AttachmentService {
   final List<Duration> retryDelays;
 
   final _busy = <String>{};
+  final _heldForEditor = <String>{};
   Future<void>? _recovered;
 
   Future<void> _ready() => _recovered ??= staging.recoverInterrupted();
@@ -63,18 +64,30 @@ final class AttachmentService {
     required String name,
     String? mime,
     String? id,
+    bool holdForEditor = false,
   }) async {
     await _ready();
     final clean = safeAttachmentName(name);
-    return staging.stage(
-      id: id ?? DateTime.now().microsecondsSinceEpoch.toRadixString(36),
-      accountId: accountId,
-      noteId: noteId,
-      name: clean,
-      mime: mime ?? mimeForName(clean),
-      source: source,
-    );
+    final itemId =
+        id ?? DateTime.now().microsecondsSinceEpoch.toRadixString(36);
+    if (holdForEditor) _heldForEditor.add(itemId);
+    try {
+      return await staging.stage(
+        id: itemId,
+        accountId: accountId,
+        noteId: noteId,
+        name: clean,
+        mime: mime ?? mimeForName(clean),
+        source: source,
+      );
+    } catch (_) {
+      _heldForEditor.remove(itemId);
+      rethrow;
+    }
   }
+
+  /// A new process has no holds; its next flush recovers unconfirmed links.
+  void releaseEditorHold(String id) => _heldForEditor.remove(id);
 
   Future<List<StagedAttachment>> pending(
     String accountId,
@@ -184,7 +197,7 @@ final class AttachmentService {
     await _ready();
     var moved = 0;
     for (final item in await staging.list(accountId: accountId)) {
-      if (_busy.contains(item.id)) continue;
+      if (_busy.contains(item.id) || _heldForEditor.contains(item.id)) continue;
       final retriable =
           item.state == StagedState.stored ||
           (item.state == StagedState.failed && item.error == 'offline');
@@ -194,7 +207,8 @@ final class AttachmentService {
     for (final item in await staging.list(accountId: accountId)) {
       if (item.state == StagedState.uploaded &&
           item.remotePath != null &&
-          !_busy.contains(item.id)) {
+          !_busy.contains(item.id) &&
+          !_heldForEditor.contains(item.id)) {
         byNote.putIfAbsent(item.noteId, () => []).add(item);
       }
     }

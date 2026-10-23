@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../data/attachments/attachment_insertion.dart';
 import '../../design/design.dart';
 import '../../l10n/app_localizations.dart';
 import 'edit_history.dart';
@@ -9,8 +10,8 @@ enum AttachKind { photo, camera, file, voice }
 
 /// Called when an Attach menu row is chosen; the editor does not move any
 /// file itself. Null disables the rows.
-/// Returns the Markdown to insert at the caret, or null when nothing was added.
-typedef AttachHandler = FutureOr<String?> Function(AttachKind kind);
+/// Returns a pending insertion to acknowledge after saving the draft.
+typedef AttachHandler = FutureOr<AttachmentInsertion?> Function(AttachKind kind);
 
 /// Commands of the Format and Insert menus and of the Task button.
 enum EditorCommand {
@@ -46,7 +47,7 @@ class FormattingDock extends StatelessWidget {
 
   final EditHistory history;
   final ValueChanged<EditorCommand> onCommand;
-  final AttachHandler? onAttach;
+  final FutureOr<void> Function(AttachKind kind)? onAttach;
 
   @override
   Widget build(BuildContext context) {

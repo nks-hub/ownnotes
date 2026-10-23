@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nextcloudnotes/data/attachments/providers.dart';
+import 'package:nextcloudnotes/data/attachments/attachment_insertion.dart';
 import 'package:nextcloudnotes/data/attachments/staging.dart';
 import 'package:nextcloudnotes/data/capture/capture_store.dart';
 import 'package:nextcloudnotes/data/capture/providers.dart';
@@ -20,17 +21,6 @@ import 'package:notes_protocol/notes_protocol.dart';
 import 'package:notes_store/notes_store.dart';
 
 import 'support/transfer_fixtures.dart';
-
-class _FileSources implements AttachmentSources {
-  _FileSources(this.picked);
-  final List<PickedFile> picked;
-  @override
-  Future<List<PickedFile>> photos() async => picked;
-  @override
-  Future<PickedFile?> camera() async => picked.firstOrNull;
-  @override
-  Future<List<PickedFile>> files() async => picked;
-}
 
 class _Engine implements VoiceEngine {
   _Engine(this.dir);
@@ -142,7 +132,7 @@ void main() {
       tester,
       overrides: [
         attachmentSourcesProvider.overrideWithValue(
-          _FileSources([PickedFile(path: file.path, name: 'Zpráva.pdf')]),
+          FileSources([PickedFile(path: file.path, name: 'Zpráva.pdf')]),
         ),
       ],
     );
@@ -151,11 +141,11 @@ void main() {
       () => addAttachment(hostContext, hostRef, n, AttachKind.file),
     );
     await tester.pump();
-    expect(result, '[Zpráva.pdf](.attachments.42/Zpr%C3%A1va.pdf)');
+    expect(result?.markdown, '[Zpráva.pdf](.attachments.42/Zpr%C3%A1va.pdf)');
     expect(env.server.uploads, ['Zpráva.pdf']);
     expect(
       await tester.runAsync(() => env.service.pending(env.accountId, 'n1')),
-      isEmpty,
+      isNotEmpty,
     );
     await finish(tester);
   });
@@ -168,14 +158,14 @@ void main() {
         tester,
         overrides: [
           attachmentSourcesProvider.overrideWithValue(
-            _FileSources([PickedFile(path: file.path, name: 'a.png')]),
+            FileSources([PickedFile(path: file.path, name: 'a.png')]),
           ),
         ],
       );
       final n = await note(tester);
       env.server.failures.add(403);
       final future = addAttachment(hostContext, hostRef, n, AttachKind.photo);
-      String? result;
+      AttachmentInsertion? result;
       var finished = false;
       unawaited(
         future.then((v) {
@@ -228,7 +218,7 @@ void main() {
       tester,
       overrides: [
         attachmentSourcesProvider.overrideWithValue(
-          _FileSources([PickedFile(path: file.path, name: 'b.png')]),
+          FileSources([PickedFile(path: file.path, name: 'b.png')]),
         ),
       ],
     );

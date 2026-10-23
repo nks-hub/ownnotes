@@ -116,6 +116,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
   late final TextEditingController _title;
   late final MarkdownTextController _text;
   late final EditHistory _history;
+  final _attachments = EditorAttachmentDelivery();
   late final TextEditingController _category;
   late final SuggestionController _suggest;
   final _textFocus = FocusNode();
@@ -307,13 +308,13 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
     _textFocus.requestFocus();
   }
 
-  Future<String?> _attach(AttachKind kind) async {
-    final markdown = await widget.onAttach!(kind);
-    if (markdown != null && mounted) {
-      _apply((v) => insertAttachment(v, markdown));
-    }
-    return markdown;
-  }
+  Future<void> _attach(AttachKind kind) => _attachments.insert(
+    kind,
+    widget.onAttach!,
+    editable: () => mounted && !_readonly,
+    apply: (markdown) => _apply((v) => insertAttachment(v, markdown)),
+    save: _save,
+  );
 
   void _runCommand(EditorCommand command) {
     switch (command) {
@@ -546,14 +547,6 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
     );
   }
 
-  /// Attachments of this note (`.attachments.<id>/…`) load through the Notes
-  /// API with the account's credentials. Remote URLs stay placeholders: the
-  /// preview does not contact third-party hosts.
-  Future<List<int>> _loadAttachment(String path) async {
-    final service = await ref.read(attachmentServiceProvider.future);
-    return service.load(_row, path);
-  }
-
   void _toggleFind() {
     if (_preview) return;
     setState(() => _finding = !_finding);
@@ -718,6 +711,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
     if (!_dirty) return _tail;
     final title = _title.text, content = _text.text, category = _category.text;
     final favorite = _favorite;
+    final deliveries = _attachments.snapshot();
     final db = ref.read(runtimeProvider).database;
     _tail = _tail.then((_) async {
       try {
@@ -737,6 +731,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
           favorite: favorite,
           revision: _revision,
         );
+        await _attachments.saved(deliveries);
         _clearFailure();
         if (mounted) {
           setState(() {
@@ -842,6 +837,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
     _live?.cancel();
     _debounce?.cancel();
     _text.removeListener(_textChanged);
+    _attachments.dispose();
     _history.dispose();
     _suggest.dispose();
     _sourceFuture?.then((s) => s?.close());
@@ -1246,7 +1242,9 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
                                     onReplaceRange: _replaceRange,
                                     loadAttachment: (_row.remoteId ?? widget.note.remoteId) == null
                                         ? null
-                                        : _loadAttachment,
+                                        : (path) async => (await ref.read(
+                                            attachmentServiceProvider.future,
+                                          )).load(_row, path),
                                   )
                                 : _sourceField(l, settings),
                           ),

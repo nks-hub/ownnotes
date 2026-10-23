@@ -9,8 +9,20 @@ import 'package:nextcloudnotes/data/attachments/attachment_cache.dart';
 import 'package:nextcloudnotes/data/attachments/attachment_service.dart';
 import 'package:nextcloudnotes/data/attachments/staging.dart';
 import 'package:nextcloudnotes/data/runtime.dart';
+import 'package:nextcloudnotes/features/attachments/attach_sources.dart';
 import 'package:notes_protocol/notes_protocol.dart';
 import 'package:notes_store/notes_store.dart';
+
+class FileSources implements AttachmentSources {
+  FileSources(this.picked);
+  final List<PickedFile> picked;
+  @override
+  Future<List<PickedFile>> photos() async => picked;
+  @override
+  Future<PickedFile?> camera() async => picked.firstOrNull;
+  @override
+  Future<List<PickedFile>> files() async => picked;
+}
 
 class FakeVault implements CredentialVault {
   final entries = <String, String>{};

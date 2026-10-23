@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:notes_store/notes_store.dart';
 
 import '../../data/attachments/attachment_service.dart';
+import '../../data/attachments/attachment_insertion.dart';
 import '../../data/attachments/providers.dart';
 import '../../data/attachments/staging.dart';
 import '../../l10n/app_localizations.dart';
@@ -16,12 +17,12 @@ export 'attach_sources.dart' show AttachKind;
 /// The one entry point of the editor's Attach menu.
 ///
 /// Picks or records the file, copies it into durable staging, uploads it and
-/// returns the Markdown to insert at the caret (one string, so the editor
-/// can make it a single undo step). Returns null when nothing was added, or
+/// returns an insertion to acknowledge after the draft commits. Its Markdown
+/// is inserted at the caret as one undo step. Returns null when nothing was added, or
 /// when the file could not go to the server yet: it then stays staged with
 /// its draft, shows up in the attachments sheet, and its link is added to
 /// the note once the upload has happened.
-Future<String?> addAttachment(
+Future<AttachmentInsertion?> addAttachment(
   BuildContext context,
   WidgetRef ref,
   LocalNote note,
@@ -66,72 +67,87 @@ Future<String?> addAttachment(
   }
 
   final staged = <StagedAttachment>[];
-  for (final file in picked) {
-    try {
-      staged.add(
-        await service.stage(
-          accountId: note.accountId,
-          noteId: note.id,
-          source: File(file.path),
-          name: file.name,
-          mime: file.mime,
-        ),
-      );
-      // The recording is safe in staging now; the voice folder copy goes.
-      if (recording) await File(file.path).delete();
-    } on AttachmentTooLarge {
-      messenger.showSnackBar(SnackBar(content: Text(l.attachTooLarge)));
-    } on Object {
-      messenger.showSnackBar(SnackBar(content: Text(l.attachReadFailed)));
+  final delivered = <String>{};
+  try {
+    for (final file in picked) {
+      try {
+        staged.add(
+          await service.stage(
+            accountId: note.accountId,
+            noteId: note.id,
+            source: File(file.path),
+            name: file.name,
+            mime: file.mime,
+            holdForEditor: true,
+          ),
+        );
+        // The recording is safe in staging now; the voice folder copy goes.
+        if (recording) await File(file.path).delete();
+      } on AttachmentTooLarge {
+        messenger.showSnackBar(SnackBar(content: Text(l.attachTooLarge)));
+      } on Object {
+        messenger.showSnackBar(SnackBar(content: Text(l.attachReadFailed)));
+      }
     }
-  }
 
-  final links = <String>[];
-  for (final item in staged) {
-    if (!context.mounted) break;
-    UploadOutcome outcome = await _withProgress<UploadOutcome>(
-      context,
-      l.attachWorking,
-      service.upload(item.id),
-    );
-    while (outcome is UploadFailed) {
+    final links = <String>[];
+    final uploaded = <String>[];
+    for (final item in staged) {
       if (!context.mounted) break;
-      final reason = attachErrorText(l, outcome.code);
-      final again = await showDialog<bool>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text(l.attachUploadFailedTitle),
-          content: Text('${item.name}\n$reason'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: Text(l.attachKeepForLater),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: Text(l.retry),
-            ),
-          ],
-        ),
-      );
-      if (again != true || !context.mounted) break;
-      outcome = await _withProgress<UploadOutcome>(
+      UploadOutcome outcome = await _withProgress<UploadOutcome>(
         context,
         l.attachWorking,
-        service.retry(item.id),
+        service.upload(item.id),
       );
+      while (outcome is UploadFailed) {
+        if (!context.mounted) break;
+        final reason = attachErrorText(l, outcome.code);
+        final again = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text(l.attachUploadFailedTitle),
+            content: Text('${item.name}\n$reason'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: Text(l.attachKeepForLater),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: Text(l.retry),
+              ),
+            ],
+          ),
+        );
+        if (again != true || !context.mounted) break;
+        outcome = await _withProgress<UploadOutcome>(
+          context,
+          l.attachWorking,
+          service.retry(item.id),
+        );
+      }
+      switch (outcome) {
+        case Uploaded(:final markdown):
+          links.add(markdown);
+          uploaded.add(item.id);
+        case WaitingForNote():
+          messenger.showSnackBar(SnackBar(content: Text(l.attachSavedWaiting)));
+        case UploadFailed():
+          messenger.showSnackBar(SnackBar(content: Text(l.attachSavedQueued)));
+      }
     }
-    switch (outcome) {
-      case Uploaded(:final markdown):
-        links.add(markdown);
-        await service.complete(item.id);
-      case WaitingForNote():
-        messenger.showSnackBar(SnackBar(content: Text(l.attachSavedWaiting)));
-      case UploadFailed():
-        messenger.showSnackBar(SnackBar(content: Text(l.attachSavedQueued)));
+    if (links.isEmpty) return null;
+    delivered.addAll(uploaded);
+    return AttachmentInsertion(
+      markdown: links.join('\n'),
+      service: service,
+      ids: uploaded,
+    );
+  } finally {
+    for (final item in staged) {
+      if (!delivered.contains(item.id)) service.releaseEditorHold(item.id);
     }
   }
-  return links.isEmpty ? null : links.join('\n');
 }
 
 /// Short text for a failure code of [StagedAttachment.error].
