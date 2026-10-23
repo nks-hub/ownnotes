@@ -20,6 +20,11 @@ jobs:
         with:
           fetch-depth: 0
       - run: python3 tool/check_git_identity.py
+      - name: Select iOS 26 SDK required by Workmanager
+        if: matrix.platform == 'ios'
+        run: |
+          sudo xcode-select --switch /Applications/Xcode_26.3.app/Contents/Developer
+          xcodebuild -version
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.47.7'
