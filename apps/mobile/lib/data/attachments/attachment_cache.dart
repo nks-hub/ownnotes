@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 import 'dart:typed_data';
 
 /// Downloaded attachments kept for previews and offline use.
@@ -17,6 +19,27 @@ final class AttachmentCache {
   final Directory root;
   final int maxFileBytes;
   final int maxTotalBytes;
+  final _loads = <(String, int, String), _PendingLoad>{};
+  final _random = Random.secure();
+  Future<void>? _diskTail;
+
+  Future<T> _onDisk<T>(Future<T> Function() work) async {
+    final previous = _diskTail;
+    final done = Completer<void>();
+    _diskTail = done.future;
+    try {
+      if (previous != null) await previous;
+      return await work();
+    } finally {
+      if (identical(_diskTail, done.future)) _diskTail = null;
+      done.complete();
+    }
+  }
+
+  void _invalidate((String, int, String) key) {
+    final pending = _loads.remove(key);
+    if (pending != null) pending.mayStore = false;
+  }
 
   File _file(String accountId, int remoteId, String path) {
     // FNV-1a over the path: a short file name that is the same on every run.
@@ -31,11 +54,13 @@ final class AttachmentCache {
   }
 
   Future<bool> contains(String accountId, int remoteId, String path) =>
-      _file(accountId, remoteId, path).exists();
+      _onDisk(() => _file(accountId, remoteId, path).exists());
 
   /// The cached bytes, or null. A hit counts as use.
-  Future<Uint8List?> read(String accountId, int remoteId, String path) async {
-    final file = _file(accountId, remoteId, path);
+  Future<Uint8List?> read(String accountId, int remoteId, String path) =>
+      _onDisk(() => _read(_file(accountId, remoteId, path)));
+
+  Future<Uint8List?> _read(File file) async {
     try {
       final bytes = await file.readAsBytes();
       await file.setLastModified(DateTime.now());
@@ -52,13 +77,27 @@ final class AttachmentCache {
     int remoteId,
     String path,
     List<int> bytes,
-  ) async {
+  ) {
+    if (bytes.length > maxFileBytes) return Future.value(false);
+    _invalidate((accountId, remoteId, path));
+    return _onDisk(() => _write(_file(accountId, remoteId, path), bytes));
+  }
+
+  Future<bool> _write(File file, List<int> bytes) async {
     if (bytes.length > maxFileBytes) return false;
-    final file = _file(accountId, remoteId, path);
     await file.parent.create(recursive: true);
-    final tmp = File('${file.path}.tmp');
-    await tmp.writeAsBytes(bytes, flush: true);
-    await tmp.rename(file.path);
+    // Other cache instances may share this directory, including another isolate.
+    final suffix = List.generate(
+      16,
+      (_) => _random.nextInt(256).toRadixString(16).padLeft(2, '0'),
+    ).join();
+    final tmp = File('${file.path}.$suffix.tmp');
+    try {
+      await tmp.writeAsBytes(bytes, flush: true);
+      await tmp.rename(file.path);
+    } finally {
+      if (await tmp.exists()) await tmp.delete();
+    }
     await _trim();
     return true;
   }
@@ -70,36 +109,67 @@ final class AttachmentCache {
     int remoteId,
     String path,
     Future<List<int>> Function() fetch,
+  ) {
+    final key = (accountId, remoteId, path);
+    final existing = _loads[key];
+    if (existing != null) return existing.future;
+    final pending = _PendingLoad();
+    _loads[key] = pending;
+    pending.future = _load(accountId, remoteId, path, fetch, pending)
+        .whenComplete(() {
+          if (identical(_loads[key], pending)) _loads.remove(key);
+        });
+    return pending.future;
+  }
+
+  Future<Uint8List> _load(
+    String accountId,
+    int remoteId,
+    String path,
+    Future<List<int>> Function() fetch,
+    _PendingLoad pending,
   ) async {
     final hit = await read(accountId, remoteId, path);
-    if (hit != null) return hit;
+    if (hit != null) return hit.asUnmodifiableView();
     final bytes = Uint8List.fromList(await fetch());
     try {
-      await write(accountId, remoteId, path, bytes);
+      await _onDisk(() async {
+        if (pending.mayStore) {
+          await _write(_file(accountId, remoteId, path), bytes);
+        }
+      });
     } on FileSystemException {
       // A full or unavailable cache must not hide a successful download.
     }
-    return bytes;
+    return bytes.asUnmodifiableView();
   }
 
-  Future<void> forget(String accountId, int remoteId, String path) async {
-    final file = _file(accountId, remoteId, path);
-    if (await file.exists()) await file.delete();
+  Future<void> forget(String accountId, int remoteId, String path) {
+    _invalidate((accountId, remoteId, path));
+    return _onDisk(() async {
+      final file = _file(accountId, remoteId, path);
+      if (await file.exists()) await file.delete();
+    });
   }
 
-  Future<void> clearAccount(String accountId) async {
-    final dir = Directory('${root.path}/$accountId');
-    if (await dir.exists()) await dir.delete(recursive: true);
+  Future<void> clearAccount(String accountId) {
+    for (final key in _loads.keys.toList()) {
+      if (key.$1 == accountId) _invalidate(key);
+    }
+    return _onDisk(() async {
+      final dir = Directory('${root.path}/$accountId');
+      if (await dir.exists()) await dir.delete(recursive: true);
+    });
   }
 
-  Future<int> sizeBytes() async {
+  Future<int> sizeBytes() => _onDisk(() async {
     var total = 0;
     if (!await root.exists()) return 0;
     await for (final e in root.list(recursive: true)) {
       if (e is File && !e.path.endsWith('.tmp')) total += await e.length();
     }
     return total;
-  }
+  });
 
   Future<void> _trim() async {
     final files = <(File, int, DateTime)>[];
@@ -107,6 +177,7 @@ final class AttachmentCache {
     await for (final e in root.list(recursive: true)) {
       if (e is! File || e.path.endsWith('.tmp')) continue;
       final stat = await e.stat();
+      if (stat.type != FileSystemEntityType.file) continue;
       files.add((e, stat.size, stat.modified));
       total += stat.size;
     }
@@ -114,8 +185,17 @@ final class AttachmentCache {
     files.sort((a, b) => a.$3.compareTo(b.$3));
     for (final (file, size, _) in files) {
       if (total <= maxTotalBytes) break;
-      await file.delete();
+      try {
+        await file.delete();
+      } on FileSystemException {
+        if (await file.exists()) rethrow;
+      }
       total -= size;
     }
   }
+}
+
+final class _PendingLoad {
+  bool mayStore = true;
+  late final Future<Uint8List> future;
 }

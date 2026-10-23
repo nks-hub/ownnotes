@@ -146,6 +146,14 @@ void main() {
     await _settle(tester);
     await tester.tap(find.byTooltip('Preview'));
     await _settle(tester);
+    if (pendingImage == null) {
+      await until(
+        tester,
+        () =>
+            find.bySemanticsLabel('photo').evaluate().isNotEmpty ||
+            find.text('Image not loaded. Retry').evaluate().isNotEmpty,
+      );
+    }
   }
 
   Future<void> close(WidgetTester tester) async {
@@ -361,6 +369,7 @@ void main() {
       tester,
       () => find.byType(Image, skipOffstage: false).evaluate().length == 2,
     );
+    expect(requests, [_path]);
     await close(tester);
   });
 
