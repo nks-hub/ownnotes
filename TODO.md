@@ -20,10 +20,8 @@ references: [docs/research/review-2026-10-20.md](docs/research/review-2026-10-20
       (Flex mode), folded to the cover screen with a note open. The
       emulator reports the laptop posture as flat, so that layout was only
       seen with the posture check bypassed.
-- [ ] TestFlight: submit build 4 for external beta review once build 3
-      leaves review (Apple allows one build of a train in review; build 3
-      lacks the `ownnotes://` scheme). Script: `tf_release` with version 4.
-- [ ] iOS on a real iPhone (TestFlight build 4): add each widget, tap it
+- [ ] TestFlight 0.2.4 (7): ověřit schválení externího testování; build je odeslaný, stav `WAITING_FOR_BETA_REVIEW`.
+- [ ] iOS on a real iPhone (TestFlight build 7): add each widget, tap it
       with the app closed and open, tick a task in the checklist widget,
       quick actions on the app icon, share text from another app. The
       simulator run covered only start-up and the `ownnotes://` scheme.
