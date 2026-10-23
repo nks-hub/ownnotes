@@ -111,6 +111,8 @@ base class DelayedPreferences extends InMemorySharedPreferencesAsync {
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  // The first construction registers the host platform and replaces any fake.
+  Workmanager();
   late Schedule schedule;
   late WorkmanagerPlatform previous;
   var network = <String>['wifi'];
@@ -137,7 +139,6 @@ void main() {
   test(
     'an existing installation retains the 15-minute connected schedule',
     () async {
-      debugDefaultTargetPlatformOverride = TargetPlatform.android;
       await scheduleBackgroundSync();
       expect(schedule.intervals, [const Duration(minutes: 15)]);
       expect(schedule.policies, [ExistingPeriodicWorkPolicy.update]);
