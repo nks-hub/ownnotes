@@ -18,6 +18,7 @@ import 'checklist/checklist_screen.dart';
 import 'editor/document_header.dart';
 import 'editor/edit_history.dart';
 import 'editor/editing_commands.dart';
+import 'editor/find_bar.dart';
 import 'editor/format_dock.dart';
 import 'editor/preview.dart';
 import 'editor/reference_picker.dart';
@@ -132,8 +133,6 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
   bool _preview = false;
   bool _finding = false;
   final _find = TextEditingController();
-  List<int> _matches = const [];
-  int _matchAt = -1;
   bool _allowPop = false;
   bool _external = false;
   late String _lastText;
@@ -558,60 +557,9 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
     return (await runtime.clientFor(account)).attachment(remoteId, path);
   }
 
-  // ---- find ----
-
-  void _findChanged() {
-    final query = _find.text.toLowerCase();
-    final text = _text.text.toLowerCase();
-    final found = <int>[];
-    if (query.isNotEmpty) {
-      var at = text.indexOf(query);
-      while (at >= 0) {
-        found.add(at);
-        at = text.indexOf(query, at + query.length);
-      }
-    }
-    setState(() {
-      _matches = found;
-      _matchAt = -1;
-    });
-  }
-
-  /// Selects the next match after the caret ([dir] 1) or the previous one
-  /// before it (-1), wrapping around.
-  void _findStep(int dir) {
-    if (_find.text.isEmpty) return;
-    if (_matches.isEmpty) {
-      showOwnSnackBar(context, AppLocalizations.of(context)!.notFound);
-      return;
-    }
-    final sel = _text.selection;
-    final from = sel.isValid ? (dir > 0 ? sel.end : sel.start) : 0;
-    int at;
-    if (dir > 0) {
-      at = _matches.indexWhere((m) => m >= from);
-      if (at < 0) at = 0;
-    } else {
-      at = _matches.lastIndexWhere((m) => m < from);
-      if (at < 0) at = _matches.length - 1;
-    }
-    _text.selection = TextSelection(
-      baseOffset: _matches[at],
-      extentOffset: _matches[at] + _find.text.length,
-    );
-    setState(() => _matchAt = at);
-    _textFocus.requestFocus();
-  }
-
   void _toggleFind() {
     if (_preview) return;
-    setState(() {
-      _finding = !_finding;
-      if (!_finding) {
-        _matches = const [];
-        _matchAt = -1;
-      }
-    });
+    setState(() => _finding = !_finding);
   }
 
   // ---- sync with the database ----
@@ -1052,37 +1000,6 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
   );
 
   List<Widget> _actions(AppLocalizations l) {
-    if (_finding) {
-      return [
-        if (_find.text.isNotEmpty)
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: Text(
-                _matches.isEmpty
-                    ? '0'
-                    : l.findCount(_matchAt < 0 ? 0 : _matchAt + 1, _matches.length),
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-            ),
-          ),
-        IconButton(
-          tooltip: l.findPrevious,
-          onPressed: () => _findStep(-1),
-          icon: const Icon(Icons.arrow_upward),
-        ),
-        IconButton(
-          tooltip: l.findNext,
-          onPressed: () => _findStep(1),
-          icon: const Icon(Icons.arrow_downward),
-        ),
-        IconButton(
-          tooltip: l.cancel,
-          onPressed: _toggleFind,
-          icon: const Icon(Icons.close),
-        ),
-      ];
-    }
     final error = context.own.error;
     return [
       IconButton(
@@ -1128,16 +1045,6 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
   }
 
   Widget _appBarTitle(AppLocalizations l) {
-    if (_finding) {
-      return TextField(
-        controller: _find,
-        autofocus: true,
-        textInputAction: TextInputAction.search,
-        decoration: InputDecoration(hintText: l.findInNote, border: InputBorder.none),
-        onChanged: (_) => _findChanged(),
-        onSubmitted: (_) => _findStep(1),
-      );
-    }
     return ListenableBuilder(
       listenable: _title,
       builder: (context, _) => Text(
@@ -1278,15 +1185,25 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
           },
         },
         child: Scaffold(
-          appBar: AppBar(
-            automaticallyImplyLeading: false,
-            // A pane next to the list has nothing to go back to.
-            leading: (ModalRoute.of(context)?.canPop ?? false)
-                ? BackButton(onPressed: _leave)
-                : null,
-            title: _appBarTitle(l),
-            actions: _actions(l),
-          ),
+          appBar: _finding
+              ? NoteFindBar(
+                  source: _text,
+                  query: _find,
+                  sourceFocus: _textFocus,
+                  onClose: _toggleFind,
+                  leading: (ModalRoute.of(context)?.canPop ?? false)
+                      ? BackButton(onPressed: _leave)
+                      : null,
+                )
+              : AppBar(
+                  automaticallyImplyLeading: false,
+                  // A pane next to the list has nothing to go back to.
+                  leading: (ModalRoute.of(context)?.canPop ?? false)
+                      ? BackButton(onPressed: _leave)
+                      : null,
+                  title: _appBarTitle(l),
+                  actions: _actions(l),
+                ),
           floatingActionButton: _preview && !_readonly && narrow
               ? FloatingActionButton(
                   tooltip: l.editNote,
