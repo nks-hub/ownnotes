@@ -48,8 +48,6 @@ references: [docs/research/review-2026-10-20.md](docs/research/review-2026-10-20
 
 - [ ] Ověřit označení poznámek, které dědí sdílení z celé složky; současná evidence sdílení sleduje přímá souborová sdílení.
 
-- [ ] Dále rozdělit `features/editor.dart` a `features/home.dart` podle odpovědností; oba soubory mají stále přes 1 000 řádků.
-
 - [ ] Android sync settings (interval, Wi-Fi only).
 - [ ] Backups that can be restored: ZIP with metadata and attachments.
 - [ ] File versions and trash from Nextcloud (DAV), restore keeps the draft.

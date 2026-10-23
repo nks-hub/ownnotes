@@ -20,10 +20,15 @@ required identity instead of using GitHub-generated merge commits.
 
 ## Structure and verification
 
-`packages/notes_protocol` contains no Flutter, storage or UI dependencies.
-`apps/mobile` owns accounts, Drift, synchronization, features and native
-adapters. No screen calls Notes REST directly. Avoid large mixed-responsibility
-files; keep logical changes independently reviewable.
+`packages/notes_protocol` obsahuje síťové kontrakty bez závislosti na Flutteru.
+`packages/notes_store` spravuje účty, databázi a synchronizaci. `apps/mobile`
+propojuje obrazovky, místní nastavení a nativní funkce.
+
+Stav editoru a seznamu vlastní `EditorScreen` a `HomeScreen`. Vykreslování je
+v částech knihoven `editor/editor_view.dart` a `collection/notebook_view.dart`;
+používá stejné řadiče textu, historii změn a navigaci. Místní příkazy editoru
+jsou v `editor/local_commands.dart`, výpočet řádků a kategorií v
+`collection/note_index.dart`.
 
 Run formatter, analyzer and meaningful tests before a commit. Verify changed
 mobile flows with a fresh application run, not only hot reload. Track analyzed,

@@ -3,6 +3,10 @@
 Finished work with how it was verified. Newest first is not guaranteed; dates are exact.
 
 
+- 2026-10-23 Vykreslování editoru a hlavní obrazovky je oddělené od jejich stavu. `editor.dart` má 908 řádků, `home.dart` 954; pohledy mají 368 a 696 řádků. Místní příkazy editoru a výpočet seznamu poznámek mají vlastní soubory. Řadiče, historie změn a ukládání zůstaly u původních vlastníků. Revize `a25bb36`: 363 mobilních testů prošlo, statická kontrola bez nálezů.
+- 2026-10-23 Debug kandidát 0.2.3+6, SHA-256 `76dc8dafa5751831b965c68e4b1f743798c75cc3618cdb7cb9ac71cf95561813`, ověřen na S9+ a S21. Na obou prošlo otevření poznámky, vložení znaku, vrácení původního textu, náhled a návrat do seznamu; na S9+ i zobrazení obrázkové přílohy. Testovací texty byly obnoveny.
+
+
 - 2026-10-23 Poznámky přijaté přes Notes API mají označení sdílení a patří také do „Sdíleno se mnou“. Vlastní sdílené poznámky mají samostatný štítek a zůstávají ve svých kategoriích. Směr sdílení se ukládá odděleně od synchronizačního rozhraní; databáze se rozšiřuje na verzi 5. Dialog upozorní i na další způsoby sdílení, například skupiny a odkazy. Načítání sdílených souborů bylo odděleno ze `sync.dart`, který má nyní méně než 1 000 řádků.
 - 2026-10-23 Revize `95d5888`: 363 mobilních, 95 protokolových a 76 databázových testů prošlo, osm živých testů bez přístupů se přeskočilo; statické kontroly bez nálezů. Ověřeny migrace verzí 1–4, souběh uživatelského a skupinového sdílení, zachování starých údajů při chybě odchozího seznamu, zrušení sdílení a český štítek při 200% písmu na šířce 320 bodů.
 - 2026-10-23 Debug kandidát 0.2.3+6, SHA-256 `3bba1b886109e5f791ee71c1d616b7442c48591355e5c1898e67080a4e19a28d`, ověřen na S9+ jako příjemci a S21 jako vlastníkovi. Testovací soubor byl u příjemce přesunut do Notes: staré APK ho neoznačovalo, nové ukázalo sdílení i ve filtru. Po odebrání přístupu na S21 server potvrdil odstranění sdílení, zmizel štítek vlastníka a po obnovení seznamu se vyprázdnil filtr příjemce. Děděné sdílení složek zůstává samostatně v TODO.
