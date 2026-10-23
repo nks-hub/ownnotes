@@ -1936,4 +1936,18 @@ class AppLocalizationsCs extends AppLocalizations {
   @override
   String get backgroundSyncSaveFailed =>
       'Nastavení synchronizace se nepodařilo uložit nebo použít.';
+
+  @override
+  String get telemetryTitle => 'Diagnostika a používání aplikace';
+
+  @override
+  String get telemetryDescription =>
+      'Odesílá chyby a názvy obrazovek do Sentry a Rybbit. Texty poznámek ani přihlašovací údaje se neodesílají. Vypnutí platí ihned, zapnutí po novém spuštění.';
+
+  @override
+  String get telemetryRestart =>
+      'Diagnostika se zapne při příštím spuštění aplikace.';
+
+  @override
+  String get telemetrySaveFailed => 'Volbu diagnostiky se nepodařilo uložit.';
 }

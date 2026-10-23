@@ -3219,6 +3219,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not save or apply sync settings.'**
   String get backgroundSyncSaveFailed;
+
+  /// No description provided for @telemetryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Diagnostics and app usage'**
+  String get telemetryTitle;
+
+  /// No description provided for @telemetryDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Sends errors and screen names to Sentry and Rybbit. Note text and credentials are excluded. Disabling takes effect now; enabling takes effect after restarting.'**
+  String get telemetryDescription;
+
+  /// No description provided for @telemetryRestart.
+  ///
+  /// In en, this message translates to:
+  /// **'Diagnostics will start the next time you open the app.'**
+  String get telemetryRestart;
+
+  /// No description provided for @telemetrySaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save the diagnostics setting.'**
+  String get telemetrySaveFailed;
 }
 
 class _AppLocalizationsDelegate

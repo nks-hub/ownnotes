@@ -19,20 +19,46 @@ void main() {
       ),
     );
     expect(event.request, isNull);
-    expect(event.message!.formatted, isNot(contains('example.invalid')));
+    expect(event.message, isNull);
     expect(event.exceptions!.single.value, isNot(contains('c2VjcmV0')));
     expect(event.exceptions!.single.value, isNot(contains('notes/7')));
   });
 
-  test('a breadcrumb keeps its shape but loses the URL', () {
+  test('a navigation breadcrumb only keeps known route names', () {
     final crumb = scrubSentryBreadcrumb(
       Breadcrumb(
+        category: 'navigation',
         message: 'GET https://cloud.example.invalid/x',
-        data: {'url': 'https://cloud.example.invalid/x', 'status': 200},
+        data: {'to': '/note', 'from': '/note/private-title', 'title': 'Secret'},
       ),
       Hint(),
     )!;
-    expect(crumb.message, 'GET https://<host>');
-    expect(crumb.data, {'url': 'https://<host>', 'status': 200});
+    expect(crumb.message, isNull);
+    expect(crumb.data, {'to': '/note'});
+  });
+
+  test('parser messages and console breadcrumbs cannot send note text', () {
+    final event = scrubSentryEvent(
+      SentryEvent(
+        message: SentryMessage('Private note contents'),
+        // ignore: deprecated_member_use
+        extra: {
+          'note': {'body': 'Private note contents'},
+        },
+        user: SentryUser(email: 'person@example.invalid'),
+        exceptions: [
+          SentryException(
+            type: 'FormatException',
+            value: 'Private note contents',
+          ),
+        ],
+        breadcrumbs: [
+          Breadcrumb(category: 'console', message: 'Private note contents'),
+        ],
+      ),
+    );
+    expect(event.toJson().toString(), isNot(contains('Private note contents')));
+    expect(event.user, isNull);
+    expect(event.exceptions!.single.type, 'FormatException');
   });
 }

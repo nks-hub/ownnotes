@@ -1,8 +1,12 @@
 import 'package:flutter/widgets.dart';
 import 'package:rybbit_flutter_sdk/rybbit_flutter_sdk.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
+// ignore: implementation_imports
+import 'package:rybbit_flutter_sdk/src/services/http_client.dart';
 
 import 'telemetry.dart';
+import 'telemetry_preferences.dart';
+import 'telemetry_transport.dart';
 
 /// Starts the app, with crash reporting and analytics attached only when the
 /// build carries the corresponding configuration.
@@ -22,6 +26,11 @@ Future<void> runWithTelemetry({
     return;
   }
 
+  await telemetryPreferences.load();
+  if (!telemetryPreferences.enabled) {
+    runApp(appBuilder(const []));
+    return;
+  }
   final installation = await installationIds.read();
   final observers = <NavigatorObserver>[];
 
@@ -30,6 +39,10 @@ Future<void> runWithTelemetry({
       await Rybbit.init(
         host: config.rybbitHost,
         siteId: config.rybbitSiteId,
+        transport: ConsentTransport(
+          RybbitHttpClient(host: config.rybbitHost),
+          telemetryPreferences,
+        ),
         anonymousId: installation?.value,
         // Errors belong to Sentry, which scrubs them first. Rybbit's own
         // handler would ship the raw message and claim FlutterError.onError
@@ -37,7 +50,7 @@ Future<void> runWithTelemetry({
         autoTrackErrors: false,
         globalProperties: {'environment': config.environment},
       );
-      observers.add(RybbitNavigatorObserver());
+      observers.add(TelemetryNavigatorObserver());
     } on Object {
       // Analytics is never worth a failed launch.
     }
@@ -82,7 +95,9 @@ void configureSentryOptions(
     ..dsn = config.sentryDsn
     ..environment = config.environment
     ..enableAppHangTracking = true
-    ..enableAutoNativeBreadcrumbs = true
+    ..enableAutoNativeBreadcrumbs = false
+    ..enableUserInteractionBreadcrumbs = false
+    ..enableUserInteractionTracing = false
     ..enableMemoryPressureBreadcrumbs = false
     // Everything below keeps note text, titles and server addresses on the
     // device: those are either off or scrubbed.
@@ -91,47 +106,102 @@ void configureSentryOptions(
     // Automatic tracing can expose server URLs.
     ..tracesSampleRate = 0
     ..beforeBreadcrumb = scrubSentryBreadcrumb
-    ..beforeSend = (event, hint) => scrubSentryEvent(event);
+    ..beforeSend = (event, hint) =>
+        telemetryPreferences.enabled ? scrubSentryEvent(event) : null;
 }
 
-const _scrubber = TelemetryScrubber();
+Future<void> stopTelemetry() async {
+  // The transport discards queued analytics before reset flushes the buffer.
+  await Rybbit.reset();
+  await Sentry.close();
+}
 
-/// Removes URLs and credentials from everything an event carries as text.
-///
-/// [SentryEvent.request] goes entirely: a Notes request URL names the server
-/// and the note id, and the failing call is already identifiable from the
-/// stack.
+/// Keeps crash types and stacks without arbitrary note or server text.
 SentryEvent scrubSentryEvent(SentryEvent event) {
   event.request = null;
-  final message = event.message;
-  if (message != null) {
-    event.message = SentryMessage(_scrubber.scrub(message.formatted));
-  }
+  event.message = null;
+  // Older integrations can still populate this deprecated field.
+  // ignore: deprecated_member_use
+  event.extra = null;
+  event.tags = null;
+  event.contexts.removeWhere(
+    (key, _) => !const {
+      'device',
+      'os',
+      'app',
+      'runtimes',
+      'runtime',
+      'flutter',
+    }.contains(key),
+  );
+  event.serverName = null;
+  event.transaction = telemetryRoutes.contains(event.transaction)
+      ? event.transaction
+      : null;
+  final id = event.user?.id;
+  event.user = id != null && InstallationId(id).isValid
+      ? SentryUser(id: id)
+      : null;
   for (final exception in event.exceptions ?? const <SentryException>[]) {
-    final value = exception.value;
-    if (value != null) {
-      exception.value = _scrubber.scrub(value);
-    }
+    // Parser errors may quote note text without a URL or credential marker.
+    exception.value = '<redacted>';
   }
+  event.breadcrumbs = event.breadcrumbs
+      ?.map((crumb) => scrubSentryBreadcrumb(crumb, Hint()))
+      .whereType<Breadcrumb>()
+      .toList();
   return event;
 }
 
 Breadcrumb? scrubSentryBreadcrumb(Breadcrumb? breadcrumb, Hint hint) {
-  if (breadcrumb == null) {
+  if (breadcrumb == null || breadcrumb.category != 'navigation') {
     return null;
   }
-  final message = breadcrumb.message;
-  if (message != null) {
-    breadcrumb.message = _scrubber.scrub(message);
-  }
-  final data = breadcrumb.data;
-  if (data != null) {
-    for (final entry in data.entries.toList()) {
-      final value = entry.value;
-      if (value is String) {
-        data[entry.key] = _scrubber.scrub(value);
-      }
+  return Breadcrumb(
+    category: 'navigation',
+    timestamp: breadcrumb.timestamp,
+    data: {
+      for (final key in const ['from', 'to'])
+        if (telemetryRoutes.contains(breadcrumb.data?[key]))
+          key: breadcrumb.data![key],
+    },
+  );
+}
+
+const telemetryRoutes = {
+  '/',
+  '/note',
+  '/login',
+  '/login/qr',
+  '/recovery',
+  '/accounts',
+  '/capture',
+  '/checklist',
+  '/templates',
+  '/about',
+  '/pane',
+  '/settings',
+};
+
+class TelemetryNavigatorObserver extends NavigatorObserver {
+  void _track(Route<dynamic>? route) {
+    final name = route?.settings.name;
+    if (telemetryPreferences.enabled &&
+        telemetryRoutes.contains(name) &&
+        Rybbit.isInitialized) {
+      Rybbit.instance.screenView(name!, title: name);
     }
   }
-  return breadcrumb;
+
+  @override
+  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) =>
+      _track(route);
+
+  @override
+  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) =>
+      _track(previousRoute);
+
+  @override
+  void didReplace({Route<dynamic>? newRoute, Route<dynamic>? oldRoute}) =>
+      _track(newRoute);
 }

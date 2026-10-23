@@ -1,0 +1,75 @@
+name: Official mobile build
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: android
+            runner: ubuntu-latest
+          - platform: ios
+            runner: macos-15
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: python3 tool/check_git_identity.py
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.7'
+          channel: stable
+          cache: true
+      - name: Configure official telemetry
+        env:
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          RYBBIT_HOST: ${{ secrets.RYBBIT_HOST }}
+          RYBBIT_SITE_ID: ${{ secrets.RYBBIT_SITE_ID }}
+        run: python3 tool/configure_telemetry.py
+      - name: Verify configured and opted-out startup
+        working-directory: apps/mobile
+        run: flutter test test/telemetry_test.dart test/telemetry_bootstrap_test.dart test/telemetry_preferences_test.dart --dart-define-from-file=telemetry.env
+      - name: Configure Android signing
+        if: matrix.platform == 'android'
+        env:
+          UPLOAD_KEYSTORE: ${{ secrets.UPLOAD_KEYSTORE }}
+          UPLOAD_KEYSTORE_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_PASSWORD }}
+        run: |
+          python3 - <<'PY'
+          import base64, os
+          from pathlib import Path
+          root = Path('apps/mobile/android').resolve()
+          (root / 'upload-keystore.jks').write_bytes(base64.b64decode(os.environ['UPLOAD_KEYSTORE']))
+          password = os.environ['UPLOAD_KEYSTORE_PASSWORD']
+          assert password, 'Upload keystore password is missing'
+          (root / 'key.properties').write_text(
+              f'storeFile={root}/upload-keystore.jks\nstorePassword={password}\nkeyAlias=upload\nkeyPassword={password}\n'
+          )
+          PY
+      - name: Build Google Play bundle
+        if: matrix.platform == 'android'
+        working-directory: apps/mobile
+        run: flutter build appbundle --release --dart-define-from-file=telemetry.env
+      - name: Compile iOS release
+        if: matrix.platform == 'ios'
+        working-directory: apps/mobile
+        run: flutter build ios --release --no-codesign --dart-define-from-file=telemetry.env
+      - uses: actions/upload-artifact@v4
+        if: matrix.platform == 'android'
+        with:
+          name: ownnotes-play-${{ github.sha }}
+          path: apps/mobile/build/app/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
+      - name: Remove build credentials
+        if: always()
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          for name in ('telemetry.env', 'android/key.properties', 'android/upload-keystore.jks'):
+              (Path('apps/mobile') / name).unlink(missing_ok=True)
+          PY

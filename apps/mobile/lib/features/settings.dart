@@ -13,6 +13,7 @@ import 'accounts.dart';
 import 'lock.dart' show localAuthProvider;
 import 'templates/templates_screen.dart';
 import 'settings/background_sync_controls.dart';
+import 'settings/telemetry_controls.dart';
 
 /// Languages the user can pick; null follows the system. Each is shown in
 /// its own language. German is listed ahead of its translation files.
@@ -134,6 +135,7 @@ class SettingsScreen extends ConsumerWidget {
                 ),
               ),
               _Section(l.settingsPrivacy),
+              const TelemetryControls(),
               SwitchListTile(
                 secondary: const Icon(Icons.lock_outline),
                 title: Text(l.appLock),

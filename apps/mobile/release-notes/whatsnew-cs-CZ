@@ -1,1 +1,1 @@
-Poznámky ze sdílených složek se načítají i mimo Notes, včetně podsložek. Synchronizaci na pozadí lze vypnout, nastavit její interval a omezit ji na Wi-Fi. Opraveno ukládání příloh, souběžná stahování a náhledy offline. Bod synchronizace se zachová po restartu. Přesuny a změny oprávnění zachovávají místní text.
+V Nastavení lze vypnout diagnostiku Sentry a statistiku Rybbit. Vypnutí platí ihned a zůstane uložené po restartu. Odesílají se jen známé názvy obrazovek; texty poznámek, přihlašovací údaje a zprávy výjimek se neodesílají.

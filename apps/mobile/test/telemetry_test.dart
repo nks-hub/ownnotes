@@ -19,7 +19,15 @@ void main() {
     });
 
     test('a malformed DSN disables crash reporting instead of guessing', () {
-      for (final dsn in const ['not-a-url', 'https://', '://nowhere', ' ']) {
+      for (final dsn in const [
+        'not-a-url',
+        'https://',
+        '://nowhere',
+        ' ',
+        'http://key@example.invalid/1',
+        'https://example.invalid/1',
+        'https://key@example.invalid/',
+      ]) {
         final config = TelemetryConfig(
           sentryDsn: dsn,
           rybbitHost: '',

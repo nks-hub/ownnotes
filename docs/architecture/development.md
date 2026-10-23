@@ -94,10 +94,18 @@ Do not reuse reference-app telemetry identifiers.
 
 Implementation: `apps/mobile/lib/core/telemetry.dart` (build-time config,
 scrubber, random installation id) and `telemetry_bootstrap.dart` (SDK start).
-Sentry gets crashes without request data, with URLs cut to `scheme://<host>`
-and credentials removed; tracing, screenshots and default PII are off. Rybbit
-gets route names only (`/note`, `/login`, `/recovery`), never note ids or
-titles, with its own error capture off. Build our telemetry-enabled app with:
+Sentry zachovává typ výjimky a zásobník volání. Zprávy výjimek, volné zprávy,
+požadavky, vlastní tagy a doplňující data zahazuje, protože mohou obsahovat text
+poznámky. Drobečky navigace obsahují jen známé názvy obrazovek. Sledování dotyků,
+nativní drobečky, tracing a snímky jsou vypnuté. Rybbit dostává jen známé názvy
+obrazovek; argumenty navigace ignoruje a vlastní sběr chyb má vypnutý.
+
+V Nastavení lze diagnostiku a statistiku vypnout. Volba se ukládá na zařízení
+a čte před spuštěním SDK. Vypnutí ihned zastaví sběr a zahodí čekající analytické
+události; již odeslaný požadavek nelze odvolat. Zapnutí platí po novém spuštění.
+Pokud uloženou volbu nelze přečíst, oba SDK zůstanou vypnuté.
+
+Build our telemetry-enabled app with:
 
 ```bash
 cp apps/mobile/telemetry.env.example apps/mobile/telemetry.env  # fill in
@@ -106,6 +114,15 @@ flutter build apk --dart-define-from-file=telemetry.env
 
 `TELEMETRY_RELEASE_GATE=true` sends one `TelemetryReleaseGateError` after start
 to prove delivery before a release; keep it off for normal builds.
+
+Workflow `Official mobile build` načítá GitHub secrets `SENTRY_DSN`,
+`RYBBIT_HOST` a `RYBBIT_SITE_ID`. `tool/configure_telemetry.py` ověří obě
+integrace, nastaví prostředí production a vypne testovací událost. Chybějící
+konfigurace oficiální build zastaví. Android používá `UPLOAD_KEYSTORE` a
+`UPLOAD_KEYSTORE_PASSWORD` a ukládá podepsaný AAB. iOS job ověřuje release
+překlad bez podpisu; podepsání a TestFlight upload probíhají na sdíleném Macu.
+Běžný workflow `Mobile candidate` nadále sestavuje bez telemetrie. Vlastní
+sestavení bez těchto parametrů žádný endpoint nepoužívá.
 
 ## Builds and release
 

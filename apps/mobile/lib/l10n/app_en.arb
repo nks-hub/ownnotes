@@ -916,5 +916,9 @@
   "backgroundSyncWifi": "Wi-Fi only",
   "backgroundSyncHint": "Applies while the app is closed, including widget changes. The open app uses any available network. Android decides when background work runs.",
   "backgroundSyncLoadFailed": "Cannot read sync settings. Tap to retry.",
-  "backgroundSyncSaveFailed": "Could not save or apply sync settings."
+  "backgroundSyncSaveFailed": "Could not save or apply sync settings.",
+  "telemetryTitle": "Diagnostics and app usage",
+  "telemetryDescription": "Sends errors and screen names to Sentry and Rybbit. Note text and credentials are excluded. Disabling takes effect now; enabling takes effect after restarting.",
+  "telemetryRestart": "Diagnostics will start the next time you open the app.",
+  "telemetrySaveFailed": "Could not save the diagnostics setting."
 }

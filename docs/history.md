@@ -1,5 +1,7 @@
 # History
 
+- 2026-10-24 OwnNotes 0.2.5 (8): volitelné Sentry a Rybbit se vypínají v Nastavení; uložená volba se čte před inicializací. Vypnutí zahazuje čekající analytické události a zastaví SDK. Diagnostika odstraní volné zprávy a texty výjimek; navigace používá jen povolené názvy obrazovek. Oficiální CI čte konfiguraci ze secrets, běžné vlastní buildy nic nevyžadují. Vydání do obchodů zatím čeká na ověření.
+
 Finished work with how it was verified. Newest first is not guaranteed; dates are exact.
 
 - 2026-10-23 Verze `0.2.4+7`, tag `v0.2.4+7`, zdroj `d4bc492`: celé CI prošlo. Mobilní sada: 383 testů prošlo, jeden test zamykání souboru určený pro Windows byl na Linuxu přeskočen. Protokol: 129 testů; databáze: 113 testů; osm živých testů v CI nemá přístupy. Statické kontroly a kontrolní Android sestavení prošly. Oprava testu Workmanageru inicializuje knihovnu před dosazením testovacího plánovače; první konstrukce na Linuxu jinak testovací plánovač přepíše.

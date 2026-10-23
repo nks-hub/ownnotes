@@ -1907,4 +1907,18 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get backgroundSyncSaveFailed =>
       'Could not save or apply sync settings.';
+
+  @override
+  String get telemetryTitle => 'Diagnostics and app usage';
+
+  @override
+  String get telemetryDescription =>
+      'Sends errors and screen names to Sentry and Rybbit. Note text and credentials are excluded. Disabling takes effect now; enabling takes effect after restarting.';
+
+  @override
+  String get telemetryRestart =>
+      'Diagnostics will start the next time you open the app.';
+
+  @override
+  String get telemetrySaveFailed => 'Could not save the diagnostics setting.';
 }

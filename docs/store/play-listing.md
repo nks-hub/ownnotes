@@ -103,10 +103,12 @@ Du brauchst einen Nextcloud-Server mit installierter App Notes.
 
 ## Data safety answers
 
-Release builds made with `telemetry.env` send:
+Oficiální buildy mají volitelnou diagnostiku a statistiku. V Nastavení ji lze
+vypnout ihned; zapnutí platí po novém spuštění. Vlastní build bez `telemetry.env`
+nic neodesílá. Při zapnuté volbě se odesílá:
 
 - **Crash logs and diagnostics** to the project's self-hosted Sentry: stack
-  trace and error type, URLs cut to `scheme://<host>`, credentials removed, a
+  trace and error type, free-form messages and requests removed, a
   random installation id; no note text, titles or server address.
 - **App interactions** to the project's self-hosted Rybbit: screen names
   (`/`, `/note`, `/login`, `/recovery`) and app open, with the random

@@ -712,5 +712,9 @@
   "backgroundSyncWifi": "Jen Wi-Fi",
   "backgroundSyncHint": "Platí při zavřené aplikaci, včetně změn z widgetů. Otevřená aplikace používá dostupnou síť. Čas spuštění na pozadí určuje Android.",
   "backgroundSyncLoadFailed": "Nastavení synchronizace nelze načíst. Klepnutím zkuste znovu.",
-  "backgroundSyncSaveFailed": "Nastavení synchronizace se nepodařilo uložit nebo použít."
+  "backgroundSyncSaveFailed": "Nastavení synchronizace se nepodařilo uložit nebo použít.",
+  "telemetryTitle": "Diagnostika a používání aplikace",
+  "telemetryDescription": "Odesílá chyby a názvy obrazovek do Sentry a Rybbit. Texty poznámek ani přihlašovací údaje se neodesílají. Vypnutí platí ihned, zapnutí po novém spuštění.",
+  "telemetryRestart": "Diagnostika se zapne při příštím spuštění aplikace.",
+  "telemetrySaveFailed": "Volbu diagnostiky se nepodařilo uložit."
 }

@@ -712,5 +712,9 @@
   "backgroundSyncWifi": "Nur WLAN",
   "backgroundSyncHint": "Gilt bei geschlossener App, auch für Widget-Änderungen. Die geöffnete App nutzt jedes verfügbare Netzwerk. Android bestimmt den Zeitpunkt der Hintergrundausführung.",
   "backgroundSyncLoadFailed": "Synchronisierungseinstellungen können nicht gelesen werden. Zum Wiederholen tippen.",
-  "backgroundSyncSaveFailed": "Synchronisierungseinstellungen konnten nicht gespeichert oder angewendet werden."
+  "backgroundSyncSaveFailed": "Synchronisierungseinstellungen konnten nicht gespeichert oder angewendet werden.",
+  "telemetryTitle": "Diagnose und App-Nutzung",
+  "telemetryDescription": "Sendet Fehler und Bildschirmnamen an Sentry und Rybbit. Notiztexte und Zugangsdaten werden nicht gesendet. Ausschalten gilt sofort, Einschalten nach einem Neustart.",
+  "telemetryRestart": "Die Diagnose startet beim nächsten Öffnen der App.",
+  "telemetrySaveFailed": "Die Diagnoseeinstellung konnte nicht gespeichert werden."
 }

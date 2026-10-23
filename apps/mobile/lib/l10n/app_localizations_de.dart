@@ -1926,4 +1926,19 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get backgroundSyncSaveFailed =>
       'Synchronisierungseinstellungen konnten nicht gespeichert oder angewendet werden.';
+
+  @override
+  String get telemetryTitle => 'Diagnose und App-Nutzung';
+
+  @override
+  String get telemetryDescription =>
+      'Sendet Fehler und Bildschirmnamen an Sentry und Rybbit. Notiztexte und Zugangsdaten werden nicht gesendet. Ausschalten gilt sofort, Einschalten nach einem Neustart.';
+
+  @override
+  String get telemetryRestart =>
+      'Die Diagnose startet beim nächsten Öffnen der App.';
+
+  @override
+  String get telemetrySaveFailed =>
+      'Die Diagnoseeinstellung konnte nicht gespeichert werden.';
 }

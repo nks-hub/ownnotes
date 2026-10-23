@@ -45,7 +45,11 @@ final class TelemetryConfig {
   /// value disables it rather than letting the SDK decide what to do with it.
   bool get crashReportingEnabled {
     final uri = Uri.tryParse(sentryDsn);
-    return uri != null && uri.hasScheme && uri.host.isNotEmpty;
+    return uri != null &&
+        uri.scheme == 'https' &&
+        uri.host.isNotEmpty &&
+        uri.userInfo.isNotEmpty &&
+        uri.pathSegments.where((part) => part.isNotEmpty).isNotEmpty;
   }
 
   /// Analytics needs both halves; one without the other is a misconfigured
@@ -53,7 +57,7 @@ final class TelemetryConfig {
   bool get analyticsEnabled {
     final uri = Uri.tryParse(rybbitHost);
     return uri != null &&
-        uri.hasScheme &&
+        uri.scheme == 'https' &&
         uri.host.isNotEmpty &&
         rybbitSiteId.isNotEmpty;
   }
