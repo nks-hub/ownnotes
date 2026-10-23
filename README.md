@@ -1,38 +1,35 @@
 # OwnNotes
 
-Independent offline-first Flutter client for Nextcloud Notes. Android and iOS
-candidate projects are included. This is an executable development foundation,
-not a production-ready implementation of the complete product plan.
+OwnNotes je mobilní klient Nextcloud Notes ve Flutteru pro Android a iOS.
+Poznámky ukládá také do zařízení, aby šly upravovat bez připojení.
+Na serveru zůstávají obyčejné soubory Markdown a kategorie odpovídají složkám.
 
-## Implemented
+## Co je implementované
 
-- Login Flow v2 in the system browser, same-origin/path checks, single poller,
-  bounded responses and terminal handling of lost credential responses.
-- Secure credential adapter, account metadata in Drift, orphan recovery and
-  explicit missing-credential state. No plaintext password fallback.
-- Account-scoped SQLite notes, raw Markdown, local revision checks, autosave,
-  search, categories, favorites and preview. Passwords are excluded from SQLite.
-- Foreground synchronization: durable intent before CREATE/PUT, uncertain write
-  recovery, partial content/favorite updates, quoted ETags and conflict decisions.
-- Mutation epochs reject stale reads; CREATE receipts preserve newer local edits
-  and reconcile already fetched remote identities. Pull never deletes by census.
-- Conflict comparison and explicit server/local/copy decisions. Original uncertain
-  records remain retained when the user creates a separate recovery copy.
-- English/Czech ARB localization, light/dark themes and candidate native identities.
-- Dart/SQLite/widget tests, including an HTTP adapter → database → UI/editor flow.
+- Více účtů, přihlášení přes Nextcloud Login Flow v2 a bezpečné úložiště přístupových údajů.
+- Lokální databáze SQLite, průběžné ukládání, synchronizace a ruční řešení konfliktů.
+- Editor Markdownu, výslovně zapínaný náhled, seznamy úkolů, šablony, historie úprav a hledání v poznámce.
+- Kategorie, oblíbené, uložené pohledy a filtry pro přílohy, úkoly a stav synchronizace.
+- Přílohy s frontou přenosů a lokální mezipamětí, sdílení přes Nextcloud a příjem obsahu z jiných aplikací.
+- Widgety, zámek aplikace, světlý a tmavý vzhled, čeština, angličtina a němčina.
+- Rozložení se seznamem a editorem vedle sebe na širších obrazovkách.
+- Synchronizace na pozadí v Androidu přes WorkManager; systém rozhoduje o skutečném čase spuštění.
+- Volitelné Sentry a Rybbit, zapínané nastavením při sestavení.
 
-## Deliberate limits of this candidate
+Tento seznam popisuje kód. Rozsah automatických a fyzických testů je uveden
+v [historii](docs/history.md); otevřené úkoly jsou v [TODO.md](TODO.md).
+Starší audity popisují své uvedené revize, nikoli vždy dnešní stav.
 
-Only one foreground sync coordinator is enabled. Native background workers and
-cross-process leases are not implemented. Renaming/moving existing notes pauses
-for a decision because attachment movement requires separate integrity checks.
-Remote DELETE, authenticated images, attachment uploads, OCS capabilities/DAV UID,
-advanced sharing/version history, widgets, app lock, telemetry and full adaptive
-tablet layout remain open. Preview currently shows placeholders for images.
+## Otevřené části
 
-The database is sandboxed SQLite, not an encrypted database. Production backup,
-encryption and export policy remains an explicit release gate. No release is
-signed with a debug key. No live Nextcloud/device compatibility claim is made.
+Export ZIP obsahuje poznámky Markdown, ale zatím nejde o úplnou obnovitelnou
+zálohu s metadaty a přílohami. Otevřené jsou také serverová historie a koš,
+nastavení intervalu a Wi-Fi pro Android, synchronizace na pozadí v iOS,
+`notify_push` a desktopové sestavení.
+
+SQLite databáze není šifrovaná. Fyzický Fold, tablet, QR přihlášení kamerou
+a některé scénáře iOS stále vyžadují ověření podle TODO. Sestavení aplikace
+samo o sobě nedokládá funkčnost těchto scénářů.
 
 ## Run and verify
 
