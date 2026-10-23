@@ -37,11 +37,21 @@ Successful intended-value validation belongs to the coordinator. The adapter
 never claims a 200 body is sufficient to mark a local revision synchronized.
 Error bodies, credentials and note text are absent from exception strings.
 
-## Not implemented
+## Rozsah dokumentu
 
-Login Flow v2, capabilities, settings, explicit exclude projections, attachment
-transport, persistent cache/outbox, synchronization coordinator, Flutter screens,
-OpenAPI coverage of the complete server, live server/fault tests.
+Výše je základní kontrakt Notes REST API. Další části jsou implementované v
+[Login Flow v2](../../packages/notes_protocol/lib/src/login.dart),
+[sdílení a WebDAV](../../packages/notes_protocol/lib/src/sharing.dart) a
+[přílohách](../../packages/notes_protocol/lib/src/attachments.dart).
+Ukládání a synchronizaci zajišťuje `notes_store`, obrazovky `apps/mobile`.
+Otevřené části jsou v [TODO](../../TODO.md).
+
+Označení sdílení používá [OCS Share API](https://docs.nextcloud.com/server/latest/developer_manual/client_apis/OCS/ocs-share-api.html).
+Příchozí a odchozí přímá souborová sdílení mají vlastní údaje v místní databázi;
+`kind` dál určuje pouze rozhraní Notes nebo WebDAV. Pole `isShared` v odpovědi
+Notes samo nerozlišuje tyto směry a ořezaný seznam může vrátit jen ID;
+[implementace Notes 6.1](https://github.com/nextcloud/notes/blob/v6.1.0/lib/Service/NoteUtil.php)
+počítá sdílení souboru jeho vlastníkem.
 
 Fixtures are synthetic. They contain no production data. Adapter tests inspect
 actual serialized HTTP requests, rather than mocking the resulting DTO alone.

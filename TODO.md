@@ -30,8 +30,6 @@ references: [docs/research/review-2026-10-20.md](docs/research/review-2026-10-20
 - [ ] On a real phone: QR login (needs a code shown on another screen and
       the phone's camera). Tablet layout was checked only on the S9 with a
       tablet-sized display (`wm size`); a real tablet is still to do.
-- [ ] A note shared from the Notes folder has no "Shared" mark in the list
-      (shares from other folders have one); decide how it should look.
 - [ ] S9 test phone: auto-rotate keeps switching itself back on
       (`accelerometer_rotation` returns to 1 within a minute), so the app
       opens in landscape. The app requests no orientation; the phone is
@@ -48,7 +46,9 @@ references: [docs/research/review-2026-10-20.md](docs/research/review-2026-10-20
 
 ## Later
 
-- [ ] Dále rozdělit `features/editor.dart` podle odpovědností; po oddělení hledání má stále přes 1 000 řádků.
+- [ ] Ověřit označení poznámek, které dědí sdílení z celé složky; současná evidence sdílení sleduje přímá souborová sdílení.
+
+- [ ] Dále rozdělit `features/editor.dart` a `features/home.dart` podle odpovědností; oba soubory mají stále přes 1 000 řádků.
 
 - [ ] Android sync settings (interval, Wi-Fi only).
 - [ ] Backups that can be restored: ZIP with metadata and attachments.
