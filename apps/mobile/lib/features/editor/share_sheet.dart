@@ -151,8 +151,9 @@ class _ShareSheetBodyState extends ConsumerState<ShareSheetBody> {
       await widget.flush();
       await runtime.sync.sync(_note.accountId);
       final fresh = await runtime.database.note(_note.accountId, _note.id);
-      if (fresh == null || fresh.remoteId == null)
+      if (fresh == null || fresh.remoteId == null) {
         throw StateError('not_uploaded');
+      }
       _note = fresh;
       await _prepare();
     } on Object {

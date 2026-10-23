@@ -598,8 +598,9 @@ List<MdBlock> _blocks(
       var j = i;
       while (j + 1 < n && (quote(j + 1) || !lines[j + 1].blank)) {
         final k = j + 1;
-        if (!quote(k) && (atx(k) || rule(k) || fenceStart(k) || listStart(k)))
+        if (!quote(k) && (atx(k) || rule(k) || fenceStart(k) || listStart(k))) {
           break;
+        }
         j = k;
       }
       add(MdBlockKind.quote, i, j);

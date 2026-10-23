@@ -121,8 +121,9 @@ Future<void> publishWidgets(
       );
     } else if (account != null) {
       if (onlyAccount != null && account != onlyAccount) continue;
-      if (!sources.containsKey(account))
+      if (!sources.containsKey(account)) {
         sources[account] = await source(account);
+      }
       final src = sources[account];
       if (src == null) {
         await storage.write(

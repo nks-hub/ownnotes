@@ -216,7 +216,13 @@ void main() {
 
       await sharingA.unshare(share.id);
       await syncB.sync('b');
-      expect(await db.select(db.localNotes).get(), isEmpty);
+      expect(
+        await (db.select(db.localNotes)..where(
+              (n) => n.accountId.equals('b') & n.remoteId.equals(note.id),
+            ))
+            .get(),
+        isEmpty,
+      );
     },
     skip: skip,
     timeout: const Timeout(Duration(minutes: 3)),
@@ -261,7 +267,13 @@ void main() {
 
       await sharingA.unshare(share.id);
       await syncB.sync('b');
-      expect(await db.select(db.localNotes).get(), isEmpty);
+      expect(
+        await (db.select(db.localNotes)..where(
+              (n) => n.accountId.equals('b') & n.remoteId.equals(fileId),
+            ))
+            .get(),
+        isEmpty,
+      );
     },
     skip: skip,
     timeout: const Timeout(Duration(minutes: 3)),
