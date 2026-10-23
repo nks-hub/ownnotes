@@ -323,6 +323,27 @@ void main() {
       ),
     );
 
+    testWidgets('sheet content stays above the system navigation bar', (tester) async {
+      tester.view.physicalSize = const Size(360, 800);
+      tester.view.devicePixelRatio = 1;
+      tester.view.padding = const FakeViewPadding(bottom: 48);
+      tester.view.viewPadding = const FakeViewPadding(bottom: 48);
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        host((c) => showOwnSheet<void>(
+          context: c,
+          title: 'Attachments',
+          builder: (_) => const Text('The file stays on the server.'),
+        )),
+      );
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+      expect(
+        tester.getBottomLeft(find.text('The file stays on the server.')).dy,
+        lessThanOrEqualTo(800 - 48),
+      );
+    });
+
     testWidgets('a sheet opens as a sheet on a phone', (tester) async {
       tester.view.physicalSize = const Size(411, 900);
       tester.view.devicePixelRatio = 1;

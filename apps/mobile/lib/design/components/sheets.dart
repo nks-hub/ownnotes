@@ -45,11 +45,16 @@ Future<T?> showOwnSheet<T>({
     enableDrag: dismissible,
     showDragHandle: true,
     constraints: const BoxConstraints(maxWidth: OwnShape.formWidth),
-    builder: (context) => _SheetBody(
-      builder: builder,
-      title: title,
-      scroll: true,
-      keyboardInset: MediaQuery.viewInsetsOf(context).bottom,
+    builder: (context) => SafeArea(
+      top: false,
+      left: false,
+      right: false,
+      child: _SheetBody(
+        builder: builder,
+        title: title,
+        scroll: true,
+        keyboardInset: MediaQuery.viewInsetsOf(context).bottom,
+      ),
     ),
   );
 }
