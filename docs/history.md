@@ -3,6 +3,11 @@
 Finished work with how it was verified. Newest first is not guaranteed; dates are exact.
 
 
+- 2026-10-23 Menu příloh v editoru otevírá skutečný přehled fronty a souborů místo prostého seznamu názvů. Opakování přenosu vloží odkaz do poznámky; odstranění odkazu zachová soubor a lze ho vrátit. Poznámka jen pro čtení nenabízí změny příloh. Dva současné pokusy o opakování už nezapisují tentýž dočasný soubor. Oba regresní testy před opravou selhaly, po opravě prošly. Test už nevkládá odkazy skrytým ručním voláním `flush`; čtení adresářů se dokončí před úklidem testu.
+- 2026-10-23 Spodní panely respektují systémovou navigační lištu. Překrytí textu bylo nalezeno na S21 a reprodukováno testem s dolním okrajem 48 bodů. Revize `378592f`: celá mobilní sada 348 testů prošla, statická kontrola bez nálezů.
+- 2026-10-23 Debug kandidát 0.2.3+6, SHA-256 `39ce1ccfa6d0139171aa4743f5a2ebf883cd2703f66eeb4cf0612db2053fa59a`, nainstalován a spuštěn na S9+ (Android 10) i S21 (Android 15). Na obou ověřen přehled příloh a jeho spodní okraj; na S9+ navíc odebrání a vrácení odkazu na testovací poznámce. Opakování přenosu a souběh dvou pokusů jsou ověřené automatickými testy, ne tímto fyzickým během. Předčasné potvrzení při vložení nové přílohy zůstává v TODO.
+
+
 - 2026-10-23 Náhled obrázků používá společnou mezipaměť příloh. Chybu stažení lze zopakovat přímo v náhledu. Poškozené UTF-8 v adrese obrázku nevyvolá pád a chyba zápisu do mezipaměti nezakryje už stažený obrázek. Revize `22cb98e`: 342 mobilních testů prošlo při jednom testovacím procesu, kontrola změněných souborů bez nálezů.
 - 2026-10-23 Ověřeno nové debug APK 0.2.3+6, SHA-256 `2de991625484f315eb813b6b61dee23a4811b2bcff99512e216d3a60068e4010`. S9+ zobrazil uložený obrázek bez aktivní sítě po novém spuštění; původní APK ve stejném scénáři selhalo. Wi-Fi i mobilní data byly obnoveny. Na S21 prošlo opakování chybějícího obrázku po jeho nahrání na server a načtení z disku po ukončení a novém spuštění aplikace, když soubor na serveru vracel 404. Testovací obrázek byl poté na server vrácen. S21 zůstal během testu připojený k síti; ověřena byla nedostupnost souboru, nikoli celé sítě.
 

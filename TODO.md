@@ -16,7 +16,7 @@ references: [docs/research/review-2026-10-20.md](docs/research/review-2026-10-20
 
 ## Now
 
-- [ ] Prošetřit občasné zablokování testu opakovaného uploadu v `transfers_ui_test.dart`; samostatný běh a další celá mobilní sada 23. 10. prošly.
+- [ ] Při vložení nové přílohy se fronta maže před uložením odkazu v editoru (`add_attachment.dart`); pád mezi těmito kroky může nechat soubor na serveru bez odkazu. Potvrzení přenosu musí následovat až po uložení poznámky.
 
 - [ ] Real Galaxy Fold: open flat, half open like a book and like a laptop
       (Flex mode), folded to the cover screen with a note open. The
