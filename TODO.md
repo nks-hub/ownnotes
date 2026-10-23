@@ -16,6 +16,8 @@ references: [docs/research/review-2026-10-20.md](docs/research/review-2026-10-20
 
 ## Now
 
+- [ ] Prošetřit občasné zablokování testu opakovaného uploadu v `transfers_ui_test.dart`; samostatný běh a další celá mobilní sada 23. 10. prošly.
+
 - [ ] Real Galaxy Fold: open flat, half open like a book and like a laptop
       (Flex mode), folded to the cover screen with a note open. The
       emulator reports the laptop posture as flat, so that layout was only
@@ -48,7 +50,8 @@ references: [docs/research/review-2026-10-20.md](docs/research/review-2026-10-20
 
 ## Later
 
-- [ ] Find in note: previous match and match count.
+- [ ] Dále rozdělit `features/editor.dart` podle odpovědností; po oddělení hledání má stále přes 1 000 řádků.
+
 - [ ] Android sync settings (interval, Wi-Fi only).
 - [ ] Backups that can be restored: ZIP with metadata and attachments.
 - [ ] File versions and trash from Nextcloud (DAV), restore keeps the draft.

@@ -2,6 +2,12 @@
 
 Finished work with how it was verified. Newest first is not guaranteed; dates are exact.
 
+
+- 2026-10-23 Hledání v poznámce obnovuje shody po změně textu i po zavření a otevření. Dotaz má vlastní řádek, počet a obě šipky jsou pod ním; hledání text nemění. Ověřeno na Galaxy S9+ (Android 10) a S21 (Android 15): oba směry, přechod přes konec, opětovné otevření a přepočítání po psaní. Původní chybu po otevření se podařilo zopakovat na S9+ před aktualizací.
+- 2026-10-23 Ověření kódu `436f304`: 339 mobilních, 93 protokolových a 73 databázových testů prošlo, statická kontrola bez nálezů. Osm živých testů se bez přístupů přeskočilo. První mobilní běh zůstal na testu opakování uploadu; samostatný test i další celá sada prošly, občasné zablokování zůstává v TODO.
+- 2026-10-23 Na telefonech byl testován debug kandidát 0.2.3+6, SHA-256 `c3a1fbe41cced28e18cb91f4a0a73313795e4b8dae567a900c5a79d417c10cac`. Aktualizace zachovala účty a poznámky. Release APK pro ARM64 se také sestavilo, SHA-256 `b34f66875232040d56e2218a472fd5fb8f0daa07e3bb24a6b5f5ee150ce41bd8`; jeho instalaci přes dosavadní debug aplikace Android odmítl kvůli podpisu. Nejde o vydání do obchodů ani fyzické ověření release režimu.
+- 2026-10-23 Aktualizováno srovnání Nextcloud Notes, Joplinu a Simplenote v existujícím auditu a zastaralý seznam funkcí v README.
+
 - 2026-10-21 About screen instead of the bare licence page: version and
   build (`package_info_plus`), what the app does and that notes stay plain
   Markdown files, the account's server with its Nextcloud and Notes versions
