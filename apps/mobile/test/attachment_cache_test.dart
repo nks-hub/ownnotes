@@ -14,6 +14,69 @@ void main() {
   tearDown(() => directory.delete(recursive: true));
 
   test(
+    'trimming removes only abandoned temporary files of this cache',
+    () async {
+      final folder = await Directory(
+        '${directory.path}/a/7',
+      ).create(recursive: true);
+      const suffix = '0123456789abcdef0123456789abcdef';
+      const oldName = '0123456789abcdef.$suffix.tmp';
+      final old = File('${folder.path}/$oldName');
+      await old.writeAsString('unfinished');
+      await old.setLastModified(
+        DateTime.now().subtract(const Duration(days: 2)),
+      );
+      final preserved = [
+        File('${folder.path}/fedcba9876543210.$suffix.tmp'),
+        File('${folder.path}/0123456789abcdef.tmp'),
+        File('${folder.path}/foreign-$oldName'),
+        File('${folder.path}/foreign.tmp'),
+      ];
+      for (var i = 0; i < preserved.length; i++) {
+        await preserved[i].writeAsString('keep');
+        await preserved[i].setLastModified(
+          DateTime.now().subtract(
+            i == 0 ? const Duration(hours: 23) : const Duration(days: 2),
+          ),
+        );
+      }
+      expect(await cache.write('a', 7, 'image.png', [1, 2, 3]), isTrue);
+      expect(await old.exists(), isFalse);
+      for (final file in preserved) {
+        expect(await file.readAsString(), 'keep');
+      }
+      expect(await cache.read('a', 7, 'image.png'), [1, 2, 3]);
+    },
+  );
+
+  test(
+    'a locked abandoned temp does not fail a successful cache write',
+    () async {
+      final folder = await Directory(
+        '${directory.path}/a/7',
+      ).create(recursive: true);
+      final old = File(
+        '${folder.path}/0123456789abcdef.0123456789abcdef0123456789abcdef.tmp',
+      );
+      await old.writeAsString('unfinished');
+      await old.setLastModified(
+        DateTime.now().subtract(const Duration(days: 2)),
+      );
+      final held = await old.open();
+      try {
+        expect(await cache.write('a', 7, 'image.png', [1]), isTrue);
+        expect(await old.exists(), isTrue);
+        expect(await cache.read('a', 7, 'image.png'), [1]);
+      } finally {
+        await held.close();
+      }
+      await cache.write('a', 7, 'other.png', [2]);
+      expect(await old.exists(), isFalse);
+    },
+    skip: !Platform.isWindows,
+  );
+
+  test(
     'preview and thumbnail share a download and one persisted result',
     () async {
       var requests = 0;

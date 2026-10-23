@@ -21,6 +21,7 @@ final class AttachmentCache {
   final int maxTotalBytes;
   final _loads = <(String, int, String), _PendingLoad>{};
   final _random = Random.secure();
+  static final _temporaryFileName = RegExp(r'[a-f0-9]{16}\.[a-f0-9]{32}\.tmp');
   Future<void>? _diskTail;
 
   Future<T> _onDisk<T>(Future<T> Function() work) async {
@@ -174,8 +175,24 @@ final class AttachmentCache {
   Future<void> _trim() async {
     final files = <(File, int, DateTime)>[];
     var total = 0;
-    await for (final e in root.list(recursive: true)) {
-      if (e is! File || e.path.endsWith('.tmp')) continue;
+    final abandonedBefore = DateTime.now().subtract(const Duration(hours: 24));
+    await for (final e in root.list(recursive: true, followLinks: false)) {
+      if (e is! File) continue;
+      if (e.path.endsWith('.tmp')) {
+        final name = e.uri.pathSegments.last;
+        if (_temporaryFileName.matchAsPrefix(name)?.end == name.length) {
+          try {
+            final stat = await e.stat();
+            if (stat.type == FileSystemEntityType.file &&
+                stat.modified.isBefore(abandonedBefore)) {
+              await e.delete();
+            }
+          } on FileSystemException {
+            // Another worker may still hold it; the current cache write is valid.
+          }
+        }
+        continue;
+      }
       final stat = await e.stat();
       if (stat.type != FileSystemEntityType.file) continue;
       files.add((e, stat.size, stat.modified));
