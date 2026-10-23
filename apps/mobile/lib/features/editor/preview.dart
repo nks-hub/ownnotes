@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:typed_data';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -11,6 +10,7 @@ import '../../core/markdown/markdown_document.dart';
 import '../../design/design.dart';
 import '../../l10n/app_localizations.dart';
 import 'preview_segments.dart';
+import 'preview_image.dart';
 
 /// Inline `@[Name](mention://user/id)` as Nextcloud Text writes it.
 class MentionSyntax extends md.InlineSyntax {
@@ -328,24 +328,24 @@ class _MarkdownPreviewState extends State<MarkdownPreview> {
   Widget _image(MarkdownImageConfig config, Widget placeholder) {
     final load = widget.loadAttachment;
     if (load == null || config.uri.hasScheme) return placeholder;
-    final path = Uri.decodeFull(config.uri.toString());
-    final bytes = _images.putIfAbsent(path, () => load(path));
-    return FutureBuilder<List<int>>(
-      future: bytes,
-      builder: (context, snapshot) => switch (snapshot) {
-        AsyncSnapshot(hasData: true, :final data?) => Image.memory(
-          Uint8List.fromList(data),
-          width: config.width,
-          height: config.height,
-          semanticLabel: config.alt,
-          errorBuilder: (_, _, _) => placeholder,
-        ),
-        AsyncSnapshot(hasError: true) => placeholder,
-        _ => const SizedBox.square(
-          dimension: 48,
-          child: Center(child: CircularProgressIndicator()),
-        ),
+    final String path;
+    try {
+      path = Uri.decodeFull(config.uri.toString());
+    } on FormatException {
+      return placeholder;
+    } on ArgumentError {
+      return placeholder;
+    }
+    return AttachmentPreviewImage(
+      load: () => _images.putIfAbsent(path, () => load(path)),
+      onRetry: () {
+        _tapConsumed = true;
+        _images.remove(path);
       },
+      placeholder: placeholder,
+      width: config.width,
+      height: config.height,
+      alt: config.alt,
     );
   }
 

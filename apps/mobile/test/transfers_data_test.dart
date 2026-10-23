@@ -106,6 +106,20 @@ void main() {
   });
 
   group('cache', () {
+    test('a failed cache write still returns the downloaded attachment', () async {
+      final dir = await Directory.systemTemp.createTemp('cache');
+      addTearDown(() => dir.delete(recursive: true));
+      final blockedRoot = File('${dir.path}/not-a-directory');
+      await blockedRoot.writeAsString('occupied');
+      final cache = AttachmentCache(Directory(blockedRoot.path));
+      expect(
+        await cache.load('a', 1, 'photo.png', () async => [1, 2, 3]),
+        [1, 2, 3],
+      );
+      expect(await cache.contains('a', 1, 'photo.png'), isFalse);
+      expect(await blockedRoot.readAsString(), 'occupied');
+    });
+
     test(
       'keeps what was read, evicts least recently used, never caches errors',
       () async {

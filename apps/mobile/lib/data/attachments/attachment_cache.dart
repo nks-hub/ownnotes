@@ -74,7 +74,11 @@ final class AttachmentCache {
     final hit = await read(accountId, remoteId, path);
     if (hit != null) return hit;
     final bytes = Uint8List.fromList(await fetch());
-    await write(accountId, remoteId, path, bytes);
+    try {
+      await write(accountId, remoteId, path, bytes);
+    } on FileSystemException {
+      // A full or unavailable cache must not hide a successful download.
+    }
     return bytes;
   }
 

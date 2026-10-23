@@ -10,6 +10,7 @@ import 'package:notes_store/notes_store.dart';
 import '../core/markdown/live_controller.dart';
 import '../core/markdown/live_styling.dart';
 import '../core/markdown/markdown_document.dart';
+import '../data/attachments/providers.dart';
 import '../data/runtime.dart';
 import '../data/settings.dart';
 import '../design/design.dart';
@@ -547,14 +548,9 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
   /// Attachments of this note (`.attachments.<id>/…`) load through the Notes
   /// API with the account's credentials. Remote URLs stay placeholders: the
   /// preview does not contact third-party hosts.
-  // shortcut: no offline cache; an offline preview shows the placeholder.
   Future<List<int>> _loadAttachment(String path) async {
-    final remoteId = _row.remoteId ?? widget.note.remoteId;
-    if (remoteId == null) throw StateError('not_uploaded');
-    final runtime = ref.read(runtimeProvider);
-    final account = await runtime.database.account(widget.note.accountId);
-    if (account == null) throw StateError('account_missing');
-    return (await runtime.clientFor(account)).attachment(remoteId, path);
+    final service = await ref.read(attachmentServiceProvider.future);
+    return service.load(_row, path);
   }
 
   void _toggleFind() {
