@@ -1,0 +1,1 @@
+Notes in shared folders are now available outside Notes, including nested folders. Attachment saving, concurrent downloads and offline previews are fixed. Sync checkpoints survive restarts. Moving notes between Notes and shared folders and changing permissions preserves local text.

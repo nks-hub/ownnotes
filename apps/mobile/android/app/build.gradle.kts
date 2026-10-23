@@ -9,7 +9,7 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
-// Release signing is driven by android/key.properties, which is gitignored and
+// Production release signing is driven by android/key.properties, which is gitignored and
 // points at the upload keystore. There is deliberately no fallback: a release
 // signed with the debug key is rejected by Play only at upload time.
 val keystorePropertiesFile = rootProject.file("key.properties")
@@ -78,7 +78,8 @@ android {
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.getByName("release")
+            // Candidates update the existing test app without clearing its data.
+            signingConfig = signingConfigs.getByName(if (isCandidate) "debug" else "release")
         }
     }
 }

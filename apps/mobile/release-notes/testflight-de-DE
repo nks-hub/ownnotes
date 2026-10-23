@@ -1,0 +1,1 @@
+Notizen aus geteilten Ordnern werden auch außerhalb von Notes geladen, einschließlich Unterordnern. Speichern von Anhängen, gleichzeitige Downloads und Offline-Vorschauen wurden korrigiert. Der Synchronisierungsstand bleibt nach einem Neustart erhalten. Verschieben zwischen Notes und geteilten Ordnern sowie geänderte Berechtigungen erhalten lokale Texte.
