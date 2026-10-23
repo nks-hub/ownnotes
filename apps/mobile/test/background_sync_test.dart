@@ -137,6 +137,7 @@ void main() {
   test(
     'an existing installation retains the 15-minute connected schedule',
     () async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.android;
       await scheduleBackgroundSync();
       expect(schedule.intervals, [const Duration(minutes: 15)]);
       expect(schedule.policies, [ExistingPeriodicWorkPolicy.update]);
