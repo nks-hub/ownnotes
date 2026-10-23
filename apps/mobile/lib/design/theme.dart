@@ -100,15 +100,18 @@ abstract final class OwnTheme {
         ).copyWith(side: WidgetStateProperty.resolveWith((s) => ring(s, null))),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(
-          minimumSize: buttonSize,
-          padding: buttonPadding,
-          shape: control,
-          textStyle: OwnType.button,
-          foregroundColor: c.accent,
-        ).copyWith(
-          side: WidgetStateProperty.resolveWith((s) => ring(s, outlineSide)),
-        ),
+        style:
+            OutlinedButton.styleFrom(
+              minimumSize: buttonSize,
+              padding: buttonPadding,
+              shape: control,
+              textStyle: OwnType.button,
+              foregroundColor: c.accent,
+            ).copyWith(
+              side: WidgetStateProperty.resolveWith(
+                (s) => ring(s, outlineSide),
+              ),
+            ),
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(

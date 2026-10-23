@@ -28,7 +28,10 @@ class DocumentHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final colors = context.own;
-    final parts = category.split('/').where((p) => p.trim().isNotEmpty).toList();
+    final parts = category
+        .split('/')
+        .where((p) => p.trim().isNotEmpty)
+        .toList();
     final content = Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
       child: Center(
@@ -45,7 +48,9 @@ class DocumentHeader extends StatelessWidget {
                 child: InkWell(
                   onTap: onTitle,
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(minHeight: OwnShape.target),
+                    constraints: const BoxConstraints(
+                      minHeight: OwnShape.target,
+                    ),
                     child: Row(
                       children: [
                         Expanded(
@@ -56,7 +61,9 @@ class DocumentHeader extends StatelessWidget {
                               maxLines: 3,
                               overflow: TextOverflow.ellipsis,
                               style: OwnType.documentTitle.copyWith(
-                                color: title.isEmpty ? colors.textSecondary : colors.text,
+                                color: title.isEmpty
+                                    ? colors.textSecondary
+                                    : colors.text,
                               ),
                             ),
                           ),
@@ -77,25 +84,31 @@ class DocumentHeader extends StatelessWidget {
               ),
               Semantics(
                 button: true,
-                label: '${l.category}: ${parts.isEmpty ? l.uncategorised : parts.join(' / ')}',
+                label:
+                    '${l.category}: ${parts.isEmpty ? l.uncategorised : parts.join(' / ')}',
                 excludeSemantics: true,
                 onTap: onCategory,
                 child: InkWell(
                   onTap: onCategory,
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(minHeight: OwnShape.target),
+                    constraints: const BoxConstraints(
+                      minHeight: OwnShape.target,
+                    ),
                     child: Row(
                       children: [
-                        Icon(Icons.folder_outlined, size: 18, color: colors.textSecondary),
+                        Icon(
+                          Icons.folder_outlined,
+                          size: 18,
+                          color: colors.textSecondary,
+                        ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             parts.isEmpty ? l.uncategorised : parts.join(' / '),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: colors.textSecondary,
-                            ),
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(color: colors.textSecondary),
                           ),
                         ),
                       ],
@@ -114,7 +127,10 @@ class DocumentHeader extends StatelessWidget {
       child: Align(
         alignment: Alignment.topCenter,
         heightFactor: collapsed ? 0 : 1,
-        child: ExcludeFocus(excluding: collapsed, child: collapsed ? ExcludeSemantics(child: content) : content),
+        child: ExcludeFocus(
+          excluding: collapsed,
+          child: collapsed ? ExcludeSemantics(child: content) : content,
+        ),
       ),
     );
   }

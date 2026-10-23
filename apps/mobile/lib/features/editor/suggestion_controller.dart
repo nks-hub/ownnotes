@@ -24,6 +24,7 @@ class SuggestionController extends ChangeNotifier {
 
   /// Asked lazily, once per use; null when no account can be asked.
   final Future<SuggestionSource?> Function() source;
+
   /// Replaced when the language changes.
   List<LocalCommand> commands;
   bool czech;
@@ -68,7 +69,12 @@ class SuggestionController extends ChangeNotifier {
     _timer?.cancel();
     switch (query.trigger) {
       case SuggestTrigger.emoji:
-        _set(SuggestionState(query: query, items: searchEmoji(query.query, czech: czech)));
+        _set(
+          SuggestionState(
+            query: query,
+            items: searchEmoji(query.query, czech: czech),
+          ),
+        );
       case SuggestTrigger.command:
         _set(SuggestionState(query: query, items: _commandItems(query.query)));
         _loadProviders(query, _generation);

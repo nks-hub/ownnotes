@@ -64,7 +64,9 @@ class _WidgetConfigAppState extends State<WidgetConfigApp> {
     }
     if (await prefs.getBool('lock') ?? false) {
       try {
-        final reason = (await AppLocalizations.delegate.load(locale)).unlockReason;
+        final reason = (await AppLocalizations.delegate.load(
+          locale,
+        )).unlockReason;
         final granted = await LocalAuthentication().authenticate(
           localizedReason: reason,
         );
@@ -109,7 +111,10 @@ class _WidgetConfigAppState extends State<WidgetConfigApp> {
       accountLabel: widgetAccountLabel(account),
     );
     await storage.write(WidgetKeys.config(config.instanceId), config.encode());
-    await storage.write(WidgetKeys.snapshot(config.instanceId), snapshot.encode());
+    await storage.write(
+      WidgetKeys.snapshot(config.instanceId),
+      snapshot.encode(),
+    );
     await storage.write(WidgetKeys.untitled, l.untitled);
     await storage.write(WidgetKeys.language, l.localeName);
     await HomeWidget.finishHomeWidgetConfigure();
@@ -129,7 +134,9 @@ class _WidgetConfigAppState extends State<WidgetConfigApp> {
       future: _setup,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
-          return const Scaffold(body: Center(child: CircularProgressIndicator()));
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
         }
         final setup = snapshot.data;
         if (setup == null) {

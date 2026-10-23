@@ -3,20 +3,24 @@ import 'package:nextcloudnotes/data/widgets/ios_widgets.dart';
 import 'package:nextcloudnotes/data/widgets/widget_snapshots.dart';
 import 'package:notes_store/notes_store.dart';
 
-LocalNote note(String id, String content, int updatedAt, {String account = 'a'}) =>
-    LocalNote(
-      id: id,
-      accountId: account,
-      title: id,
-      content: content,
-      category: '',
-      favorite: false,
-      readonly: false,
-      revision: 1,
-      syncState: 'clean',
-      updatedAt: updatedAt,
-      kind: 'note',
-    );
+LocalNote note(
+  String id,
+  String content,
+  int updatedAt, {
+  String account = 'a',
+}) => LocalNote(
+  id: id,
+  accountId: account,
+  title: id,
+  content: content,
+  category: '',
+  favorite: false,
+  readonly: false,
+  revision: 1,
+  syncState: 'clean',
+  updatedAt: updatedAt,
+  kind: 'note',
+);
 
 void main() {
   final notes = [

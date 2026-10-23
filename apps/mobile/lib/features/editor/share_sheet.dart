@@ -29,27 +29,26 @@ String markdownFileName(String title) {
 }
 
 final copySenderProvider = Provider<CopySender>(
-  (ref) =>
-      ({required title, required text, required asFile}) async {
-        if (asFile) {
-          final name = markdownFileName(title);
-          await SharePlus.instance.share(
-            ShareParams(
-              subject: title,
-              files: [
-                XFile.fromData(
-                  Uint8List.fromList(utf8.encode(text)),
-                  mimeType: 'text/markdown',
-                  name: name,
-                ),
-              ],
-              fileNameOverrides: [name],
+  (ref) => ({required title, required text, required asFile}) async {
+    if (asFile) {
+      final name = markdownFileName(title);
+      await SharePlus.instance.share(
+        ShareParams(
+          subject: title,
+          files: [
+            XFile.fromData(
+              Uint8List.fromList(utf8.encode(text)),
+              mimeType: 'text/markdown',
+              name: name,
             ),
-          );
-        } else {
-          await SharePlus.instance.share(ShareParams(text: text, subject: title));
-        }
-      },
+          ],
+          fileNameOverrides: [name],
+        ),
+      );
+    } else {
+      await SharePlus.instance.share(ShareParams(text: text, subject: title));
+    }
+  },
 );
 
 /// The share surface of the editor (spec 7.3): send a copy, share with
@@ -77,7 +76,12 @@ enum _Phase { checking, notUploaded, uploading, ready, incoming, failed }
 
 /// A change to the shares that is not finished or did not work.
 class _Operation {
-  _Operation(this.userId, this.label, {required this.remove, this.canEdit = false});
+  _Operation(
+    this.userId,
+    this.label, {
+    required this.remove,
+    this.canEdit = false,
+  });
   final String userId;
   final String label;
   final bool remove;
@@ -147,13 +151,17 @@ class _ShareSheetBodyState extends ConsumerState<ShareSheetBody> {
       await widget.flush();
       await runtime.sync.sync(_note.accountId);
       final fresh = await runtime.database.note(_note.accountId, _note.id);
-      if (fresh == null || fresh.remoteId == null) throw StateError('not_uploaded');
+      if (fresh == null || fresh.remoteId == null)
+        throw StateError('not_uploaded');
       _note = fresh;
       await _prepare();
     } on Object {
       if (mounted) setState(() => _phase = _Phase.notUploaded);
       if (mounted) {
-        showOwnSnackBar(context, AppLocalizations.of(context)!.shareUploadFailed);
+        showOwnSnackBar(
+          context,
+          AppLocalizations.of(context)!.shareUploadFailed,
+        );
       }
     }
   }
@@ -243,14 +251,22 @@ class _ShareSheetBodyState extends ConsumerState<ShareSheetBody> {
   }
 
   Future<void> _share(Sharee who, bool canEdit) async {
-    final op = _Operation(who.userId, who.label, remove: false, canEdit: canEdit);
+    final op = _Operation(
+      who.userId,
+      who.label,
+      remove: false,
+      canEdit: canEdit,
+    );
     setState(() {
       _operations.add(op);
       _picked = null;
       _search.clear();
       _found = const [];
     });
-    await _run(op, () => _sharing!.shareWithUser(_path!, who.userId, canEdit: canEdit));
+    await _run(
+      op,
+      () => _sharing!.shareWithUser(_path!, who.userId, canEdit: canEdit),
+    );
   }
 
   Future<void> _unshare(FileShare share) async {
@@ -268,7 +284,11 @@ class _ShareSheetBodyState extends ConsumerState<ShareSheetBody> {
       await action();
       await _refreshShares();
       // Lets the next sync list the new share.
-      ref.read(runtimeProvider).sync.sync(_note.accountId, relist: true).ignore();
+      ref
+          .read(runtimeProvider)
+          .sync
+          .sync(_note.accountId, relist: true)
+          .ignore();
       if (mounted) setState(() => _operations.remove(op));
     } on Object {
       if (mounted) setState(() => op.failed = true);
@@ -287,7 +307,10 @@ class _ShareSheetBodyState extends ConsumerState<ShareSheetBody> {
       }
       await _run(op, () => sharing.unshare(share.id));
     } else {
-      await _run(op, () => sharing.shareWithUser(path, op.userId, canEdit: op.canEdit));
+      await _run(
+        op,
+        () => sharing.shareWithUser(path, op.userId, canEdit: op.canEdit),
+      );
     }
   }
 
@@ -303,13 +326,15 @@ class _ShareSheetBodyState extends ConsumerState<ShareSheetBody> {
           minTileHeight: OwnShape.target,
           leading: const Icon(Icons.text_snippet_outlined),
           title: Text(l.shareAsText),
-          onTap: () => send(title: widget.title, text: widget.text(), asFile: false),
+          onTap: () =>
+              send(title: widget.title, text: widget.text(), asFile: false),
         ),
         ListTile(
           minTileHeight: OwnShape.target,
           leading: const Icon(Icons.description_outlined),
           title: Text(l.shareAsFile),
-          onTap: () => send(title: widget.title, text: widget.text(), asFile: true),
+          onTap: () =>
+              send(title: widget.title, text: widget.text(), asFile: true),
         ),
         const SizedBox(height: 8),
         _header(context, l.shareWithPeople),
@@ -350,7 +375,9 @@ class _ShareSheetBodyState extends ConsumerState<ShareSheetBody> {
                 const SizedBox(width: 16),
                 Expanded(
                   child: Text(
-                    _phase == _Phase.uploading ? l.shareUploading : l.shareChecking,
+                    _phase == _Phase.uploading
+                        ? l.shareUploading
+                        : l.shareChecking,
                   ),
                 ),
               ],
@@ -375,7 +402,13 @@ class _ShareSheetBodyState extends ConsumerState<ShareSheetBody> {
           OwnBanner(
             tone: OwnTone.error,
             message: l.shareFailed,
-            actions: [OwnButton.text(label: l.retry, icon: Icons.refresh, onPressed: _prepare)],
+            actions: [
+              OwnButton.text(
+                label: l.retry,
+                icon: Icons.refresh,
+                onPressed: _prepare,
+              ),
+            ],
           ),
         ];
       case _Phase.ready:
@@ -431,7 +464,8 @@ class _ShareSheetBodyState extends ConsumerState<ShareSheetBody> {
           child: Text(l.shareNone),
         ),
       for (final s in _shares) _shareRow(context, l, s),
-      for (final op in _operations.where((o) => !o.remove)) _operationRow(context, l, op),
+      for (final op in _operations.where((o) => !o.remove))
+        _operationRow(context, l, op),
     ];
   }
 
@@ -470,7 +504,9 @@ class _ShareSheetBodyState extends ConsumerState<ShareSheetBody> {
   }
 
   Widget _shareRow(BuildContext context, AppLocalizations l, FileShare s) {
-    final op = _operations.where((o) => o.remove && o.userId == s.shareWith).firstOrNull;
+    final op = _operations
+        .where((o) => o.remove && o.userId == s.shareWith)
+        .firstOrNull;
     if (op != null) return _operationRow(context, l, op);
     return ListTile(
       minTileHeight: OwnShape.target,
@@ -494,7 +530,11 @@ class _ShareSheetBodyState extends ConsumerState<ShareSheetBody> {
     );
   }
 
-  Widget _operationRow(BuildContext context, AppLocalizations l, _Operation op) {
+  Widget _operationRow(
+    BuildContext context,
+    AppLocalizations l,
+    _Operation op,
+  ) {
     if (op.failed) {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 4),
@@ -503,7 +543,11 @@ class _ShareSheetBodyState extends ConsumerState<ShareSheetBody> {
           title: op.label,
           message: l.shareFailed,
           actions: [
-            OwnButton.text(label: l.retry, icon: Icons.refresh, onPressed: () => _retry(op)),
+            OwnButton.text(
+              label: l.retry,
+              icon: Icons.refresh,
+              onPressed: () => _retry(op),
+            ),
             OwnButton.text(
               label: l.cancel,
               icon: Icons.close,

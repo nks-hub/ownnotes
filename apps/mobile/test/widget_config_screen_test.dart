@@ -44,7 +44,9 @@ Future<void> pump(
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(scale)),
+        data: MediaQuery.of(
+          context,
+        ).copyWith(textScaler: TextScaler.linear(scale)),
         child: child!,
       ),
       home: WidgetConfigScreen(
@@ -123,7 +125,9 @@ void main() {
     expect(saved!.collection, isNull);
   });
 
-  testWidgets('switching the account drops the note of the old one', (tester) async {
+  testWidgets('switching the account drops the note of the old one', (
+    tester,
+  ) async {
     WidgetConfig? saved;
     await pump(
       tester,
@@ -149,7 +153,9 @@ void main() {
     expect(saved!.noteId, 'n3');
   });
 
-  testWidgets('a failed save stays on the screen with a message', (tester) async {
+  testWidgets('a failed save stays on the screen with a message', (
+    tester,
+  ) async {
     await pump(
       tester,
       accounts: const [WidgetAccountChoice('a', 'ann')],
@@ -164,7 +170,10 @@ void main() {
 
   testWidgets('no account asks to sign in', (tester) async {
     await pump(tester, accounts: const [], onSave: (_) async {});
-    expect(find.text('Sign in to OwnNotes before adding a widget.'), findsOneWidget);
+    expect(
+      find.text('Sign in to OwnNotes before adding a widget.'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('Czech at 200% text does not overflow', (tester) async {

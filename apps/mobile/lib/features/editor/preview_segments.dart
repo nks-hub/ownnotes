@@ -41,7 +41,10 @@ final _calloutOpen = RegExp(
   r'^:::[ \t]*(info|warn|warning|error|success)[ \t]*(.*?)[ \t]*$',
 );
 final _calloutClose = RegExp(r'^:::[ \t]*$');
-final _detailsOpen = RegExp(r'^[ \t]*<details(\s+open)?\s*>', caseSensitive: false);
+final _detailsOpen = RegExp(
+  r'^[ \t]*<details(\s+open)?\s*>',
+  caseSensitive: false,
+);
 final _fence = RegExp(r'^(`{3,}|~{3,})');
 final _summary = RegExp(
   r'<summary[^>]*>(.*?)</summary>',
@@ -118,7 +121,9 @@ List<PreviewSegment> _build(String text, int base, int depth) {
           final l = line(j);
           final jf = _fence.firstMatch(l.trimLeft());
           if (inner != null) {
-            if (jf != null && jf[1]![0] == inner[0] && jf[1]!.length >= inner.length) {
+            if (jf != null &&
+                jf[1]![0] == inner[0] &&
+                jf[1]!.length >= inner.length) {
               inner = null;
             }
             continue;
@@ -179,13 +184,18 @@ List<PreviewSegment> _build(String text, int base, int depth) {
           final sum = _summary.firstMatch(region);
           final bodyFrom = sum?.end ?? opening.end;
           final bodyTo = region.toLowerCase().lastIndexOf('</details>');
-          final body = bodyTo > bodyFrom ? region.substring(bodyFrom, bodyTo) : '';
+          final body = bodyTo > bodyFrom
+              ? region.substring(bodyFrom, bodyTo)
+              : '';
           out.add(
             DetailsSegment(
               SourceRange(base + regionStart, base + regionEnd),
               sum == null
                   ? ''
-                  : sum[1]!.replaceAll(_tags, '').replaceAll(RegExp(r'\s+'), ' ').trim(),
+                  : sum[1]!
+                        .replaceAll(_tags, '')
+                        .replaceAll(RegExp(r'\s+'), ' ')
+                        .trim(),
               details[1] != null,
               body.trim().isEmpty
                   ? const []

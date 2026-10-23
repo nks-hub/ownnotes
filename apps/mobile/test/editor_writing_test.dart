@@ -56,7 +56,10 @@ class _FakeSource implements SuggestionSource {
   ];
 
   @override
-  Future<List<ReferenceResult>> search(ReferenceProvider p, String term) async => [
+  Future<List<ReferenceResult>> search(
+    ReferenceProvider p,
+    String term,
+  ) async => [
     ReferenceResult(
       title: 'Plan [2026]',
       url: Uri.parse('https://cloud.test/f/9'),
@@ -76,7 +79,8 @@ Future<void> _settle(WidgetTester tester, [int rounds = 12]) =>
       }
     });
 
-Finder get _source => find.byWidgetPredicate((w) => w is TextField && w.expands);
+Finder get _source =>
+    find.byWidgetPredicate((w) => w is TextField && w.expands);
 
 TextEditingController _controller(WidgetTester tester) =>
     tester.widget<TextField>(_source).controller!;
@@ -87,8 +91,12 @@ http.Response _json(Object body, [int status = 200]) => http.Response(
   headers: {'content-type': 'application/json'},
 );
 
-http.Response _ocs(Object? data) =>
-    _json({'ocs': {'meta': {'statuscode': 200}, 'data': data}});
+http.Response _ocs(Object? data) => _json({
+  'ocs': {
+    'meta': {'statuscode': 200},
+    'data': data,
+  },
+});
 
 Future<(AppRuntime, LocalNote)> _setup(
   WidgetTester tester, {
@@ -107,7 +115,8 @@ Future<(AppRuntime, LocalNote)> _setup(
       _Vault(),
       transport: () => MockClient(
         handler ??
-            (r) async => r.url.pathSegments.last == 'notes' ? _json([]) : _json({}),
+            (r) async =>
+                r.url.pathSegments.last == 'notes' ? _json([]) : _json({}),
       ),
     ),
   ))!;
@@ -197,7 +206,10 @@ void main() {
         await tester.enterText(_source, text);
         await tester.pump();
         expect(_controller(tester).text, text);
-        expect(_controller(tester).selection, TextSelection.collapsed(offset: text.length));
+        expect(
+          _controller(tester).selection,
+          TextSelection.collapsed(offset: text.length),
+        );
       }
       // A word still being composed keeps its range through restyling.
       tester.testTextInput.updateEditingValue(
@@ -228,7 +240,10 @@ void main() {
       await tester.tap(_source);
       await tester.enterText(_source, '# word');
       await tester.pump();
-      _controller(tester).selection = const TextSelection(baseOffset: 2, extentOffset: 6);
+      _controller(tester).selection = const TextSelection(
+        baseOffset: 2,
+        extentOffset: 6,
+      );
       await tester.pump();
       await tester.tap(find.byTooltip('Format'));
       await tester.pumpAndSettle();
@@ -305,7 +320,9 @@ void main() {
       await _close(tester);
     });
 
-    testWidgets('Attach rows are disabled until a handler exists', (tester) async {
+    testWidgets('Attach rows are disabled until a handler exists', (
+      tester,
+    ) async {
       final (runtime, note) = await _setup(tester);
       await _open(tester, runtime, note);
       await tester.tap(find.byTooltip('Attach'));
@@ -319,8 +336,14 @@ void main() {
   });
 
   group('top bar and header', () {
-    testWidgets('three icon actions, overflow rows all have icons', (tester) async {
-      final (runtime, note) = await _setup(tester, title: 'Meeting', category: 'Work/Planning');
+    testWidgets('three icon actions, overflow rows all have icons', (
+      tester,
+    ) async {
+      final (runtime, note) = await _setup(
+        tester,
+        title: 'Meeting',
+        category: 'Work/Planning',
+      );
       await _open(tester, runtime, note);
       expect(find.byTooltip('Preview'), findsOneWidget);
       expect(find.byTooltip('Share'), findsOneWidget);
@@ -343,7 +366,10 @@ void main() {
       }
       final rows = find.byWidgetPredicate((w) => w is PopupMenuItem);
       expect(rows, findsNWidgets(8));
-      expect(find.descendant(of: rows, matching: find.byType(Icon)), findsNWidgets(8));
+      expect(
+        find.descendant(of: rows, matching: find.byType(Icon)),
+        findsNWidgets(8),
+      );
       await _close(tester);
     });
 
@@ -380,14 +406,22 @@ void main() {
       final (runtime, note) = await _setup(tester, title: 'Meeting');
       await _open(tester, runtime, note);
       await tester.tap(
-        find.descendant(of: find.byType(DocumentHeader), matching: find.text('Meeting')),
+        find.descendant(
+          of: find.byType(DocumentHeader),
+          matching: find.text('Meeting'),
+        ),
       );
       await tester.pumpAndSettle();
       expect(find.widgetWithText(TextField, 'Meeting'), findsOneWidget);
-      await tester.enterText(find.widgetWithText(TextField, 'Meeting'), 'Renamed');
+      await tester.enterText(
+        find.widgetWithText(TextField, 'Meeting'),
+        'Renamed',
+      );
       await tester.pump(const Duration(milliseconds: 500));
       await _close(tester);
-      final saved = (await tester.runAsync(() => runtime.database.note(note.accountId, note.id)))!;
+      final saved = (await tester.runAsync(
+        () => runtime.database.note(note.accountId, note.id),
+      ))!;
       expect(saved.title, 'Renamed');
     });
   });
@@ -418,7 +452,12 @@ void main() {
 
     testWidgets('Escape dismisses and the typed text stays', (tester) async {
       final (runtime, note) = await _setup(tester);
-      await _open(tester, runtime, note, overrides: [_suggestions(_FakeSource())]);
+      await _open(
+        tester,
+        runtime,
+        note,
+        overrides: [_suggestions(_FakeSource())],
+      );
       await tester.tap(_source);
       await tester.enterText(_source, 'sun :smi');
       await tester.pump();
@@ -438,7 +477,12 @@ void main() {
       tester,
     ) async {
       final (runtime, note) = await _setup(tester);
-      await _open(tester, runtime, note, overrides: [_suggestions(_FakeSource(failing: true))]);
+      await _open(
+        tester,
+        runtime,
+        note,
+        overrides: [_suggestions(_FakeSource(failing: true))],
+      );
       await tester.tap(_source);
       await tester.enterText(_source, ':milk');
       await tester.pump();
@@ -453,16 +497,27 @@ void main() {
       tester,
     ) async {
       final (runtime, note) = await _setup(tester);
-      await _open(tester, runtime, note, overrides: [_suggestions(_FakeSource(failing: true))]);
+      await _open(
+        tester,
+        runtime,
+        note,
+        overrides: [_suggestions(_FakeSource(failing: true))],
+      );
       await tester.tap(_source);
       await tester.enterText(_source, '@ja');
       await tester.pump(const Duration(milliseconds: 400));
       await _settle(tester, 2);
-      expect(find.textContaining('Suggestions are not available'), findsOneWidget);
+      expect(
+        find.textContaining('Suggestions are not available'),
+        findsOneWidget,
+      );
       await tester.enterText(_source, '@ja more text');
       await tester.pump();
       expect(_controller(tester).text, '@ja more text');
-      expect(find.textContaining('Suggestions are not available'), findsNothing);
+      expect(
+        find.textContaining('Suggestions are not available'),
+        findsNothing,
+      );
       await _close(tester);
     });
 
@@ -470,7 +525,12 @@ void main() {
       tester,
     ) async {
       final (runtime, note) = await _setup(tester);
-      await _open(tester, runtime, note, overrides: [_suggestions(_FakeSource())]);
+      await _open(
+        tester,
+        runtime,
+        note,
+        overrides: [_suggestions(_FakeSource())],
+      );
       await tester.tap(_source);
       await tester.enterText(_source, '/head');
       await tester.pump();
@@ -490,9 +550,16 @@ void main() {
       await _close(tester);
     });
 
-    testWidgets('Insert menu opens the mention and emoji lists', (tester) async {
+    testWidgets('Insert menu opens the mention and emoji lists', (
+      tester,
+    ) async {
       final (runtime, note) = await _setup(tester, content: 'word');
-      await _open(tester, runtime, note, overrides: [_suggestions(_FakeSource())]);
+      await _open(
+        tester,
+        runtime,
+        note,
+        overrides: [_suggestions(_FakeSource())],
+      );
       await tester.tap(_source);
       await tester.pump();
       await tester.tap(find.byTooltip('Insert'));
@@ -525,13 +592,18 @@ void main() {
       expect(find.byType(MentionChip), findsOneWidget);
       expect(find.text('Jan Novák'), findsOneWidget);
       expect(find.textContaining('Warning'), findsOneWidget);
-      expect(find.textContaining('careful now', findRichText: true), findsOneWidget);
+      expect(
+        find.textContaining('careful now', findRichText: true),
+        findsOneWidget,
+      );
       expect(find.byType(Table), findsOneWidget);
       expect(
         find.ancestor(
           of: find.byType(Table),
           matching: find.byWidgetPredicate(
-            (w) => w is SingleChildScrollView && w.scrollDirection == Axis.horizontal,
+            (w) =>
+                w is SingleChildScrollView &&
+                w.scrollDirection == Axis.horizontal,
           ),
         ),
         findsOneWidget,
@@ -542,11 +614,17 @@ void main() {
       expect(find.byType(Checkbox), findsOneWidget);
       // Details start closed and open on a tap without leaving the preview.
       expect(find.text('More'), findsOneWidget);
-      expect(find.textContaining('hidden words', findRichText: true), findsNothing);
+      expect(
+        find.textContaining('hidden words', findRichText: true),
+        findsNothing,
+      );
       await tester.ensureVisible(find.text('More'));
       await tester.tap(find.text('More'));
       await _settle(tester, 2);
-      expect(find.textContaining('hidden words', findRichText: true), findsOneWidget);
+      expect(
+        find.textContaining('hidden words', findRichText: true),
+        findsOneWidget,
+      );
       expect(find.byTooltip('Edit source'), findsOneWidget);
       await _close(tester);
     });
@@ -570,7 +648,10 @@ void main() {
       expect(milk, findsNWidgets(3));
       await tester.tap(milk.at(1));
       await _settle(tester, 4);
-      expect(_controller(tester).selection.baseOffset, text.indexOf('milk', text.indexOf('milk') + 1));
+      expect(
+        _controller(tester).selection.baseOffset,
+        text.indexOf('milk', text.indexOf('milk') + 1),
+      );
       await _close(tester);
     });
 
@@ -584,7 +665,10 @@ void main() {
       await _settle(tester, 4);
       await tester.tap(find.byType(Checkbox).last);
       await _settle(tester, 4);
-      expect(tester.widgetList<Checkbox>(find.byType(Checkbox)).map((c) => c.value), [false, true]);
+      expect(
+        tester.widgetList<Checkbox>(find.byType(Checkbox)).map((c) => c.value),
+        [false, true],
+      );
       await tester.tap(find.byTooltip('Edit source'));
       await _settle(tester, 4);
       expect(_controller(tester).text, '- [ ] milk\n\ntext\n\n- [x] milk');
@@ -616,7 +700,8 @@ void main() {
   });
 
   group('checklist mode', () {
-    const shop = '# Shop\n\nProse stays.\n\n- [ ] milk\n- [x] bread\n- [ ] eggs\n\nEnd.';
+    const shop =
+        '# Shop\n\nProse stays.\n\n- [ ] milk\n- [x] bread\n- [ ] eggs\n\nEnd.';
 
     Future<void> openChecklist(WidgetTester tester) async {
       await tester.tap(find.byTooltip('More options'));
@@ -640,7 +725,10 @@ void main() {
       expect(find.text('2 of 3 tasks done'), findsOneWidget);
       expect(find.text('Completed (2)'), findsOneWidget);
       // Quick add.
-      await tester.enterText(find.widgetWithText(TextField, 'Add item'), 'cheese');
+      await tester.enterText(
+        find.widgetWithText(TextField, 'Add item'),
+        'cheese',
+      );
       await tester.testTextInput.receiveAction(TextInputAction.done);
       await tester.pumpAndSettle();
       expect(find.text('cheese'), findsOneWidget);
@@ -649,7 +737,9 @@ void main() {
       await tester.tap(find.text('Clear completed items'));
       await tester.pumpAndSettle();
       expect(find.textContaining('Remove 2 completed items'), findsOneWidget);
-      await tester.tap(find.widgetWithText(TextButton, 'Clear completed items'));
+      await tester.tap(
+        find.widgetWithText(TextButton, 'Clear completed items'),
+      );
       await tester.pumpAndSettle();
       expect(find.text('milk'), findsNothing);
       expect(find.text('2 items removed'), findsOneWidget);
@@ -662,12 +752,17 @@ void main() {
       expect(
         _controller(tester).text,
         '# Shop\n\nProse stays.\n\n- [x] milk\n- [x] bread\n- [ ] eggs\n- [ ] cheese\n\nEnd.'
-            .replaceFirst('- [ ] eggs\n- [ ] cheese', '- [ ] eggs\n- [ ] cheese'),
+            .replaceFirst(
+              '- [ ] eggs\n- [ ] cheese',
+              '- [ ] eggs\n- [ ] cheese',
+            ),
       );
       await _close(tester);
     });
 
-    testWidgets('Move down changes only the order of the blocks', (tester) async {
+    testWidgets('Move down changes only the order of the blocks', (
+      tester,
+    ) async {
       final (runtime, note) = await _setup(
         tester,
         content: '- [ ] a\n  detail of a\n- [ ] b\n- [ ] c',
@@ -680,12 +775,19 @@ void main() {
       await tester.pumpAndSettle();
       await tester.pageBack();
       await tester.pumpAndSettle();
-      expect(_controller(tester).text, '- [ ] b\n- [ ] a\n  detail of a\n- [ ] c');
+      expect(
+        _controller(tester).text,
+        '- [ ] b\n- [ ] a\n  detail of a\n- [ ] c',
+      );
       await _close(tester);
     });
 
     testWidgets('a read-only note offers no checklist edits', (tester) async {
-      final (runtime, note) = await _setup(tester, content: shop, readonly: true);
+      final (runtime, note) = await _setup(
+        tester,
+        content: shop,
+        readonly: true,
+      );
       await _open(tester, runtime, note);
       await openChecklist(tester);
       expect(find.widgetWithText(TextField, 'Add item'), findsNothing);
@@ -703,8 +805,14 @@ void main() {
   });
 
   group('sharing', () {
-    Future<http.Response> server(http.Request r, List<String> log, {int shareStatus = 200}) async {
-      log.add('${r.method} ${r.url.path}${r.url.query.isEmpty ? '' : '?${r.url.query}'}');
+    Future<http.Response> server(
+      http.Request r,
+      List<String> log, {
+      int shareStatus = 200,
+    }) async {
+      log.add(
+        '${r.method} ${r.url.path}${r.url.query.isEmpty ? '' : '?${r.url.query}'}',
+      );
       final p = r.url.path;
       if (p.endsWith('/api/v1/notes') && r.method == 'GET') return _json([]);
       if (p.endsWith('/api/v1/notes') && r.method == 'POST') {
@@ -736,20 +844,38 @@ void main() {
       if (p.endsWith('/sharees')) {
         return _ocs({
           'users': [
-            {'label': 'Jan Novák', 'value': {'shareType': 0, 'shareWith': 'jan'}},
+            {
+              'label': 'Jan Novák',
+              'value': {'shareType': 0, 'shareWith': 'jan'},
+            },
           ],
         });
       }
       if (p.endsWith('/shares') && r.method == 'GET') {
-        return _ocs(shared
-            .map((s) => {'id': s.$1, 'share_type': 0, 'share_with': s.$2, 'permissions': s.$3, 'path': '/Notes/Doc.md'})
-            .toList());
+        return _ocs(
+          shared
+              .map(
+                (s) => {
+                  'id': s.$1,
+                  'share_type': 0,
+                  'share_with': s.$2,
+                  'permissions': s.$3,
+                  'path': '/Notes/Doc.md',
+                },
+              )
+              .toList(),
+        );
       }
       if (p.endsWith('/shares') && r.method == 'POST') {
         if (shareStatus != 200) return _json({}, shareStatus);
         final form = Uri.splitQueryString(r.body);
         shared.add(('31', form['shareWith']!, int.parse(form['permissions']!)));
-        return _ocs({'id': 31, 'share_with': form['shareWith'], 'permissions': int.parse(form['permissions']!), 'path': '/Notes/Doc.md'});
+        return _ocs({
+          'id': 31,
+          'share_with': form['shareWith'],
+          'permissions': int.parse(form['permissions']!),
+          'path': '/Notes/Doc.md',
+        });
       }
       if (r.method == 'DELETE') {
         shared.clear();
@@ -758,16 +884,24 @@ void main() {
       return _json({});
     }
 
-    testWidgets('send a copy works offline as text and as a file', (tester) async {
+    testWidgets('send a copy works offline as text and as a file', (
+      tester,
+    ) async {
       final sent = <(String, String, bool)>[];
-      final (runtime, note) = await _setup(tester, title: 'Plan', content: 'body', remoteId: 7);
+      final (runtime, note) = await _setup(
+        tester,
+        title: 'Plan',
+        content: 'body',
+        remoteId: 7,
+      );
       await _open(
         tester,
         runtime,
         note,
         overrides: [
           copySenderProvider.overrideWithValue(
-            ({required title, required text, required asFile}) async => sent.add((title, text, asFile)),
+            ({required title, required text, required asFile}) async =>
+                sent.add((title, text, asFile)),
           ),
         ],
       );
@@ -782,7 +916,9 @@ void main() {
       await _close(tester);
     });
 
-    testWidgets('a never uploaded note uploads first, then can be shared', (tester) async {
+    testWidgets('a never uploaded note uploads first, then can be shared', (
+      tester,
+    ) async {
       final log = <String>[];
       shared.clear();
       final (runtime, note) = await _setup(
@@ -794,11 +930,17 @@ void main() {
       await tester.tap(find.byTooltip('Share'));
       await tester.pumpAndSettle();
       expect(find.textContaining('not on the server yet'), findsOneWidget);
-      expect(log.where((l) => l.startsWith('POST') && l.contains('/shares')), isEmpty);
+      expect(
+        log.where((l) => l.startsWith('POST') && l.contains('/shares')),
+        isEmpty,
+      );
       await tester.tap(find.text('Upload and continue'));
       await _settle(tester, 25);
       await tester.pumpAndSettle();
-      expect(log.any((l) => l.startsWith('POST') && l.endsWith('/api/v1/notes')), isTrue);
+      expect(
+        log.any((l) => l.startsWith('POST') && l.endsWith('/api/v1/notes')),
+        isTrue,
+      );
       expect(find.widgetWithText(TextField, 'Search people'), findsOneWidget);
       await _close(tester);
     });
@@ -818,7 +960,10 @@ void main() {
       await _settle(tester, 6);
       await tester.pumpAndSettle();
       expect(find.text('Not shared with anyone yet.'), findsOneWidget);
-      await tester.enterText(find.widgetWithText(TextField, 'Search people'), 'ja');
+      await tester.enterText(
+        find.widgetWithText(TextField, 'Search people'),
+        'ja',
+      );
       await tester.pump(const Duration(milliseconds: 400));
       await _settle(tester, 4);
       await tester.pumpAndSettle();
@@ -829,7 +974,9 @@ void main() {
       await tester.tap(find.text('Share with Jan Novák'));
       await _settle(tester, 6);
       await tester.pumpAndSettle();
-      final post = log.lastWhere((l) => l.startsWith('POST') && l.contains('/shares'));
+      final post = log.lastWhere(
+        (l) => l.startsWith('POST') && l.contains('/shares'),
+      );
       expect(post, isNotEmpty);
       expect(find.text('jan'), findsOneWidget);
       expect(find.text('Can view'), findsOneWidget);
@@ -841,7 +988,9 @@ void main() {
       await _close(tester);
     });
 
-    testWidgets('a failed share is shown with Retry and nothing else breaks', (tester) async {
+    testWidgets('a failed share is shown with Retry and nothing else breaks', (
+      tester,
+    ) async {
       final log = <String>[];
       shared.clear();
       var failing = true;
@@ -856,7 +1005,10 @@ void main() {
       await tester.tap(find.byTooltip('Share'));
       await _settle(tester, 6);
       await tester.pumpAndSettle();
-      await tester.enterText(find.widgetWithText(TextField, 'Search people'), 'ja');
+      await tester.enterText(
+        find.widgetWithText(TextField, 'Search people'),
+        'ja',
+      );
       await tester.pump(const Duration(milliseconds: 400));
       await _settle(tester, 4);
       await tester.pumpAndSettle();
@@ -875,12 +1027,22 @@ void main() {
       await _close(tester);
     });
 
-    testWidgets('a note shared with me cannot be shared further', (tester) async {
-      final (runtime, note) = await _setup(tester, content: 'x', remoteId: 9, kind: 'shared');
+    testWidgets('a note shared with me cannot be shared further', (
+      tester,
+    ) async {
+      final (runtime, note) = await _setup(
+        tester,
+        content: 'x',
+        remoteId: 9,
+        kind: 'shared',
+      );
       await _open(tester, runtime, note);
       await tester.tap(find.byTooltip('Share'));
       await tester.pumpAndSettle();
-      expect(find.textContaining('Only its owner can share it further'), findsOneWidget);
+      expect(
+        find.textContaining('Only its owner can share it further'),
+        findsOneWidget,
+      );
       await _close(tester);
     });
 
@@ -898,7 +1060,10 @@ void main() {
       await tester.tap(find.byTooltip('Share'));
       await _settle(tester, 4);
       await tester.pumpAndSettle();
-      expect(find.textContaining('may not be able to open them'), findsOneWidget);
+      expect(
+        find.textContaining('may not be able to open them'),
+        findsOneWidget,
+      );
       await _close(tester);
     });
   });
@@ -907,21 +1072,31 @@ void main() {
     testWidgets('a local save failure is reported and listed under attention', (
       tester,
     ) async {
-      final (runtime, note) = await _setup(tester, content: 'x', syncState: 'unreadable');
+      final (runtime, note) = await _setup(
+        tester,
+        content: 'x',
+        syncState: 'unreadable',
+      );
       await _open(tester, runtime, note);
       await tester.tap(_source);
       await tester.enterText(_source, 'typed on top');
       await tester.pump(const Duration(milliseconds: 500));
       await _settle(tester, 3);
       expect(find.text('Could not save on this device'), findsWidgets);
-      expect(find.textContaining('could not hand out this note'), findsOneWidget);
+      expect(
+        find.textContaining('could not hand out this note'),
+        findsOneWidget,
+      );
       expect(find.text('Retry'), findsOneWidget);
       expect(find.text('Copy Markdown'), findsOneWidget);
       expect(find.text('Export draft'), findsOneWidget);
       final items = await tester.runAsync(
-        () => runtime.attention.watch(note.accountId).firstWhere(
-          (list) => list.any((i) => i.kind == AttentionKind.saveFailure),
-        ).timeout(const Duration(seconds: 5)),
+        () => runtime.attention
+            .watch(note.accountId)
+            .firstWhere(
+              (list) => list.any((i) => i.kind == AttentionKind.saveFailure),
+            )
+            .timeout(const Duration(seconds: 5)),
       );
       expect(items!.any((i) => i.reason == 'note_unreadable'), isTrue);
       // The typed text is still in the editor.
@@ -937,9 +1112,15 @@ void main() {
         expandTemplate('# {{date}} {{time}}\n{{title}}', when, title: 'T'),
         '# 2026-10-20 07:05\nT',
       );
-      expect(planDailyNote(const DailyNoteConfig(category: 'Daily'), when).title, '2026-10-20');
       expect(
-        planDailyNote(const DailyNoteConfig(titlePattern: 'EEE d.M.'), when).title,
+        planDailyNote(const DailyNoteConfig(category: 'Daily'), when).title,
+        '2026-10-20',
+      );
+      expect(
+        planDailyNote(
+          const DailyNoteConfig(titlePattern: 'EEE d.M.'),
+          when,
+        ).title,
         'Tue 20.10.',
       );
     });
@@ -948,17 +1129,27 @@ void main() {
       const store = TemplateStore();
       expect(await store.templates(), isEmpty);
       await store.saveTemplates(const [
-        NoteTemplate(id: 'a', name: 'Meeting', content: '# {{title}}', category: 'Work'),
+        NoteTemplate(
+          id: 'a',
+          name: 'Meeting',
+          content: '# {{title}}',
+          category: 'Work',
+        ),
       ]);
       final list = await store.templates();
       expect(list.single.name, 'Meeting');
       expect(list.single.category, 'Work');
-      await store.saveDaily(const DailyNoteConfig(category: 'Daily', templateId: 'a'));
+      await store.saveDaily(
+        const DailyNoteConfig(category: 'Daily', templateId: 'a'),
+      );
       expect((await store.daily()).templateId, 'a');
     });
 
     Future<(AppRuntime, String)> runtimeWithAccount() async {
-      final runtime = AppRuntime(NotesDatabase(NativeDatabase.memory()), _Vault());
+      final runtime = AppRuntime(
+        NotesDatabase(NativeDatabase.memory()),
+        _Vault(),
+      );
       await runtime.accounts.add(
         LoginCredentials(
           server: ServerBase.parse('https://cloud.test'),
@@ -975,7 +1166,13 @@ void main() {
       final id = await createFromTemplate(
         runtime,
         account,
-        const NoteTemplate(id: 't', name: 'Meet', title: 'Meet {{date}}', content: '- [ ] {{title}}', category: 'Work'),
+        const NoteTemplate(
+          id: 't',
+          name: 'Meet',
+          title: 'Meet {{date}}',
+          content: '- [ ] {{title}}',
+          category: 'Work',
+        ),
         now: DateTime(2026, 1, 2),
       );
       final note = (await runtime.database.note(account, id))!;
@@ -988,7 +1185,10 @@ void main() {
         const NoteTemplate(id: 't', name: 'Meet'),
         category: 'Elsewhere',
       );
-      expect((await runtime.database.note(account, moved))!.category, 'Elsewhere');
+      expect(
+        (await runtime.database.note(account, moved))!.category,
+        'Elsewhere',
+      );
       await runtime.close();
     });
 
@@ -1001,17 +1201,31 @@ void main() {
         account,
         config: config,
         now: when,
-        template: const NoteTemplate(id: 't', name: 'D', content: '## {{date}}'),
+        template: const NoteTemplate(
+          id: 't',
+          name: 'D',
+          content: '## {{date}}',
+        ),
       );
       expect(first.created, isTrue);
       expect(first.plan.title, '2026-05-06');
       final note = (await runtime.database.note(account, first.noteId))!;
       expect(note.content, '## 2026-05-06');
       expect(note.category, 'Daily');
-      final again = await createDailyNote(runtime, account, config: config, now: when);
+      final again = await createDailyNote(
+        runtime,
+        account,
+        config: config,
+        now: when,
+      );
       expect(again.created, isFalse);
       expect(again.noteId, first.noteId);
-      final next = await createDailyNote(runtime, account, config: config, now: DateTime(2026, 5, 7));
+      final next = await createDailyNote(
+        runtime,
+        account,
+        config: config,
+        now: DateTime(2026, 5, 7),
+      );
       expect(next.created, isTrue);
       await runtime.close();
     });

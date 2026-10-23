@@ -37,7 +37,13 @@ enum MdBlockKind {
 
 /// A top-level block of the note, in the order the preview shows them.
 final class MdBlock {
-  const MdBlock(this.kind, this.range, this.firstLine, this.lastLine, [this.level]);
+  const MdBlock(
+    this.kind,
+    this.range,
+    this.firstLine,
+    this.lastLine, [
+    this.level,
+  ]);
   final MdBlockKind kind;
 
   /// Source of the whole block without the final line break.
@@ -153,7 +159,9 @@ final _listMarker = RegExp(r'^( {0,3})([-+*]|\d{1,9}[.)])(?:[ \t]+(.*)|$)');
 final _atx = RegExp(r'^ {0,3}(#{1,6})(?:[ \t]|$)');
 final _rule = RegExp(r'^ {0,3}([-*_])(?:[ \t]*\1){2,}[ \t]*$');
 final _setext = RegExp(r'^ {0,3}(=+|-+)[ \t]*$');
-final _htmlStart = RegExp(r'^ {0,3}<(?:[A-Za-z][A-Za-z0-9-]*[\s/>]|/|!--|\?|![A-Z])');
+final _htmlStart = RegExp(
+  r'^ {0,3}<(?:[A-Za-z][A-Za-z0-9-]*[\s/>]|/|!--|\?|![A-Z])',
+);
 final _refDefinition = RegExp(r'^ {0,3}\[[^\]]+\]:\s*\S');
 final _tableDelim = RegExp(r'^\s*\|?\s*:?-+:?\s*(?:\|\s*:?-+:?\s*)*\|?\s*$');
 final _attachmentLink = RegExp(
@@ -169,12 +177,7 @@ final _inlineCode = RegExp(r'(`+)(?:(?!\1).|\n)+?\1');
 /// [renderedTasks] and [previewBlocks] confirm the scan against the parser
 /// that feeds the preview.
 final class MarkdownDocument {
-  MarkdownDocument._(
-    this.text,
-    this.lines,
-    this.blocks,
-    this.tasks,
-  );
+  MarkdownDocument._(this.text, this.lines, this.blocks, this.tasks);
 
   factory MarkdownDocument.parse(String text) => _scan(text);
 
@@ -226,7 +229,8 @@ final class MarkdownDocument {
       final raw = text.substring(line.start, line.end);
       if (!raw.contains('.attachments.')) continue;
       final skip = [
-        for (final m in _inlineCode.allMatches(raw)) SourceRange(m.start, m.end),
+        for (final m in _inlineCode.allMatches(raw))
+          SourceRange(m.start, m.end),
       ];
       for (final m in _attachmentLink.allMatches(raw)) {
         if (skip.any((r) => m.start >= r.start && m.start < r.end)) continue;
@@ -395,7 +399,9 @@ MarkdownDocument _scan(String text) {
     final hasBreak = end >= 0;
     if (!hasBreak) end = text.length;
     var contentEnd = end;
-    if (hasBreak && contentEnd > start && text.codeUnitAt(contentEnd - 1) == 0x0D) {
+    if (hasBreak &&
+        contentEnd > start &&
+        text.codeUnitAt(contentEnd - 1) == 0x0D) {
       contentEnd--;
     }
     final raw = text.substring(start, contentEnd);
@@ -468,7 +474,9 @@ MarkdownDocument _scan(String text) {
     start = end + 1;
   }
   // A trailing line break does not open another (empty) line.
-  if (lines.length > 1 && lines.last.start == text.length && text.endsWith('\n')) {
+  if (lines.length > 1 &&
+      lines.last.start == text.length &&
+      text.endsWith('\n')) {
     lines.removeLast();
     indents.removeLast();
     stripped.removeLast();
@@ -508,10 +516,12 @@ List<MdBlock> _blocks(
 ) {
   final n = lines.length;
   final out = <MdBlock>[];
-  bool plain(int i) => lines[i].quoteDepth == 0 && lines[i].kind == MdLineKind.text;
+  bool plain(int i) =>
+      lines[i].quoteDepth == 0 && lines[i].kind == MdLineKind.text;
   bool atx(int i) => plain(i) && _atx.hasMatch(stripped[i]);
   bool rule(int i) => plain(i) && _rule.hasMatch(stripped[i]);
-  bool listStart(int i) => plain(i) && !rule(i) && _listMarker.hasMatch(stripped[i]);
+  bool listStart(int i) =>
+      plain(i) && !rule(i) && _listMarker.hasMatch(stripped[i]);
   bool html(int i) => plain(i) && _htmlStart.hasMatch(stripped[i]);
   bool quote(int i) => lines[i].quoteDepth > 0;
   bool fenceStart(int i) => lines[i].kind == MdLineKind.fenceOpen;
@@ -527,7 +537,12 @@ List<MdBlock> _blocks(
       _tableDelim.hasMatch(stripped[i + 1]);
   // A non-blank line that cannot be a lazy paragraph continuation.
   bool interrupts(int i) {
-    if (atx(i) || rule(i) || quote(i) || fenceStart(i) || html(i) || tableStart(i)) {
+    if (atx(i) ||
+        rule(i) ||
+        quote(i) ||
+        fenceStart(i) ||
+        html(i) ||
+        tableStart(i)) {
       return true;
     }
     if (!listStart(i)) return false;
@@ -536,11 +551,19 @@ List<MdBlock> _blocks(
     // An ordered item interrupts a paragraph only as number 1, and an empty
     // item never does.
     final ordered = RegExp(r'\d').hasMatch(marker);
-    return (m[3] ?? '').isNotEmpty && (!ordered || marker.startsWith('1.') || marker.startsWith('1)'));
+    return (m[3] ?? '').isNotEmpty &&
+        (!ordered || marker.startsWith('1.') || marker.startsWith('1)'));
   }
 
-  void add(MdBlockKind kind, int first, int last, [int? level]) =>
-      out.add(MdBlock(kind, SourceRange(lines[first].start, lines[last].end), first, last, level));
+  void add(MdBlockKind kind, int first, int last, [int? level]) => out.add(
+    MdBlock(
+      kind,
+      SourceRange(lines[first].start, lines[last].end),
+      first,
+      last,
+      level,
+    ),
+  );
 
   var i = 0;
   while (i < n) {
@@ -575,7 +598,8 @@ List<MdBlock> _blocks(
       var j = i;
       while (j + 1 < n && (quote(j + 1) || !lines[j + 1].blank)) {
         final k = j + 1;
-        if (!quote(k) && (atx(k) || rule(k) || fenceStart(k) || listStart(k))) break;
+        if (!quote(k) && (atx(k) || rule(k) || fenceStart(k) || listStart(k)))
+          break;
         j = k;
       }
       add(MdBlockKind.quote, i, j);
@@ -606,7 +630,10 @@ List<MdBlock> _blocks(
           j = k;
           continue;
         }
-        if (atx(k) || rule(k) || (fenceStart(k) && indents[k] < 2) || (quote(k) && indents[k] == 0)) {
+        if (atx(k) ||
+            rule(k) ||
+            (fenceStart(k) && indents[k] < 2) ||
+            (quote(k) && indents[k] == 0)) {
           break;
         }
         j = k;

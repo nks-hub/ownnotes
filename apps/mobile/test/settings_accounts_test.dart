@@ -102,35 +102,31 @@ void main() {
     double scale = 1,
     http.Client Function()? transport,
   }) => ProviderScope(
-        overrides: [
-          runtimeProvider.overrideWithValue(runtime),
-          localAuthProvider.overrideWithValue(
-            auth ?? FakeAuth(supported: true),
-          ),
-          accountTransportProvider.overrideWithValue(
-            transport ??
-                () => MockClient(
-                  (r) async => http.Response(jsonEncode({}), 404),
-                ),
-          ),
-        ],
-        // The same wiring main.dart gets: preferences feed MaterialApp.
-        child: Consumer(
-          builder: (context, ref, _) => MaterialApp(
-            locale: ref.watch(localeProvider) ?? locale ?? const Locale('en'),
-            themeMode: ref.watch(themeModeProvider),
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocales,
-            builder: (context, child) => MediaQuery(
-              data: MediaQuery.of(
-                context,
-              ).copyWith(textScaler: TextScaler.linear(scale)),
-              child: AppLock(child: child!),
-            ),
-            home: home,
-          ),
+    overrides: [
+      runtimeProvider.overrideWithValue(runtime),
+      localAuthProvider.overrideWithValue(auth ?? FakeAuth(supported: true)),
+      accountTransportProvider.overrideWithValue(
+        transport ??
+            () => MockClient((r) async => http.Response(jsonEncode({}), 404)),
+      ),
+    ],
+    // The same wiring main.dart gets: preferences feed MaterialApp.
+    child: Consumer(
+      builder: (context, ref, _) => MaterialApp(
+        locale: ref.watch(localeProvider) ?? locale ?? const Locale('en'),
+        themeMode: ref.watch(themeModeProvider),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: TextScaler.linear(scale)),
+          child: AppLock(child: child!),
         ),
-      );
+        home: home,
+      ),
+    ),
+  );
 
   group('account switcher', () {
     Widget opener(String currentId, Future<bool> Function()? before) => Builder(

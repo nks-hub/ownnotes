@@ -17,7 +17,10 @@ const _support = 'dev@nks-hub.cz';
 /// Nextcloud and Notes versions of the account's server; null values when it
 /// does not say, an error when it cannot be reached.
 final serverVersionsProvider = FutureProvider.autoDispose
-    .family<({String? nextcloud, String? notes}), Account>((ref, account) async {
+    .family<({String? nextcloud, String? notes}), Account>((
+      ref,
+      account,
+    ) async {
       final password = await ref
           .read(runtimeProvider)
           .vault

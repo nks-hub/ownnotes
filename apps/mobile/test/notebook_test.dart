@@ -1,5 +1,4 @@
-import 'dart:ui'
-    show DisplayFeature, DisplayFeatureState, DisplayFeatureType;
+import 'dart:ui' show DisplayFeature, DisplayFeatureState, DisplayFeatureType;
 
 import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';

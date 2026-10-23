@@ -60,11 +60,18 @@ void main() {
       expect(back.appearance, WidgetAppearance.dark);
       expect(back.isConfigured, isTrue);
       expect(
-        const WidgetConfig(instanceId: '1', type: WidgetType.checklist, accountId: 'a').isConfigured,
+        const WidgetConfig(
+          instanceId: '1',
+          type: WidgetType.checklist,
+          accountId: 'a',
+        ).isConfigured,
         isFalse,
       );
       expect(
-        const WidgetConfig(instanceId: '1', type: WidgetType.quickNote).isConfigured,
+        const WidgetConfig(
+          instanceId: '1',
+          type: WidgetType.quickNote,
+        ).isConfigured,
         isFalse,
       );
     });
@@ -128,7 +135,15 @@ void main() {
         );
         expect(snapshot.isRedacted, isTrue);
         final json = snapshot.encode();
-        for (final secret in ['Secret', 'Taxes', 'milk', 'Personal', 'n1', 'revision', 'tasks']) {
+        for (final secret in [
+          'Secret',
+          'Taxes',
+          'milk',
+          'Personal',
+          'n1',
+          'revision',
+          'tasks',
+        ]) {
           expect(json, isNot(contains(secret)), reason: '$type leaks $secret');
         }
         expect(jsonDecode(json), {
@@ -149,7 +164,10 @@ void main() {
         'privacy': 'redacted',
         'title': 'Secret plan',
         'tasks': [
-          {'key': {'label': 'x', 'occurrence': 0}, 'checked': false},
+          {
+            'key': {'label': 'x', 'occurrence': 0},
+            'checked': false,
+          },
         ],
       });
       expect(back.isRedacted, isTrue);
@@ -208,11 +226,21 @@ void main() {
         now: 1,
       );
       expect(
-        build(const WidgetCollection(WidgetScope.category, 'Work')).notes.map((n) => n.id),
+        build(
+          const WidgetCollection(WidgetScope.category, 'Work'),
+        ).notes.map((n) => n.id),
         ['n1'],
       );
-      expect(build(const WidgetCollection(WidgetScope.favorites)).notes.map((n) => n.id), ['n2']);
-      expect(build(const WidgetCollection(WidgetScope.uncategorised)).notes, hasLength(2));
+      expect(
+        build(
+          const WidgetCollection(WidgetScope.favorites),
+        ).notes.map((n) => n.id),
+        ['n2'],
+      );
+      expect(
+        build(const WidgetCollection(WidgetScope.uncategorised)).notes,
+        hasLength(2),
+      );
     });
 
     test('checklist widget lists tasks with their occurrence', () {
@@ -223,7 +251,12 @@ void main() {
           accountId: 'a',
           noteId: 'n9',
         ),
-        [note(id: 'n9', content: '- [ ] milk\n- [x] milk\n```\n- [ ] code\n```')],
+        [
+          note(
+            id: 'n9',
+            content: '- [ ] milk\n- [x] milk\n```\n- [ ] code\n```',
+          ),
+        ],
         locked: false,
         untitled: 'Untitled',
         now: 1,
@@ -297,12 +330,18 @@ void main() {
 
     test('the lock blocks everything, even a duplicate', () {
       expect(run(command(), locked: true), isA<BlockedCommand>());
-      expect(run(command(), applied: {'c1'}, locked: true), isA<BlockedCommand>());
+      expect(
+        run(command(), applied: {'c1'}, locked: true),
+        isA<BlockedCommand>(),
+      );
     });
 
     test('a note of another account is not touched', () {
       expect(
-        run(command(), target: note(account: 'other', content: '- [ ] milk')),
+        run(
+          command(),
+          target: note(account: 'other', content: '- [ ] milk'),
+        ),
         isA<OpenNoteCommand>(),
       );
     });

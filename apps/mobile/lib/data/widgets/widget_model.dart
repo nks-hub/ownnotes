@@ -357,9 +357,12 @@ final class WidgetCommand {
     accountId: json['accountId']! as String,
     noteId: json['noteId']! as String,
     expectedRevision: (json['expectedRevision']! as num).toInt(),
-    kind: _enum(WidgetCommandKind.values, json['kind']) ??
+    kind:
+        _enum(WidgetCommandKind.values, json['kind']) ??
         WidgetCommandKind.setTask,
-    task: WidgetTaskKey.fromJson(Map<String, Object?>.from(json['task']! as Map)),
+    task: WidgetTaskKey.fromJson(
+      Map<String, Object?>.from(json['task']! as Map),
+    ),
     checked: json['checked'] == true,
     contentHash: json['contentHash'] as String?,
   );

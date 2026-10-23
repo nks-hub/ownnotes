@@ -73,7 +73,8 @@ WidgetSnapshot buildWidgetSnapshot(
 
   switch (config.type) {
     case WidgetType.notesList:
-      final collection = config.collection ?? const WidgetCollection(WidgetScope.all);
+      final collection =
+          config.collection ?? const WidgetCollection(WidgetScope.all);
       final shown = [
         for (final n in own)
           if (_inCollection(n, collection)) n,
@@ -102,7 +103,10 @@ WidgetSnapshot buildWidgetSnapshot(
         tasks: config.type == WidgetType.checklist
             ? [
                 for (final t in doc.tasks)
-                  WidgetTaskEntry(WidgetTaskKey(t.label, t.occurrence), t.checked),
+                  WidgetTaskEntry(
+                    WidgetTaskKey(t.label, t.occurrence),
+                    t.checked,
+                  ),
               ]
             : const [],
       );

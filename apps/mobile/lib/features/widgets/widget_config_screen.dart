@@ -258,7 +258,8 @@ class _WidgetConfigScreenState extends State<WidgetConfigScreen> {
         final checklist = _type == WidgetType.checklist;
         final notes = [
           for (final n in all)
-            if (!checklist || MarkdownDocument.parse(n.content).tasks.isNotEmpty)
+            if (!checklist ||
+                MarkdownDocument.parse(n.content).tasks.isNotEmpty)
               n,
         ]..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
         if (notes.isEmpty) {

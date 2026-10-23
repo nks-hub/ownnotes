@@ -33,7 +33,8 @@ class _Vault implements CredentialVault {
   Future<Set<String>> references() async => entries.keys.toSet();
 }
 
-const _content = '# Title\n\nfirst line\n\nsecond **banana** line\n\n- [ ] task';
+const _content =
+    '# Title\n\nfirst line\n\nsecond **banana** line\n\n- [ ] task';
 
 Future<void> _openPreview(WidgetTester tester, {bool readonly = false}) async {
   await _openEditor(tester, readonly: readonly);

@@ -120,11 +120,14 @@ class TemplateStore {
       if (jsonDecode(raw) case final Map m) {
         return DailyNoteConfig(
           category: m['category'] is String ? m['category'] as String : '',
-          titlePattern: m['titlePattern'] is String &&
+          titlePattern:
+              m['titlePattern'] is String &&
                   (m['titlePattern'] as String).trim().isNotEmpty
               ? m['titlePattern'] as String
               : 'yyyy-MM-dd',
-          templateId: m['templateId'] is String ? m['templateId'] as String : null,
+          templateId: m['templateId'] is String
+              ? m['templateId'] as String
+              : null,
         );
       }
     } on FormatException {
@@ -133,14 +136,15 @@ class TemplateStore {
     return const DailyNoteConfig();
   }
 
-  Future<void> saveDaily(DailyNoteConfig c) => SharedPreferencesAsync().setString(
-    _dailyKey,
-    jsonEncode({
-      'category': c.category,
-      'titlePattern': c.titlePattern,
-      'templateId': c.templateId,
-    }),
-  );
+  Future<void> saveDaily(DailyNoteConfig c) =>
+      SharedPreferencesAsync().setString(
+        _dailyKey,
+        jsonEncode({
+          'category': c.category,
+          'titlePattern': c.titlePattern,
+          'templateId': c.templateId,
+        }),
+      );
 }
 
 String _format(String pattern, DateTime when) {
@@ -188,7 +192,11 @@ Future<String> createFromTemplate(
 }
 
 final class DailyNoteResult {
-  const DailyNoteResult(this.noteId, {required this.created, required this.plan});
+  const DailyNoteResult(
+    this.noteId, {
+    required this.created,
+    required this.plan,
+  });
 
   /// Local id of the note to open.
   final String noteId;

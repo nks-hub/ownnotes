@@ -129,7 +129,10 @@ List<TextSpan> buildLiveMarkdownSpans(
         add('](${m[5]})', marker);
       } else if (m[6] != null) {
         add('~~', marker);
-        add(m[6]!, merge(const TextStyle(decoration: TextDecoration.lineThrough)));
+        add(
+          m[6]!,
+          merge(const TextStyle(decoration: TextDecoration.lineThrough)),
+        );
         add('~~', marker);
       } else {
         add('*', marker);
@@ -162,7 +165,8 @@ List<TextSpan> buildLiveMarkdownSpans(
         add(m[1]!);
         final rest = raw.substring(m.end);
         if (m[2] != null) {
-          final size = bodySize * LiveMarkdownMetrics.headingScale(m[2]!.length);
+          final size =
+              bodySize * LiveMarkdownMetrics.headingScale(m[2]!.length);
           final heading = TextStyle(
             fontSize: size,
             // The enlarged run keeps the body's line advance.
@@ -176,12 +180,18 @@ List<TextSpan> buildLiveMarkdownSpans(
           inline(rest, marker);
         } else {
           if (m[5] != null) {
-            add(m[5]!, TextStyle(color: style.link).merge(weight(FontWeight.w700)));
+            add(
+              m[5]!,
+              TextStyle(color: style.link).merge(weight(FontWeight.w700)),
+            );
             add(m[6]!);
           }
           TextStyle? around;
           if (m[7] != null) {
-            add(m[7]!, TextStyle(color: style.link).merge(weight(FontWeight.w700)));
+            add(
+              m[7]!,
+              TextStyle(color: style.link).merge(weight(FontWeight.w700)),
+            );
             add(m[8]!);
             if (m[7]!.toLowerCase() == '[x]') {
               around = TextStyle(

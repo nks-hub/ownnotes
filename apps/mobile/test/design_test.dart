@@ -29,10 +29,24 @@ void main() {
       expect(OwnColors.dark.decision, const Color(0xFFFFBE80));
       for (final c in themes.values) {
         for (final color in [
-          c.canvas, c.document, c.raised, c.text, c.textSecondary, c.outline,
-          c.accent, c.onAccent, c.selected, c.onSelected, c.error,
-          c.errorContainer, c.success, c.successContainer, c.decision,
-          c.decisionContainer, c.info, c.infoContainer,
+          c.canvas,
+          c.document,
+          c.raised,
+          c.text,
+          c.textSecondary,
+          c.outline,
+          c.accent,
+          c.onAccent,
+          c.selected,
+          c.onSelected,
+          c.error,
+          c.errorContainer,
+          c.success,
+          c.successContainer,
+          c.decision,
+          c.decisionContainer,
+          c.info,
+          c.infoContainer,
         ]) {
           expect(color.a, 1.0);
         }
@@ -94,11 +108,23 @@ void main() {
         final s = theme.colorScheme;
         expect(contrast(s.onPrimary, s.primary), greaterThanOrEqualTo(4.5));
         expect(contrast(s.onSurface, s.surface), greaterThanOrEqualTo(4.5));
-        expect(contrast(s.onSurfaceVariant, s.surfaceContainer), greaterThanOrEqualTo(4.5));
+        expect(
+          contrast(s.onSurfaceVariant, s.surfaceContainer),
+          greaterThanOrEqualTo(4.5),
+        );
         expect(contrast(s.onError, s.error), greaterThanOrEqualTo(4.5));
-        expect(contrast(s.onPrimaryContainer, s.primaryContainer), greaterThanOrEqualTo(4.5));
-        expect(contrast(s.onInverseSurface, s.inverseSurface), greaterThanOrEqualTo(4.5));
-        expect(theme.scaffoldBackgroundColor, theme.extension<OwnColors>()!.canvas);
+        expect(
+          contrast(s.onPrimaryContainer, s.primaryContainer),
+          greaterThanOrEqualTo(4.5),
+        );
+        expect(
+          contrast(s.onInverseSurface, s.inverseSurface),
+          greaterThanOrEqualTo(4.5),
+        );
+        expect(
+          theme.scaffoldBackgroundColor,
+          theme.extension<OwnColors>()!.canvas,
+        );
       }
     });
   });
@@ -106,12 +132,24 @@ void main() {
   group('type and geometry', () {
     test('roles carry the specified size, line height and weight', () {
       expect(OwnType.screenTitle.fontSize, 22);
-      expect(OwnType.screenTitle.fontSize! * OwnType.screenTitle.height!, closeTo(28, 1e-9));
-      expect(OwnType.documentTitle.fontSize! * OwnType.documentTitle.height!, closeTo(34, 1e-9));
+      expect(
+        OwnType.screenTitle.fontSize! * OwnType.screenTitle.height!,
+        closeTo(28, 1e-9),
+      );
+      expect(
+        OwnType.documentTitle.fontSize! * OwnType.documentTitle.height!,
+        closeTo(34, 1e-9),
+      );
       expect(OwnType.body.fontWeight, FontWeight.w400);
       expect(OwnType.button.fontWeight, FontWeight.w600);
-      expect(OwnType.metadata.fontSize! * OwnType.metadata.height!, closeTo(19, 1e-9));
-      expect(OwnType.sourceBody.fontSize! * OwnType.sourceBody.height!, closeTo(27.2, 1e-9));
+      expect(
+        OwnType.metadata.fontSize! * OwnType.metadata.height!,
+        closeTo(19, 1e-9),
+      );
+      expect(
+        OwnType.sourceBody.fontSize! * OwnType.sourceBody.height!,
+        closeTo(27.2, 1e-9),
+      );
       expect(OwnType.previewCode.fontFamily, 'NotoSansMono');
     });
 
@@ -173,15 +211,24 @@ void main() {
               SyncPresentation(
                 kind: kind,
                 text: german[kind.index % german.length],
-                actions: [SyncAction(german[1], () {}), SyncAction(german[5], () {})],
+                actions: [
+                  SyncAction(german[1], () {}),
+                  SyncAction(german[5], () {}),
+                ],
               ),
             ),
           OwnNoteRowFrame(
-            title: 'Besprechungsnotizen mit einem sehr langen Titel, der umbrechen muss und noch weiter geht',
-            excerpt: 'Entscheidungen vom Montag und die nächsten Schritte, ausführlich beschrieben über mehrere Zeilen',
+            title:
+                'Besprechungsnotizen mit einem sehr langen Titel, der umbrechen muss und noch weiter geht',
+            excerpt:
+                'Entscheidungen vom Montag und die nächsten Schritte, ausführlich beschrieben über mehrere Zeilen',
             meta: const ['Arbeit / Planung', 'Gestern'],
             stateLines: [
-              NoteStateLine(text: german[2], icon: Icons.rule, tone: OwnTone.decision),
+              NoteStateLine(
+                text: german[2],
+                icon: Icons.rule,
+                tone: OwnTone.decision,
+              ),
               NoteStateLine(text: german[3], icon: Icons.schedule),
             ],
             favorite: true,
@@ -194,7 +241,8 @@ void main() {
             height: 500,
             child: OwnStateView.error(
               title: 'Datenbank kann nicht geöffnet werden',
-              message: 'Versuche es erneut oder exportiere die Wiederherstellungsdaten.',
+              message:
+                  'Versuche es erneut oder exportiere die Wiederherstellungsdaten.',
               actions: [],
             ),
           ),
@@ -204,7 +252,9 @@ void main() {
 
     for (final dark in [false, true]) {
       for (final scale in [1.0, 2.0]) {
-        testWidgets('${dark ? 'dark' : 'light'} at ${scale * 100}% text', (tester) async {
+        testWidgets('${dark ? 'dark' : 'light'} at ${scale * 100}% text', (
+          tester,
+        ) async {
           tester.view.physicalSize = const Size(411, 900);
           tester.view.devicePixelRatio = 1;
           addTearDown(tester.view.reset);
@@ -214,14 +264,18 @@ void main() {
               darkTheme: OwnTheme.dark(),
               themeMode: dark ? ThemeMode.dark : ThemeMode.light,
               builder: (context, child) => MediaQuery(
-                data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(scale)),
+                data: MediaQuery.of(
+                  context,
+                ).copyWith(textScaler: TextScaler.linear(scale)),
                 child: child!,
               ),
               home: Scaffold(body: SafeArea(child: gallery())),
             ),
           );
           expect(tester.takeException(), isNull);
-          for (final b in tester.widgetList<OwnButton>(find.byType(OwnButton))) {
+          for (final b in tester.widgetList<OwnButton>(
+            find.byType(OwnButton),
+          )) {
             final size = tester.getSize(find.byWidget(b));
             expect(size.height, greaterThanOrEqualTo(48), reason: b.label);
           }
@@ -229,7 +283,9 @@ void main() {
       }
     }
 
-    testWidgets('actions stack at large text and keep their order', (tester) async {
+    testWidgets('actions stack at large text and keep their order', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(411, 900);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
@@ -237,7 +293,9 @@ void main() {
         MaterialApp(
           theme: OwnTheme.light(),
           builder: (context, child) => MediaQuery(
-            data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(scale)),
+            data: MediaQuery.of(
+              context,
+            ).copyWith(textScaler: TextScaler.linear(scale)),
             child: child!,
           ),
           home: Scaffold(
@@ -251,9 +309,15 @@ void main() {
         ),
       );
       await pump(1);
-      expect(tester.getTopLeft(find.text('One')).dy, tester.getTopLeft(find.text('Two')).dy);
+      expect(
+        tester.getTopLeft(find.text('One')).dy,
+        tester.getTopLeft(find.text('Two')).dy,
+      );
       await pump(2);
-      expect(tester.getTopLeft(find.text('One')).dy, lessThan(tester.getTopLeft(find.text('Two')).dy));
+      expect(
+        tester.getTopLeft(find.text('One')).dy,
+        lessThan(tester.getTopLeft(find.text('Two')).dy),
+      );
     });
   });
 
@@ -267,19 +331,23 @@ void main() {
       ]);
       expect(urgent!.text, 'd');
       expect(SyncPresentation.mostUrgent(const []), isNull);
-      final order = [...SyncKind.values]..sort((a, b) => a.priority.compareTo(b.priority));
+      final order = [...SyncKind.values]
+        ..sort((a, b) => a.priority.compareTo(b.priority));
       expect(order.first, SyncKind.conflict);
       expect(order.last, SyncKind.upToDate);
     });
 
     test('only critical states are persistent banners', () {
-      expect(
-        SyncKind.values.where((k) => k.persistent),
-        [SyncKind.authFailure, SyncKind.conflict, SyncKind.localWriteFailure],
-      );
+      expect(SyncKind.values.where((k) => k.persistent), [
+        SyncKind.authFailure,
+        SyncKind.conflict,
+        SyncKind.localWriteFailure,
+      ]);
     });
 
-    testWidgets('a conflict is a banner with its action, a quiet state a row', (tester) async {
+    testWidgets('a conflict is a banner with its action, a quiet state a row', (
+      tester,
+    ) async {
       var pressed = 0;
       await tester.pumpWidget(
         MaterialApp(
@@ -295,7 +363,10 @@ void main() {
                   ),
                 ),
                 const SyncStatusLine(
-                  SyncPresentation(kind: SyncKind.upToDate, text: 'Up to date · checked 10:42'),
+                  SyncPresentation(
+                    kind: SyncKind.upToDate,
+                    text: 'Up to date · checked 10:42',
+                  ),
                 ),
               ],
             ),
@@ -310,31 +381,41 @@ void main() {
   });
 
   group('sheets and snackbar', () {
-    Widget host(void Function(BuildContext) onTap, {double scale = 1}) => MaterialApp(
-      theme: OwnTheme.light(),
-      builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(scale)),
-        child: child!,
-      ),
-      home: Scaffold(
-        body: Builder(
-          builder: (context) => TextButton(onPressed: () => onTap(context), child: const Text('open')),
-        ),
-      ),
-    );
+    Widget host(void Function(BuildContext) onTap, {double scale = 1}) =>
+        MaterialApp(
+          theme: OwnTheme.light(),
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(
+              context,
+            ).copyWith(textScaler: TextScaler.linear(scale)),
+            child: child!,
+          ),
+          home: Scaffold(
+            body: Builder(
+              builder: (context) => TextButton(
+                onPressed: () => onTap(context),
+                child: const Text('open'),
+              ),
+            ),
+          ),
+        );
 
-    testWidgets('sheet content stays above the system navigation bar', (tester) async {
+    testWidgets('sheet content stays above the system navigation bar', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(360, 800);
       tester.view.devicePixelRatio = 1;
       tester.view.padding = const FakeViewPadding(bottom: 48);
       tester.view.viewPadding = const FakeViewPadding(bottom: 48);
       addTearDown(tester.view.reset);
       await tester.pumpWidget(
-        host((c) => showOwnSheet<void>(
-          context: c,
-          title: 'Attachments',
-          builder: (_) => const Text('The file stays on the server.'),
-        )),
+        host(
+          (c) => showOwnSheet<void>(
+            context: c,
+            title: 'Attachments',
+            builder: (_) => const Text('The file stays on the server.'),
+          ),
+        ),
       );
       await tester.tap(find.text('open'));
       await tester.pumpAndSettle();
@@ -349,7 +430,13 @@ void main() {
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
       await tester.pumpWidget(
-        host((c) => showOwnSheet<void>(context: c, title: 'Accounts', builder: (_) => const Text('body'))),
+        host(
+          (c) => showOwnSheet<void>(
+            context: c,
+            title: 'Accounts',
+            builder: (_) => const Text('body'),
+          ),
+        ),
       );
       await tester.tap(find.text('open'));
       await tester.pumpAndSettle();
@@ -357,13 +444,19 @@ void main() {
       expect(find.byType(BottomSheet), findsOneWidget);
     });
 
-    testWidgets('a short window or huge text becomes a full screen route', (tester) async {
+    testWidgets('a short window or huge text becomes a full screen route', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(411, 900);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
       await tester.pumpWidget(
         host(
-          (c) => showOwnSheet<void>(context: c, title: 'Accounts', builder: (_) => const Text('body')),
+          (c) => showOwnSheet<void>(
+            context: c,
+            title: 'Accounts',
+            builder: (_) => const Text('body'),
+          ),
           scale: 2.0,
         ),
       );
@@ -374,12 +467,19 @@ void main() {
       expect(find.byType(AppBar), findsOneWidget);
     });
 
-    testWidgets('a snackbar with undo replaces the previous one', (tester) async {
+    testWidgets('a snackbar with undo replaces the previous one', (
+      tester,
+    ) async {
       var undone = false;
       await tester.pumpWidget(
         host((c) {
           showOwnSnackBar(c, 'first');
-          showOwnSnackBar(c, 'Note deleted', actionLabel: 'Undo', onAction: () => undone = true);
+          showOwnSnackBar(
+            c,
+            'Note deleted',
+            actionLabel: 'Undo',
+            onAction: () => undone = true,
+          );
         }),
       );
       await tester.tap(find.text('open'));
@@ -392,7 +492,9 @@ void main() {
 
   group('font asset', () {
     test('the mono subset stays inside the 250 KiB budget', () async {
-      final data = await rootBundle.load('assets/fonts/NotoSansMono-Subset.ttf');
+      final data = await rootBundle.load(
+        'assets/fonts/NotoSansMono-Subset.ttf',
+      );
       expect(data.lengthInBytes, greaterThan(10 * 1024));
       expect(data.lengthInBytes, lessThanOrEqualTo(250 * 1024));
       // TrueType outlines.
@@ -404,7 +506,9 @@ void main() {
       registerFontLicenses();
       registerFontLicenses();
       final entries = await LicenseRegistry.licenses.toList();
-      final mono = entries.where((e) => e.packages.contains('Noto Sans Mono')).toList();
+      final mono = entries
+          .where((e) => e.packages.contains('Noto Sans Mono'))
+          .toList();
       expect(mono, hasLength(1));
       expect(
         mono.single.paragraphs.map((p) => p.text).join(' '),

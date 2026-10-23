@@ -73,9 +73,7 @@ class EditHistory extends ChangeNotifier {
     // What was typed since the last step is kept as that step's selection.
     _at = to;
     _silent = true;
-    controller.value = _entries[to].value.copyWith(
-      composing: TextRange.empty,
-    );
+    controller.value = _entries[to].value.copyWith(composing: TextRange.empty);
     _silent = false;
     notifyListeners();
   }

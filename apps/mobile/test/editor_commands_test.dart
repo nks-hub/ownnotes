@@ -34,7 +34,10 @@ void main() {
     test('bold wraps the selection and unwraps it again', () {
       final wrapped = toggleWrap(v('a word b', 2, 6), '**', '**');
       expect(wrapped.text, 'a **word** b');
-      expect(wrapped.selection, const TextSelection(baseOffset: 4, extentOffset: 8));
+      expect(
+        wrapped.selection,
+        const TextSelection(baseOffset: 4, extentOffset: 8),
+      );
       expect(toggleWrap(wrapped, '**', '**').text, 'a word b');
     });
 
@@ -90,7 +93,10 @@ void main() {
     test('link selects the address, or the label of an address', () {
       final link = insertLink(v('see here', 4, 8));
       expect(link.text, 'see [here](https://)');
-      expect(link.text.substring(link.selection.start, link.selection.end), 'https://');
+      expect(
+        link.text.substring(link.selection.start, link.selection.end),
+        'https://',
+      );
       final url = insertLink(v('https://x.y', 0, 11));
       expect(url.text, '[](https://x.y)');
       expect(url.selection, const TextSelection.collapsed(offset: 1));
@@ -223,7 +229,10 @@ void main() {
 
     test('emoji are found by English and Czech names, diacritics ignored', () {
       expect(searchEmoji('smile', czech: false).first.glyph, isNotNull);
-      expect(searchEmoji('usmev', czech: true).map((e) => e.glyph), contains('🙂'));
+      expect(
+        searchEmoji('usmev', czech: true).map((e) => e.glyph),
+        contains('🙂'),
+      );
       expect(searchEmoji('mleko', czech: true).first.glyph, '🥛');
       expect(searchEmoji('milk', czech: false).first.title, 'milk');
       expect(searchEmoji('mléko', czech: true).first.title, 'mléko');
@@ -309,7 +318,10 @@ void main() {
       final last = cl.items.last;
       expect(last.label, 'milk');
       final next = cl.toggled(last)!;
-      expect(next.lastIndexOf('[x] milk'), greaterThan(next.indexOf('[x] bread')));
+      expect(
+        next.lastIndexOf('[x] milk'),
+        greaterThan(next.indexOf('[x] bread')),
+      );
       expect(next.indexOf('- [ ] milk'), doc.indexOf('- [ ] milk'));
     });
 
@@ -317,10 +329,19 @@ void main() {
       final next = Checklist.parse(doc).added('  cheese ')!;
       expect(
         next,
-        doc.replaceFirst('- [ ] milk\n\nClosing', '- [ ] milk\n- [ ] cheese\n\nClosing'),
+        doc.replaceFirst(
+          '- [ ] milk\n\nClosing',
+          '- [ ] milk\n- [ ] cheese\n\nClosing',
+        ),
       );
-      expect(Checklist.parse('prose only').added('a'), 'prose only\n\n- [ ] a\n');
-      expect(Checklist.parse('1. [ ] a\n2. [ ] b').added('c'), '1. [ ] a\n2. [ ] b\n3. [ ] c');
+      expect(
+        Checklist.parse('prose only').added('a'),
+        'prose only\n\n- [ ] a\n',
+      );
+      expect(
+        Checklist.parse('1. [ ] a\n2. [ ] b').added('c'),
+        '1. [ ] a\n2. [ ] b\n3. [ ] c',
+      );
       expect(Checklist.parse(doc).added('   '), isNull);
     });
 
@@ -346,8 +367,14 @@ void main() {
       );
       expect(cl.movedUp(0), isNull);
       final down = cl.movedDown(0)!;
-      expect(down.indexOf('- [x] bread'), lessThan(down.indexOf('note under milk')));
-      expect(down, contains('- [x] bread\n- [ ] milk\n  note under milk\n- [ ] eggs'));
+      expect(
+        down.indexOf('- [x] bread'),
+        lessThan(down.indexOf('note under milk')),
+      );
+      expect(
+        down,
+        contains('- [x] bread\n- [ ] milk\n  note under milk\n- [ ] eggs'),
+      );
     });
 
     test('drag to another sibling position', () {
@@ -367,7 +394,9 @@ void main() {
     });
 
     test('quoted and fenced tasks are not part of the checklist', () {
-      final cl = Checklist.parse('> - [ ] quoted\n```\n- [ ] code\n```\n- [ ] real');
+      final cl = Checklist.parse(
+        '> - [ ] quoted\n```\n- [ ] code\n```\n- [ ] real',
+      );
       expect(cl.items.map((i) => i.label), ['real']);
     });
   });

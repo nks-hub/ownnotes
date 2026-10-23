@@ -11,7 +11,8 @@ enum AttachKind { photo, camera, file, voice }
 /// Called when an Attach menu row is chosen; the editor does not move any
 /// file itself. Null disables the rows.
 /// Returns a pending insertion to acknowledge after saving the draft.
-typedef AttachHandler = FutureOr<AttachmentInsertion?> Function(AttachKind kind);
+typedef AttachHandler =
+    FutureOr<AttachmentInsertion?> Function(AttachKind kind);
 
 /// Commands of the Format and Insert menus and of the Task button.
 enum EditorCommand {
@@ -82,18 +83,54 @@ class FormattingDock extends StatelessWidget {
                   icon: Icons.text_format,
                   onSelected: onCommand,
                   entries: [
-                    _item(EditorCommand.heading1, Icons.looks_one_outlined, '${l.fmtHeading} 1'),
-                    _item(EditorCommand.heading2, Icons.looks_two_outlined, '${l.fmtHeading} 2'),
-                    _item(EditorCommand.heading3, Icons.looks_3_outlined, '${l.fmtHeading} 3'),
+                    _item(
+                      EditorCommand.heading1,
+                      Icons.looks_one_outlined,
+                      '${l.fmtHeading} 1',
+                    ),
+                    _item(
+                      EditorCommand.heading2,
+                      Icons.looks_two_outlined,
+                      '${l.fmtHeading} 2',
+                    ),
+                    _item(
+                      EditorCommand.heading3,
+                      Icons.looks_3_outlined,
+                      '${l.fmtHeading} 3',
+                    ),
                     _item(EditorCommand.bold, Icons.format_bold, l.fmtBold),
-                    _item(EditorCommand.italic, Icons.format_italic, l.fmtItalic),
-                    _item(EditorCommand.strike, Icons.format_strikethrough, l.fmtStrike),
+                    _item(
+                      EditorCommand.italic,
+                      Icons.format_italic,
+                      l.fmtItalic,
+                    ),
+                    _item(
+                      EditorCommand.strike,
+                      Icons.format_strikethrough,
+                      l.fmtStrike,
+                    ),
                     _item(EditorCommand.quote, Icons.format_quote, l.fmtQuote),
-                    _item(EditorCommand.bullets, Icons.format_list_bulleted, l.fmtList),
-                    _item(EditorCommand.numbered, Icons.format_list_numbered, l.fmtNumbered),
+                    _item(
+                      EditorCommand.bullets,
+                      Icons.format_list_bulleted,
+                      l.fmtList,
+                    ),
+                    _item(
+                      EditorCommand.numbered,
+                      Icons.format_list_numbered,
+                      l.fmtNumbered,
+                    ),
                     _item(EditorCommand.code, Icons.code, l.fmtCode),
-                    _item(EditorCommand.indent, Icons.format_indent_increase, l.fmtIndent),
-                    _item(EditorCommand.outdent, Icons.format_indent_decrease, l.fmtOutdent),
+                    _item(
+                      EditorCommand.indent,
+                      Icons.format_indent_increase,
+                      l.fmtIndent,
+                    ),
+                    _item(
+                      EditorCommand.outdent,
+                      Icons.format_indent_decrease,
+                      l.fmtOutdent,
+                    ),
                   ],
                 ),
                 IconButton(
@@ -106,10 +143,30 @@ class FormattingDock extends StatelessWidget {
                   icon: Icons.attach_file,
                   onSelected: (k) => onAttach?.call(k),
                   entries: [
-                    _item(AttachKind.photo, Icons.photo_outlined, l.attachPhoto, enabled: onAttach != null),
-                    _item(AttachKind.camera, Icons.photo_camera_outlined, l.attachCamera, enabled: onAttach != null),
-                    _item(AttachKind.file, Icons.insert_drive_file_outlined, l.attachFile, enabled: onAttach != null),
-                    _item(AttachKind.voice, Icons.mic_none, l.attachVoice, enabled: onAttach != null),
+                    _item(
+                      AttachKind.photo,
+                      Icons.photo_outlined,
+                      l.attachPhoto,
+                      enabled: onAttach != null,
+                    ),
+                    _item(
+                      AttachKind.camera,
+                      Icons.photo_camera_outlined,
+                      l.attachCamera,
+                      enabled: onAttach != null,
+                    ),
+                    _item(
+                      AttachKind.file,
+                      Icons.insert_drive_file_outlined,
+                      l.attachFile,
+                      enabled: onAttach != null,
+                    ),
+                    _item(
+                      AttachKind.voice,
+                      Icons.mic_none,
+                      l.attachVoice,
+                      enabled: onAttach != null,
+                    ),
                   ],
                 ),
                 _Menu<EditorCommand>(
@@ -118,10 +175,26 @@ class FormattingDock extends StatelessWidget {
                   onSelected: onCommand,
                   entries: [
                     _item(EditorCommand.link, Icons.link, l.fmtLink),
-                    _item(EditorCommand.mention, Icons.alternate_email, l.insertMention),
-                    _item(EditorCommand.emoji, Icons.emoji_emotions_outlined, l.insertEmoji),
-                    _item(EditorCommand.smartPicker, Icons.travel_explore_outlined, l.smartPicker),
-                    _item(EditorCommand.template, Icons.description_outlined, l.templates),
+                    _item(
+                      EditorCommand.mention,
+                      Icons.alternate_email,
+                      l.insertMention,
+                    ),
+                    _item(
+                      EditorCommand.emoji,
+                      Icons.emoji_emotions_outlined,
+                      l.insertEmoji,
+                    ),
+                    _item(
+                      EditorCommand.smartPicker,
+                      Icons.travel_explore_outlined,
+                      l.smartPicker,
+                    ),
+                    _item(
+                      EditorCommand.template,
+                      Icons.description_outlined,
+                      l.templates,
+                    ),
                   ],
                 ),
               ],
@@ -133,18 +206,22 @@ class FormattingDock extends StatelessWidget {
   }
 }
 
-PopupMenuEntry<T> _item<T>(T value, IconData icon, String label, {bool enabled = true}) =>
-    PopupMenuItem<T>(
-      value: value,
-      enabled: enabled,
-      child: Row(
-        children: [
-          Icon(icon),
-          const SizedBox(width: 16),
-          Flexible(child: Text(label)),
-        ],
-      ),
-    );
+PopupMenuEntry<T> _item<T>(
+  T value,
+  IconData icon,
+  String label, {
+  bool enabled = true,
+}) => PopupMenuItem<T>(
+  value: value,
+  enabled: enabled,
+  child: Row(
+    children: [
+      Icon(icon),
+      const SizedBox(width: 16),
+      Flexible(child: Text(label)),
+    ],
+  ),
+);
 
 class _Menu<T> extends StatelessWidget {
   const _Menu({

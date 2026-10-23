@@ -48,7 +48,9 @@ abstract interface class SuggestionSource {
 /// Builds the source of an account. Tests replace the provider.
 typedef SuggestionSourceFactory = Future<SuggestionSource> Function(Account a);
 
-final suggestionSourceFactoryProvider = Provider<SuggestionSourceFactory>((ref) {
+final suggestionSourceFactoryProvider = Provider<SuggestionSourceFactory>((
+  ref,
+) {
   final runtime = ref.watch(runtimeProvider);
   return (account) async {
     final password = await runtime.vault.read(account.credentialRef);
@@ -83,10 +85,7 @@ final class NextcloudSuggestionSource implements SuggestionSource {
   final String _authorization;
   List<ReferenceProvider>? _providers;
 
-  Future<Object?> _ocs(
-    List<String> segments,
-    Map<String, Object> query,
-  ) async {
+  Future<Object?> _ocs(List<String> segments, Map<String, Object> query) async {
     final uri = base.uri.replace(
       pathSegments: [
         ...base.uri.pathSegments.where((s) => s.isNotEmpty),
@@ -142,7 +141,8 @@ final class NextcloudSuggestionSource implements SuggestionSource {
             MentionCandidate(
               id: id,
               label: label,
-              subline: u['subline'] is String && (u['subline']! as String).isNotEmpty
+              subline:
+                  u['subline'] is String && (u['subline']! as String).isNotEmpty
                   ? u['subline']! as String
                   : null,
             ),
@@ -176,7 +176,9 @@ final class NextcloudSuggestionSource implements SuggestionSource {
           ];
           final searchId = ids.where(searchable.contains).firstOrNull;
           if (searchId != null) {
-            out.add(ReferenceProvider(id: id, title: title, searchId: searchId));
+            out.add(
+              ReferenceProvider(id: id, title: title, searchId: searchId),
+            );
           }
         }
       }
@@ -197,7 +199,10 @@ final class NextcloudSuggestionSource implements SuggestionSource {
     final out = <ReferenceResult>[];
     if (entries is List) {
       for (final e in entries) {
-        if (e case {'title': final String title, 'resourceUrl': final String url}) {
+        if (e case {
+          'title': final String title,
+          'resourceUrl': final String url,
+        }) {
           final uri = Uri.tryParse(url);
           if (uri == null || !(uri.scheme == 'https' || uri.scheme == 'http')) {
             continue;
@@ -206,7 +211,8 @@ final class NextcloudSuggestionSource implements SuggestionSource {
             ReferenceResult(
               title: title,
               url: uri,
-              subline: e['subline'] is String && (e['subline']! as String).isNotEmpty
+              subline:
+                  e['subline'] is String && (e['subline']! as String).isNotEmpty
                   ? e['subline']! as String
                   : null,
             ),

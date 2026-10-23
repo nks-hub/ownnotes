@@ -106,7 +106,9 @@ class _Row extends StatelessWidget {
             foregroundColor: colors.onSelected,
             child: Text(
               item.glyph!,
-              style: TextStyle(fontSize: item.id.startsWith('emoji:') ? 20 : 14),
+              style: TextStyle(
+                fontSize: item.id.startsWith('emoji:') ? 20 : 14,
+              ),
             ),
           )
         : Icon(item.icon, color: colors.textSecondary);
@@ -197,9 +199,9 @@ class _Message extends StatelessWidget {
           Expanded(
             child: Text(
               text,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: colors.textSecondary,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: colors.textSecondary),
             ),
           ),
         ],

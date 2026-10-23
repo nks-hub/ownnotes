@@ -94,7 +94,8 @@ TextEditingValue toggleWrap(TextEditingValue v, String left, String right) {
   // A single `*` must not count the halves of `**`.
   bool lone(int markerEnd, int markerStart) =>
       left.length > 1 ||
-      !(markerEnd - 2 >= 0 && text.substring(markerEnd - 2, markerEnd) == left + left) &&
+      !(markerEnd - 2 >= 0 &&
+              text.substring(markerEnd - 2, markerEnd) == left + left) &&
           !(markerStart + 2 <= text.length &&
               text.substring(markerStart, markerStart + 2) == right + right);
   if (a >= left.length &&
@@ -197,8 +198,11 @@ TextEditingValue toggleList(TextEditingValue v, ListKind kind) {
   return _mapLines(v, (line, _) {
     if (line.trim().isEmpty) return line;
     final m = _listPrefix.firstMatch(line);
-    final indent = m?[1] ?? line.substring(0, line.length - line.trimLeft().length);
-    final rest = m == null ? line.trimLeft() : line.substring(m.end - (m[4]?.length ?? 0));
+    final indent =
+        m?[1] ?? line.substring(0, line.length - line.trimLeft().length);
+    final rest = m == null
+        ? line.trimLeft()
+        : line.substring(m.end - (m[4]?.length ?? 0));
     if (all) return '$indent$rest';
     number++;
     return '$indent${kind == ListKind.bullet ? '-' : '$number.'} $rest';
@@ -237,8 +241,10 @@ String _unit(String line) =>
     RegExp(r'^[ \t]*\d{1,9}[.)]').hasMatch(line) ? '   ' : '  ';
 
 /// Indents the selected lines by one list level.
-TextEditingValue indent(TextEditingValue v) =>
-    _mapLines(v, (line, _) => line.trim().isEmpty ? line : '${_unit(line)}$line');
+TextEditingValue indent(TextEditingValue v) => _mapLines(
+  v,
+  (line, _) => line.trim().isEmpty ? line : '${_unit(line)}$line',
+);
 
 /// Removes one list level from the selected lines.
 TextEditingValue outdent(TextEditingValue v) => _mapLines(v, (line, _) {
@@ -312,15 +318,29 @@ TextEditingValue insertAtSelection(TextEditingValue v, String insert) {
 TextEditingValue insertTrigger(TextEditingValue v, String trigger) {
   final sel = _valid(v);
   final before = sel.start == 0 ? '' : v.text[sel.start - 1];
-  final needsSpace = before.isNotEmpty && !RegExp(r'[\s(\[{"' "'" r']').hasMatch(before);
-  return replaceRange(v, sel.start, sel.end, '${needsSpace ? ' ' : ''}$trigger');
+  final needsSpace =
+      before.isNotEmpty &&
+      !RegExp(
+        r'[\s(\[{"'
+        "'"
+        r']',
+      ).hasMatch(before);
+  return replaceRange(
+    v,
+    sel.start,
+    sel.end,
+    '${needsSpace ? ' ' : ''}$trigger',
+  );
 }
 
 /// Enter in a list: continues it with the next marker, or ends the list when
 /// the item is empty. Works on the value a keyboard produced ([next]) against
 /// the one before ([previous]); returns null when this was not a plain Enter
 /// in a list item.
-TextEditingValue? continueList(TextEditingValue previous, TextEditingValue next) {
+TextEditingValue? continueList(
+  TextEditingValue previous,
+  TextEditingValue next,
+) {
   final sel = previous.selection;
   if (!sel.isValid ||
       !sel.isCollapsed ||

@@ -128,7 +128,10 @@ class _TemplatesScreenState extends State<TemplatesScreen> {
       await widget.store.saveTemplates(list);
     } on Object {
       if (mounted) {
-        showOwnSnackBar(context, AppLocalizations.of(context)!.settingSaveFailed);
+        showOwnSnackBar(
+          context,
+          AppLocalizations.of(context)!.settingSaveFailed,
+        );
       }
     }
   }
@@ -139,7 +142,10 @@ class _TemplatesScreenState extends State<TemplatesScreen> {
       await widget.store.saveDaily(c);
     } on Object {
       if (mounted) {
-        showOwnSnackBar(context, AppLocalizations.of(context)!.settingSaveFailed);
+        showOwnSnackBar(
+          context,
+          AppLocalizations.of(context)!.settingSaveFailed,
+        );
       }
     }
   }
@@ -243,7 +249,8 @@ class _TemplatesScreenState extends State<TemplatesScreen> {
                           labelText: l.category,
                           prefixIcon: const Icon(Icons.folder_outlined),
                         ),
-                        onChanged: (v) => _saveDaily(_daily.copyWith(category: v.trim())),
+                        onChanged: (v) =>
+                            _saveDaily(_daily.copyWith(category: v.trim())),
                       ),
                       const SizedBox(height: 12),
                       TextField(
@@ -254,13 +261,16 @@ class _TemplatesScreenState extends State<TemplatesScreen> {
                         ),
                         onChanged: (v) => _saveDaily(
                           _daily.copyWith(
-                            titlePattern: v.trim().isEmpty ? 'yyyy-MM-dd' : v.trim(),
+                            titlePattern: v.trim().isEmpty
+                                ? 'yyyy-MM-dd'
+                                : v.trim(),
                           ),
                         ),
                       ),
                       const SizedBox(height: 12),
                       DropdownButtonFormField<String?>(
-                        initialValue: _templates.any((t) => t.id == _daily.templateId)
+                        initialValue:
+                            _templates.any((t) => t.id == _daily.templateId)
                             ? _daily.templateId
                             : null,
                         decoration: InputDecoration(
@@ -288,7 +298,9 @@ class _TemplatesScreenState extends State<TemplatesScreen> {
                       Text(
                         l.dailyNotePreview(
                           plan.title,
-                          plan.category.isEmpty ? l.uncategorised : plan.category,
+                          plan.category.isEmpty
+                              ? l.uncategorised
+                              : plan.category,
                         ),
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
@@ -337,7 +349,8 @@ class _TemplateEditorState extends State<_TemplateEditor> {
               if (name.isEmpty) return;
               Navigator.of(context).pop(
                 NoteTemplate(
-                  id: widget.template?.id ??
+                  id:
+                      widget.template?.id ??
                       DateTime.now().microsecondsSinceEpoch.toRadixString(36),
                   name: name,
                   title: _title.text,
@@ -377,7 +390,9 @@ class _TemplateEditorState extends State<_TemplateEditor> {
             style: monoTextStyle().copyWith(fontSize: 15),
             decoration: InputDecoration(
               labelText: l.content,
-              helperText: l.templatePlaceholders('{{date}}, {{time}}, {{title}}'),
+              helperText: l.templatePlaceholders(
+                '{{date}}, {{time}}, {{title}}',
+              ),
               helperMaxLines: 3,
               alignLabelWithHint: true,
             ),

@@ -35,9 +35,7 @@ class NoteStateLine extends StatelessWidget {
           Expanded(
             child: Text(
               text,
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: fg),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: fg),
             ),
           ),
         ],
@@ -144,9 +142,7 @@ class OwnNoteRowFrame extends StatelessWidget {
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: theme.titleSmall?.copyWith(
-                              color: selected
-                                  ? colors.onSelected
-                                  : colors.text,
+                              color: selected ? colors.onSelected : colors.text,
                             ),
                           ),
                         ),

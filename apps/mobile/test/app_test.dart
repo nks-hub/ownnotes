@@ -541,9 +541,16 @@ void main() {
       ),
     ))!;
     addTearDown(runtime.close);
-    final dir = (await tester.runAsync(() => Directory.systemTemp.createTemp('empty-draft')))!;
+    final dir = (await tester.runAsync(
+      () => Directory.systemTemp.createTemp('empty-draft'),
+    ))!;
     addTearDown(() => dir.delete(recursive: true));
-    final attachments = attachmentServiceFor(dir, runtime.database, FakeServer(), const []);
+    final attachments = attachmentServiceFor(
+      dir,
+      runtime.database,
+      FakeServer(),
+      const [],
+    );
     await tester.runAsync(
       () => runtime.accounts.add(
         LoginCredentials(
@@ -584,9 +591,7 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     await tester.pumpAndSettle();
   });
-  phoneTest('the keyboard opening keeps the note text focused', (
-    tester,
-  ) async {
+  phoneTest('the keyboard opening keeps the note text focused', (tester) async {
     // Galaxy S21 in portrait: with the keyboard up less than 400 points
     // remain for the editor.
     tester.view.physicalSize = const Size(1080, 2400);
@@ -647,9 +652,7 @@ void main() {
     expect(taskMarks(text).map((i) => text[i]), [' ', 'x']);
     expect(taskMarks(text).last, text.lastIndexOf('x'));
   });
-  phoneTest('a checkbox ticked in preview edits the Markdown', (
-    tester,
-  ) async {
+  phoneTest('a checkbox ticked in preview edits the Markdown', (tester) async {
     var etag = 'etag1';
     var content = '- [ ] a\n```\n- [ ] code\n```\n- [ ] b';
     Map<String, Object> note() => {

@@ -65,7 +65,10 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
         ? widget.text.selection.extentOffset.clamp(0, length)
         : length;
     widget.history.apply(
-      TextEditingValue(text: next, selection: TextSelection.collapsed(offset: caret)),
+      TextEditingValue(
+        text: next,
+        selection: TextSelection.collapsed(offset: caret),
+      ),
     );
     widget.onChanged();
   }
@@ -322,7 +325,10 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
 
   Widget _contextRow(BuildContext context, Checklist cl, MdBlock block) {
     final colors = context.own;
-    final text = block.range.of(cl.text).replaceAll(RegExp(r'^[#>\s]+', multiLine: true), '').trim();
+    final text = block.range
+        .of(cl.text)
+        .replaceAll(RegExp(r'^[#>\s]+', multiLine: true), '')
+        .trim();
     final heading = block.kind == MdBlockKind.heading;
     return InkWell(
       onTap: () => widget.onEditAt(block.range.start),
@@ -383,19 +389,24 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
                     children: [
                       Checkbox(
                         value: item.checked,
-                        onChanged: widget.readonly ? null : (_) => _toggle(cl, item),
+                        onChanged: widget.readonly
+                            ? null
+                            : (_) => _toggle(cl, item),
                       ),
                       Expanded(
                         child: Padding(
                           padding: const EdgeInsets.symmetric(vertical: 8),
                           child: Text(
                             label,
-                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                              color: item.checked ? colors.textSecondary : null,
-                              decoration: item.checked
-                                  ? TextDecoration.lineThrough
-                                  : null,
-                            ),
+                            style: Theme.of(context).textTheme.bodyLarge
+                                ?.copyWith(
+                                  color: item.checked
+                                      ? colors.textSecondary
+                                      : null,
+                                  decoration: item.checked
+                                      ? TextDecoration.lineThrough
+                                      : null,
+                                ),
                           ),
                         ),
                       ),
@@ -459,6 +470,10 @@ class _MenuRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Row(
-    children: [Icon(icon), const SizedBox(width: 16), Flexible(child: Text(label))],
+    children: [
+      Icon(icon),
+      const SizedBox(width: 16),
+      Flexible(child: Text(label)),
+    ],
   );
 }

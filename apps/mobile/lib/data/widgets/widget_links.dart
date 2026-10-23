@@ -43,7 +43,8 @@ WidgetLink? parseWidgetLink(Uri? uri) {
     case 'search':
       return const SearchLink();
     case 'new':
-      final kind = WidgetNewKind.values.asNameMap()[uri.queryParameters['kind']];
+      final kind = WidgetNewKind.values
+          .asNameMap()[uri.queryParameters['kind']];
       return NewNoteLink(
         accountId: parts.firstOrNull,
         kind: kind ?? WidgetNewKind.note,

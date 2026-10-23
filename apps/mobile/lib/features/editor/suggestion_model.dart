@@ -28,7 +28,11 @@ final class SuggestQuery {
 }
 
 final _word = RegExp(r'[\p{L}\p{N}_.+\-]', unicode: true);
-final _boundaryBefore = RegExp(r'[\s(\[{"' "'" r'>]');
+final _boundaryBefore = RegExp(
+  r'[\s(\[{"'
+  "'"
+  r'>]',
+);
 
 /// The suggestion trigger the caret is in, or null. A trigger counts only at
 /// a word boundary (so `me@host`, `10:30` and `a/b` never do), outside code,
@@ -57,7 +61,9 @@ SuggestQuery? detectSuggestion(
   if (trigger == null) return null;
   final start = at - 1;
   if (start > 0 && !_boundaryBefore.hasMatch(text[start - 1])) return null;
-  if (v.composing.isValid && v.composing.start <= start && start < v.composing.end) {
+  if (v.composing.isValid &&
+      v.composing.start <= start &&
+      start < v.composing.end) {
     return null;
   }
   if (doc.isInCode(start)) return null;
@@ -120,9 +126,26 @@ final class SuggestionState {
 }
 
 const _fold = {
-  'á': 'a', 'ä': 'a', 'č': 'c', 'ď': 'd', 'é': 'e', 'ě': 'e', 'ë': 'e',
-  'í': 'i', 'ň': 'n', 'ó': 'o', 'ö': 'o', 'ř': 'r', 'š': 's', 'ť': 't',
-  'ú': 'u', 'ů': 'u', 'ü': 'u', 'ý': 'y', 'ž': 'z', 'ß': 'ss',
+  'á': 'a',
+  'ä': 'a',
+  'č': 'c',
+  'ď': 'd',
+  'é': 'e',
+  'ě': 'e',
+  'ë': 'e',
+  'í': 'i',
+  'ň': 'n',
+  'ó': 'o',
+  'ö': 'o',
+  'ř': 'r',
+  'š': 's',
+  'ť': 't',
+  'ú': 'u',
+  'ů': 'u',
+  'ü': 'u',
+  'ý': 'y',
+  'ž': 'z',
+  'ß': 'ss',
 };
 
 /// Lower case without Czech and German diacritics, for matching.

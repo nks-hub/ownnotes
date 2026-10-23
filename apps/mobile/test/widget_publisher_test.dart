@@ -134,33 +134,48 @@ void main() {
         );
       Future<WidgetSource?> source(String id) async =>
           WidgetSource([note('n', 'a', 'One')], label: 'x');
-      await publishWidgets(storage, source: source, locked: false, untitled: '…', now: 1);
-      final after = storage.refreshes;
-      await publishWidgets(storage, source: source, locked: false, untitled: '…', now: 99);
-      expect(storage.refreshes, after);
-    });
-
-    test('the language tag is stored and a change redraws the widgets', () async {
-      final storage = FakeStorage(['1']);
-      Future<WidgetSource?> source(String id) async => null;
-      Future<void> publish(String? language) => publishWidgets(
+      await publishWidgets(
         storage,
         source: source,
         locked: false,
         untitled: '…',
-        language: language,
+        now: 1,
       );
-      await publish('de');
-      expect(storage.data[WidgetKeys.language], 'de');
       final after = storage.refreshes;
-      await publish('de');
+      await publishWidgets(
+        storage,
+        source: source,
+        locked: false,
+        untitled: '…',
+        now: 99,
+      );
       expect(storage.refreshes, after);
-      await publish('en');
-      expect(storage.data[WidgetKeys.language], 'en');
-      expect(storage.refreshes, after + 1);
-      await publish(null);
-      expect(storage.data[WidgetKeys.language], 'en');
     });
+
+    test(
+      'the language tag is stored and a change redraws the widgets',
+      () async {
+        final storage = FakeStorage(['1']);
+        Future<WidgetSource?> source(String id) async => null;
+        Future<void> publish(String? language) => publishWidgets(
+          storage,
+          source: source,
+          locked: false,
+          untitled: '…',
+          language: language,
+        );
+        await publish('de');
+        expect(storage.data[WidgetKeys.language], 'de');
+        final after = storage.refreshes;
+        await publish('de');
+        expect(storage.refreshes, after);
+        await publish('en');
+        expect(storage.data[WidgetKeys.language], 'en');
+        expect(storage.refreshes, after + 1);
+        await publish(null);
+        expect(storage.data[WidgetKeys.language], 'en');
+      },
+    );
 
     test('an app publish without a label keeps the stored one', () async {
       final storage = FakeStorage(['1'])
@@ -174,7 +189,8 @@ void main() {
         );
       await publishWidgets(
         storage,
-        source: (_) async => WidgetSource([note('n', 'a', 'One')], label: 'ann'),
+        source: (_) async =>
+            WidgetSource([note('n', 'a', 'One')], label: 'ann'),
         locked: false,
         untitled: '…',
       );
@@ -208,7 +224,12 @@ void main() {
         );
       Future<WidgetSource?> source(String id) async =>
           WidgetSource([note('n$id', id, 'Title $id')], label: id);
-      await publishWidgets(storage, source: source, locked: false, untitled: '…');
+      await publishWidgets(
+        storage,
+        source: source,
+        locked: false,
+        untitled: '…',
+      );
 
       await clearWidgetsOfAccount(storage, 'a');
       expect(storage.snapshot('1'), isNull);
@@ -218,86 +239,116 @@ void main() {
       expect(storage.config('2')!.accountId, 'b');
     });
 
-    test('an account missing from the database is cleared by the publisher', () async {
-      final storage = FakeStorage(['1'])
-        ..place(
-          const WidgetConfig(
-            instanceId: '1',
-            type: WidgetType.checklist,
-            accountId: 'gone',
-            noteId: 'n',
-          ),
+    test(
+      'an account missing from the database is cleared by the publisher',
+      () async {
+        final storage = FakeStorage(['1'])
+          ..place(
+            const WidgetConfig(
+              instanceId: '1',
+              type: WidgetType.checklist,
+              accountId: 'gone',
+              noteId: 'n',
+            ),
+          );
+        await publishWidgets(
+          storage,
+          source: (_) async => null,
+          locked: false,
+          untitled: '…',
         );
-      await publishWidgets(
-        storage,
-        source: (_) async => null,
-        locked: false,
-        untitled: '…',
-      );
-      expect(storage.config('1')!.accountId, isNull);
-      expect(storage.snapshot('1'), isNull);
-    });
+        expect(storage.config('1')!.accountId, isNull);
+        expect(storage.snapshot('1'), isNull);
+      },
+    );
   });
 
   group('privacy', () {
-    test('the app lock redacts every widget and unlocking restores them', () async {
-      final storage = FakeStorage(['1', '2'])
-        ..place(
-          const WidgetConfig(
-            instanceId: '1',
-            type: WidgetType.notesList,
-            accountId: 'a',
-            collection: WidgetCollection(WidgetScope.all),
-          ),
-        )
-        ..place(
-          const WidgetConfig(
-            instanceId: '2',
-            type: WidgetType.checklist,
-            accountId: 'a',
-            noteId: 'n',
-          ),
+    test(
+      'the app lock redacts every widget and unlocking restores them',
+      () async {
+        final storage = FakeStorage(['1', '2'])
+          ..place(
+            const WidgetConfig(
+              instanceId: '1',
+              type: WidgetType.notesList,
+              accountId: 'a',
+              collection: WidgetCollection(WidgetScope.all),
+            ),
+          )
+          ..place(
+            const WidgetConfig(
+              instanceId: '2',
+              type: WidgetType.checklist,
+              accountId: 'a',
+              noteId: 'n',
+            ),
+          );
+        Future<WidgetSource?> source(String id) async => WidgetSource([
+          note('n', 'a', 'Secret plan', content: '- [ ] secret task'),
+        ], label: 'ann@example');
+        await publishWidgets(
+          storage,
+          source: source,
+          locked: false,
+          untitled: '…',
         );
-      Future<WidgetSource?> source(String id) async => WidgetSource([
-        note('n', 'a', 'Secret plan', content: '- [ ] secret task'),
-      ], label: 'ann@example');
-      await publishWidgets(storage, source: source, locked: false, untitled: '…');
-      expect(storage.snapshot('2')!.tasks, isNotEmpty);
+        expect(storage.snapshot('2')!.tasks, isNotEmpty);
 
-      await publishWidgets(storage, source: source, locked: true, untitled: '…');
-      expect(storage.locked, isTrue);
-      for (final id in ['1', '2']) {
-        final raw = storage.data[WidgetKeys.snapshot(id)]!;
-        expect(storage.snapshot(id)!.isRedacted, isTrue);
-        for (final secret in ['Secret', 'secret', 'ann@example', '"n"', '"a"']) {
-          expect(raw.contains(secret), isFalse, reason: '$secret in $raw');
+        await publishWidgets(
+          storage,
+          source: source,
+          locked: true,
+          untitled: '…',
+        );
+        expect(storage.locked, isTrue);
+        for (final id in ['1', '2']) {
+          final raw = storage.data[WidgetKeys.snapshot(id)]!;
+          expect(storage.snapshot(id)!.isRedacted, isTrue);
+          for (final secret in [
+            'Secret',
+            'secret',
+            'ann@example',
+            '"n"',
+            '"a"',
+          ]) {
+            expect(raw.contains(secret), isFalse, reason: '$secret in $raw');
+          }
         }
-      }
 
-      await publishWidgets(storage, source: source, locked: false, untitled: '…');
-      expect(storage.snapshot('1')!.notes.single.title, 'Secret plan');
-    });
-
-    test('a late publisher for one account cannot write content while locked', () async {
-      final storage = FakeStorage(['1'])
-        ..locked = true
-        ..place(
-          const WidgetConfig(
-            instanceId: '1',
-            type: WidgetType.notesList,
-            accountId: 'a',
-            collection: WidgetCollection(WidgetScope.all),
-          ),
+        await publishWidgets(
+          storage,
+          source: source,
+          locked: false,
+          untitled: '…',
         );
-      await publishWidgets(
-        storage,
-        source: (_) async => WidgetSource([note('n', 'a', 'Visible?')]),
-        locked: true,
-        untitled: '…',
-        onlyAccount: 'a',
-      );
-      expect(storage.snapshot('1')!.isRedacted, isTrue);
-    });
+        expect(storage.snapshot('1')!.notes.single.title, 'Secret plan');
+      },
+    );
+
+    test(
+      'a late publisher for one account cannot write content while locked',
+      () async {
+        final storage = FakeStorage(['1'])
+          ..locked = true
+          ..place(
+            const WidgetConfig(
+              instanceId: '1',
+              type: WidgetType.notesList,
+              accountId: 'a',
+              collection: WidgetCollection(WidgetScope.all),
+            ),
+          );
+        await publishWidgets(
+          storage,
+          source: (_) async => WidgetSource([note('n', 'a', 'Visible?')]),
+          locked: true,
+          untitled: '…',
+          onlyAccount: 'a',
+        );
+        expect(storage.snapshot('1')!.isRedacted, isTrue);
+      },
+    );
   });
 
   group('commands', () {
@@ -468,7 +519,8 @@ void main() {
     });
 
     test('new note links carry account and kind', () {
-      final plain = parseWidgetLink(Uri.parse('ownnotes://new'))! as NewNoteLink;
+      final plain =
+          parseWidgetLink(Uri.parse('ownnotes://new'))! as NewNoteLink;
       expect(plain.accountId, isNull);
       expect(plain.kind, WidgetNewKind.note);
       final daily =
@@ -480,7 +532,10 @@ void main() {
 
     test('open and unrelated links', () {
       expect(parseWidgetLink(Uri.parse('ownnotes://open')), isA<OpenAppLink>());
-      expect(parseWidgetLink(Uri.parse('ownnotes://search')), isA<SearchLink>());
+      expect(
+        parseWidgetLink(Uri.parse('ownnotes://search')),
+        isA<SearchLink>(),
+      );
       expect(parseWidgetLink(Uri.parse('https://example.org/x')), isNull);
       expect(parseWidgetLink(Uri.parse('ownnotes://note')), isNull);
     });

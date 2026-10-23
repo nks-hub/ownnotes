@@ -124,33 +124,54 @@ void main() {
         ('plain', false),
       ]);
       expect(text[doc.tasks[1].markOffset], 'x');
-      expect(text.substring(doc.tasks[0].markOffset + 2), startsWith(' quoted'));
+      expect(
+        text.substring(doc.tasks[0].markOffset + 2),
+        startsWith(' quoted'),
+      );
     });
 
-    test('ordered tasks and nested lists are found, tasks without text too', () {
-      final doc = parse('1. [ ] one\n2) [x] two\n   - [ ] nested\n- [ ]\n- [ ]x');
-      expect(doc.tasks.map((t) => t.label), ['one', 'two', 'nested', '']);
-    });
+    test(
+      'ordered tasks and nested lists are found, tasks without text too',
+      () {
+        final doc = parse(
+          '1. [ ] one\n2) [x] two\n   - [ ] nested\n- [ ]\n- [ ]x',
+        );
+        expect(doc.tasks.map((t) => t.label), ['one', 'two', 'nested', '']);
+      },
+    );
 
     test('CRLF offsets are exact', () {
       const text = 'a\r\n- [ ] one\r\n- [x] two\r\n';
       final doc = parse(text);
       expect(doc.tasks.map((t) => text[t.markOffset]), [' ', 'x']);
       expect(doc.tasks[0].line.of(text), '- [ ] one');
-      expect(doc.toggled(text, doc.tasks[0]), 'a\r\n- [x] one\r\n- [x] two\r\n');
+      expect(
+        doc.toggled(text, doc.tasks[0]),
+        'a\r\n- [x] one\r\n- [x] two\r\n',
+      );
     });
 
     test('emoji before a task keep UTF-16 offsets', () {
       const text = '😀 intro 👨‍👩‍👧\n- [ ] 🎉 party\n- [ ] 🎉 party';
       final doc = parse(text);
       expect(text[doc.tasks[0].markOffset], ' ');
-      expect(text.substring(doc.tasks[1].markOffset - 3, doc.tasks[1].markOffset + 2), '- [ ]');
+      expect(
+        text.substring(
+          doc.tasks[1].markOffset - 3,
+          doc.tasks[1].markOffset + 2,
+        ),
+        '- [ ]',
+      );
       expect(doc.tasks[1].occurrence, 1);
-      expect(doc.toggled(text, doc.tasks[1]), contains('- [ ] 🎉 party\n- [x] 🎉 party'));
+      expect(
+        doc.toggled(text, doc.tasks[1]),
+        contains('- [ ] 🎉 party\n- [x] 🎉 party'),
+      );
     });
 
     test('Czech and German labels compare by letters', () {
-      const text = '- [ ] Žluťoučký kůň\n- [x] Größe prüfen\n- [ ] Žluťoučký kůň!';
+      const text =
+          '- [ ] Žluťoučký kůň\n- [x] Größe prüfen\n- [ ] Žluťoučký kůň!';
       final doc = parse(text);
       expect(doc.tasks.map((t) => t.occurrence), [0, 0, 1]);
       expect(doc.taskSummary, const TaskSummary(1, 3));

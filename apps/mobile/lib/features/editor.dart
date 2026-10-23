@@ -355,7 +355,11 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
             v,
             q.start,
             end,
-            expandTemplate(template.content, DateTime.now(), title: _title.text),
+            expandTemplate(
+              template.content,
+              DateTime.now(),
+              title: _title.text,
+            ),
           ),
         );
       case SuggestionAction.reference:
@@ -378,9 +382,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
     String insert,
   ) {
     final intact =
-        end <= v.text.length &&
-        start < end &&
-        '@:/'.contains(v.text[start]);
+        end <= v.text.length && start < end && '@:/'.contains(v.text[start]);
     return intact
         ? replaceRange(v, start, end, insert)
         : insertAtSelection(v, insert);
@@ -422,7 +424,9 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
     final sel = _text.selection;
     if (e == null || !e.attached || !sel.isValid || !e.hasSize) return null;
     try {
-      final local = e.getLocalRectForCaret(TextPosition(offset: sel.extentOffset));
+      final local = e.getLocalRectForCaret(
+        TextPosition(offset: sel.extentOffset),
+      );
       return MatrixUtils.transformRect(e.getTransformTo(stack), local);
     } on Object {
       return null;
@@ -465,7 +469,9 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
   void _startEditing([int? offset]) {
     if (_readonly) return;
     final length = _text.text.length;
-    final at = offset ?? (_text.selection.isValid ? _text.selection.extentOffset : length);
+    final at =
+        offset ??
+        (_text.selection.isValid ? _text.selection.extentOffset : length);
     _text.selection = TextSelection.collapsed(offset: at.clamp(0, length));
     _setPreview(false);
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -481,7 +487,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
         ? _text.selection.extentOffset.clamp(0, next.length)
         : next.length;
     _history.apply(
-      TextEditingValue(text: next, selection: TextSelection.collapsed(offset: caret)),
+      TextEditingValue(
+        text: next,
+        selection: TextSelection.collapsed(offset: caret),
+      ),
     );
   }
 
@@ -496,7 +505,8 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
     final note = notes.where((n) => n.id == widget.note.id).firstOrNull;
     if (note == null || !mounted) return;
     // A conflict or a permission change does not raise the revision.
-    final shown = note.syncState != _row.syncState || note.readonly != _readonly;
+    final shown =
+        note.syncState != _row.syncState || note.readonly != _readonly;
     _row = note;
     if (note.revision > _revision) {
       _adopt(note);
@@ -544,7 +554,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
             selection: TextSelection.collapsed(
               offset: at <= same
                   ? at
-                  : (at + content.length - old.length).clamp(same, content.length),
+                  : (at + content.length - old.length).clamp(
+                      same,
+                      content.length,
+                    ),
             ),
           ),
         );

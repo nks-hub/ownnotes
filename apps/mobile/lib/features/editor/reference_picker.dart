@@ -25,11 +25,8 @@ Future<String?> showReferencePicker(
   context: context,
   title: AppLocalizations.of(context)!.smartPicker,
   fullScreen: true,
-  builder: (_) => _Picker(
-    source: source,
-    providerId: providerId,
-    initialTerm: initialTerm,
-  ),
+  builder: (_) =>
+      _Picker(source: source, providerId: providerId, initialTerm: initialTerm),
 );
 
 class _Picker extends StatefulWidget {
@@ -176,19 +173,24 @@ class _PickerState extends State<_Picker> {
         else if (_failed)
           OwnBanner(tone: OwnTone.error, message: l.suggestError)
         else if (_results.isEmpty)
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Text(l.noMatches),
-          )
+          Padding(padding: const EdgeInsets.all(16), child: Text(l.noMatches))
         else
           for (final r in _results)
             ListTile(
               minTileHeight: OwnShape.target,
               leading: const Icon(Icons.link),
-              title: Text(r.title, maxLines: 2, overflow: TextOverflow.ellipsis),
+              title: Text(
+                r.title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
               subtitle: r.subline == null
                   ? null
-                  : Text(r.subline!, maxLines: 1, overflow: TextOverflow.ellipsis),
+                  : Text(
+                      r.subline!,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
               onTap: () => Navigator.of(context).pop(referenceMarkdown(r)),
             ),
       ],

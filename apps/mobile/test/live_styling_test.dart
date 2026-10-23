@@ -54,7 +54,10 @@ void main() {
         final s = span(all, t).style!;
         expect(s.fontSize! * s.height!, closeTo(17 * 1.6, 1e-9), reason: t);
       }
-      expect(LiveMarkdownMetrics.onGrid(const TextStyle(fontSize: 17)).height, 1.6);
+      expect(
+        LiveMarkdownMetrics.onGrid(const TextStyle(fontSize: 17)).height,
+        1.6,
+      );
       expect(LiveMarkdownMetrics.strut(17).height, 1.6);
       expect(LiveMarkdownMetrics.strut(17).forceStrutHeight, isNot(true));
     });
@@ -69,7 +72,9 @@ void main() {
   group('markers and constructs', () {
     test('markers use the secondary colour without opacity', () {
       final all = spans('**b** and `c` [l](u) ~~s~~ *i*\n> q');
-      for (final s in all.where((s) => const ['**', '`', '[', '](u)', '~~', '*', '>'].contains(s.text))) {
+      for (final s in all.where(
+        (s) => const ['**', '`', '[', '](u)', '~~', '*', '>'].contains(s.text),
+      )) {
         expect(s.style!.color, _marker, reason: s.text);
         expect(s.style!.color!.a, 1.0);
       }
@@ -94,12 +99,15 @@ void main() {
       expect(span(all, 'open').style?.decoration, isNull);
     });
 
-    test('code fences and indented code use upright mono, text inside is not styled', () {
-      final all = spans('```dart\n**no**\n```\n\n    # nope');
-      expect(span(all, '**no**').style!.fontFamily, monoFontFamily);
-      expect(span(all, '```dart').style!.color, _marker);
-      expect(span(all, '    # nope').style!.fontFamily, monoFontFamily);
-    });
+    test(
+      'code fences and indented code use upright mono, text inside is not styled',
+      () {
+        final all = spans('```dart\n**no**\n```\n\n    # nope');
+        expect(span(all, '**no**').style!.fontFamily, monoFontFamily);
+        expect(span(all, '```dart').style!.color, _marker);
+        expect(span(all, '    # nope').style!.fontFamily, monoFontFamily);
+      },
+    );
 
     test('monospace body has no italic and sets the weight axis', () {
       final all = spans(
@@ -113,7 +121,9 @@ void main() {
       );
       expect(span(all, 'i').style!.fontStyle, isNull);
       expect(span(all, 'i').style!.fontWeight, FontWeight.w500);
-      expect(span(all, 'b').style!.fontVariations, [const FontVariation('wght', 700)]);
+      expect(span(all, 'b').style!.fontVariations, [
+        const FontVariation('wght', 700),
+      ]);
     });
   });
 
@@ -141,10 +151,15 @@ void main() {
       return result;
     }
 
-    testWidgets('styling never touches value, selection or composing range', (tester) async {
+    testWidgets('styling never touches value, selection or composing range', (
+      tester,
+    ) async {
       final controller = MarkdownTextController(text: '# head\nbody');
       addTearDown(controller.dispose);
-      controller.selection = const TextSelection(baseOffset: 2, extentOffset: 5);
+      controller.selection = const TextSelection(
+        baseOffset: 2,
+        extentOffset: 5,
+      );
       final before = controller.value;
       final span = await build(tester, controller, composing: false);
       expect(span.toPlainText(), '# head\nbody');

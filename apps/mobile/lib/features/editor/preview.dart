@@ -27,8 +27,7 @@ class MentionSyntax extends md.InlineSyntax {
 /// Link to a file in the note's `.attachments.<id>/` folder (images are left
 /// to the image syntax, which starts earlier at the `!`).
 class AttachmentSyntax extends md.InlineSyntax {
-  AttachmentSyntax()
-    : super(r'\[([^\]]*)\]\((\.attachments\.[^)\s]+)\)');
+  AttachmentSyntax() : super(r'\[([^\]]*)\]\((\.attachments\.[^)\s]+)\)');
   @override
   bool onMatch(md.InlineParser parser, Match match) {
     parser.addNode(
@@ -220,7 +219,9 @@ class _MarkdownPreviewState extends State<MarkdownPreview> {
         children: [
           Center(
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: OwnShape.editorMeasure),
+              constraints: const BoxConstraints(
+                maxWidth: OwnShape.editorMeasure,
+              ),
               child: _Segments(state: this, segments: segments),
             ),
           ),
@@ -280,10 +281,10 @@ class _MarkdownPreviewState extends State<MarkdownPreview> {
       return;
     }
     final (plain, at, paragraph) = found;
-    final word = RegExp(r'[\p{L}\p{N}]+', unicode: true)
-        .allMatches(plain)
-        .where((m) => m.end >= at && m.start <= at)
-        .firstOrNull;
+    final word = RegExp(
+      r'[\p{L}\p{N}]+',
+      unicode: true,
+    ).allMatches(plain).where((m) => m.end >= at && m.start <= at).firstOrNull;
     final source = range.of(widget.text);
     final local = MarkdownDocument.parse(source).offsetOfText(
       word?.group(0) ?? '',
@@ -543,9 +544,9 @@ class _Callout extends StatelessWidget {
                     segment.heading.isEmpty
                         ? label
                         : '$label: ${segment.heading}',
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      color: fg,
-                    ),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.titleSmall?.copyWith(color: fg),
                   ),
                 ),
               ],
@@ -647,7 +648,10 @@ class _TableBlock extends StatelessWidget {
       inlineSyntaxes: [MentionSyntax()],
     );
     final nodes = doc.parseLines(source.split('\n'));
-    final table = nodes.whereType<md.Element>().where((e) => e.tag == 'table').firstOrNull;
+    final table = nodes
+        .whereType<md.Element>()
+        .where((e) => e.tag == 'table')
+        .firstOrNull;
     if (table == null) {
       return Text(source);
     }

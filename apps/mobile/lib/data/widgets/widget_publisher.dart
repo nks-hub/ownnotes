@@ -121,7 +121,8 @@ Future<void> publishWidgets(
       );
     } else if (account != null) {
       if (onlyAccount != null && account != onlyAccount) continue;
-      if (!sources.containsKey(account)) sources[account] = await source(account);
+      if (!sources.containsKey(account))
+        sources[account] = await source(account);
       final src = sources[account];
       if (src == null) {
         await storage.write(
@@ -160,7 +161,10 @@ Future<void> clearWidgetsOfAccount(
   for (final config in await readWidgetConfigs(storage)) {
     if (config.accountId != accountId) continue;
     final id = config.instanceId;
-    await storage.write(WidgetKeys.config(id), config.withoutAccount().encode());
+    await storage.write(
+      WidgetKeys.config(id),
+      config.withoutAccount().encode(),
+    );
     await storage.write(WidgetKeys.snapshot(id), null);
     await storage.write(WidgetKeys.stale(id), null);
     changed = true;
@@ -195,7 +199,9 @@ Future<Set<String>> drainWidgetCommands(
   var touched = false;
   for (final id in await storage.instanceIds()) {
     final done = int.tryParse(await storage.read(WidgetKeys.cmdDone(id)) ?? '');
-    final queued = int.tryParse(await storage.read(WidgetKeys.cmdSeq(id)) ?? '');
+    final queued = int.tryParse(
+      await storage.read(WidgetKeys.cmdSeq(id)) ?? '',
+    );
     if (queued == null || queued <= (done ?? 0)) continue;
     for (var n = (done ?? 0) + 1; n <= queued; n++) {
       final raw = await storage.read(WidgetKeys.cmd(id, n));

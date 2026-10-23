@@ -152,7 +152,12 @@ final class Checklist {
     var n = 0;
     for (final b in clearable) {
       n += items
-          .where((i) => i.firstLine >= b.firstLine && i.lastLine <= b.lastLine && i.checked)
+          .where(
+            (i) =>
+                i.firstLine >= b.firstLine &&
+                i.lastLine <= b.lastLine &&
+                i.checked,
+          )
           .length;
     }
     return n;
@@ -180,7 +185,8 @@ final class Checklist {
     for (var j = index - 1; j >= 0; j--) {
       final o = items[j];
       if (o.parent == item.parent && o.depth == item.depth) {
-        return o.lastLine < item.firstLine && _gapBlank(o.lastLine, item.firstLine)
+        return o.lastLine < item.firstLine &&
+                _gapBlank(o.lastLine, item.firstLine)
             ? j
             : -1;
       }
@@ -229,11 +235,15 @@ final class Checklist {
     if (!chain.contains(to)) return null;
     final lines = _lines;
     final blocks = [
-      for (final i in chain) lines.sublist(items[i].firstLine, items[i].lastLine + 1),
+      for (final i in chain)
+        lines.sublist(items[i].firstLine, items[i].lastLine + 1),
     ];
     final gaps = [
       for (var k = 0; k < chain.length - 1; k++)
-        lines.sublist(items[chain[k]].lastLine + 1, items[chain[k + 1]].firstLine),
+        lines.sublist(
+          items[chain[k]].lastLine + 1,
+          items[chain[k + 1]].firstLine,
+        ),
     ];
     final order = List<int>.generate(chain.length, (k) => k);
     order.removeAt(chain.indexOf(from));
@@ -243,7 +253,11 @@ final class Checklist {
       out.addAll(blocks[order[k]]);
       if (k < gaps.length) out.addAll(gaps[k]);
     }
-    lines.replaceRange(items[chain.first].firstLine, items[chain.last].lastLine + 1, out);
+    lines.replaceRange(
+      items[chain.first].firstLine,
+      items[chain.last].lastLine + 1,
+      out,
+    );
     return lines.join('\n');
   }
 }
