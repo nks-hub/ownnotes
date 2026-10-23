@@ -46,8 +46,6 @@ references: [docs/research/review-2026-10-20.md](docs/research/review-2026-10-20
 
 ## Later
 
-- [ ] Načítat poznámky ze sdílených složek mimo nastavenou složku Notes; děděné sdílení se zatím označuje u již načtených poznámek.
-- [ ] Odstraňovat opuštěné dočasné soubory cache po pádu aplikace; čerstvé rozpracované zápisy musí zůstat zachované.
 
 - [ ] Backups that can be restored: ZIP with metadata and attachments.
 - [ ] File versions and trash from Nextcloud (DAV), restore keeps the draft.

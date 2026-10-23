@@ -97,7 +97,15 @@ poznámky a cest složek vrácených OCS. Příjemce používá `file_target`, v
 `path`. Porovnání respektuje hranice složek; `/Notes/Team` nezahrnuje
 `/Notes/Team 2`. Neznámá cesta nesmaže dříve ověřené označení. Nabídka
 sdílení odkáže u zděděného přístupu na Nextcloud a neupravuje oprávnění
-nadřazené složky. Složky mimo Notes se zatím neprocházejí, viz TODO.
+nadřazené složky.
+
+Přijaté složky mimo Notes se procházejí pomocí DAV Depth:1. Načítají se
+Markdown a TXT soubory, složky příloh se vynechávají. Výchozí limity jsou
+256 složek, 512 požadavků na metadata, 20 000 záznamů, hloubka 32 a 32 MiB
+XML. Cizí adresy, neúplné odpovědi a překročení limitu ukončí průchod bez
+mazání dřívější cache. Notes census se provede až po dokončení obou seznamů.
+Přesun mezi Notes a DAV zachová místní ID a text; rozpracovaná změna nepoužije
+ETag z jiného rozhraní.
 
 Tests: `packages/notes_protocol/test/sharing_test.dart` (fake client),
 `packages/notes_store/test/shared_sync_test.dart` (real SQLite, fake server),

@@ -91,10 +91,10 @@ class FakeServer {
       case 'PROPFIND':
         return http.Response(
           '<d:multistatus xmlns:d="DAV:" xmlns:oc="http://owncloud.org/ns">'
-          '<d:response><d:propstat><d:prop><d:getetag>&quot;$etag&quot;'
+          '<d:response><d:href>${r.url}</d:href><d:propstat><d:prop><d:resourcetype/><d:getetag>&quot;$etag&quot;'
           '</d:getetag><oc:fileid>1480</oc:fileid><oc:permissions>'
           '${permissions & 2 != 0 ? 'SGDNVW' : 'SGDNV'}</oc:permissions>'
-          '</d:prop></d:propstat></d:response></d:multistatus>',
+          '</d:prop><d:status>HTTP/1.1 200 OK</d:status></d:propstat></d:response></d:multistatus>',
           207,
         );
       case 'GET':
@@ -244,16 +244,22 @@ void main() {
     expect(note.syncState, 'clean');
   });
 
-  test('an unchanged file costs one PROPFIND and no download', () async {
-    await sync.sync('a');
-    server.requests.clear();
-    await sync.sync('a');
-    expect(server.requests.where((r) => r.startsWith('GET /remote')), isEmpty);
-    expect(
-      server.requests.where((r) => r.startsWith('PROPFIND')),
-      hasLength(1),
-    );
-  });
+  test(
+    'an unchanged file refreshes metadata without downloading content',
+    () async {
+      await sync.sync('a');
+      server.requests.clear();
+      await sync.sync('a');
+      expect(
+        server.requests.where((r) => r.startsWith('GET /remote')),
+        isEmpty,
+      );
+      expect(
+        server.requests.where((r) => r.startsWith('PROPFIND')),
+        hasLength(2),
+      );
+    },
+  );
 
   test('edits on different lines merge after a rejected If-Match', () async {
     await sync.sync('a');

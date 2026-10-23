@@ -191,6 +191,16 @@ void main() {
       var readonly = received;
       String? path = '/Notes/Team/Plan.md';
       final transport = MockClient((request) async {
+        if (request.method == 'PROPFIND') {
+          return http.Response(
+            '<d:multistatus xmlns:d="DAV:" xmlns:oc="http://owncloud.org/ns">'
+            '<d:response><d:href>${request.url}</d:href><d:propstat><d:prop>'
+            '<d:resourcetype><d:collection/></d:resourcetype><oc:fileid>40</oc:fileid>'
+            '<oc:permissions>G</oc:permissions></d:prop><d:status>HTTP/1.1 200 OK</d:status>'
+            '</d:propstat></d:response></d:multistatus>',
+            207,
+          );
+        }
         expect(request.method, 'GET');
         if (request.url.path.endsWith('/notes')) {
           return json([

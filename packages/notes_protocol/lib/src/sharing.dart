@@ -3,10 +3,13 @@ import 'dart:convert';
 import 'dart:io' show HttpDate;
 
 import 'package:http/http.dart' as http;
+import 'package:xml/xml.dart';
 
 import 'client.dart';
 import 'models.dart';
 import 'server_base.dart';
+
+part 'shared_folders.dart';
 
 /// A user a note can be shared with (`shareType` 0).
 final class Sharee {

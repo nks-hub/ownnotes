@@ -180,15 +180,16 @@ final class SyncCoordinator {
               )
               ..limit(1))
             .get();
-    await pullNotes(
+    final pulled = await pullNotes(
       database: database,
       client: client,
       accountId: accountId,
       keepLease: () => _keepLease(accountId),
       scopeFor: scopeFor,
       forceFull: forceFull || suspect.isNotEmpty,
+      deferCensus: sharingFor != null,
     );
-    await _shared(account);
+    if (pulled != null) await _shared(account, pulled);
   }
 
   /// DELETE has no If-Match on the server, so the note is read first: a
@@ -559,21 +560,46 @@ final class SyncCoordinator {
     modified: DateTime.now().millisecondsSinceEpoch ~/ 1000,
   );
 
-  Future<void> _shared(Account account) async {
+  Future<void> _shared(Account account, NotesPullSnapshot pulled) async {
     final factory = sharingFor;
     if (factory == null) return;
     final sharing = await factory(account);
     final listed = _sharesListed[account.id];
+    final missingNotes =
+        await (database.select(database.localNotes)
+              ..where(
+                (n) =>
+                    n.accountId.equals(account.id) &
+                    n.kind.equals('note') &
+                    n.remoteId.isNotNull() &
+                    n.remoteId.isNotIn(pulled.ids),
+              )
+              ..limit(1))
+            .get();
     if (listed == null ||
+        missingNotes.isNotEmpty ||
         DateTime.now().difference(listed) >= shareListInterval) {
-      await refreshSharedNotes(
+      final refreshed = await refreshSharedNotes(
         database,
         sharing,
         account.id,
         keepLease: () => _keepLease(account.id),
+        snapshot: pulled,
       );
+      if (!refreshed) return;
       _sharesListed[account.id] = DateTime.now();
     }
+    final currentAccount = await database.account(account.id);
+    if (currentAccount?.generation != pulled.account.generation ||
+        currentAccount?.mutationEpoch != pulled.account.mutationEpoch) {
+      return;
+    }
+    await database.census(
+      account.id,
+      pulled.account.mutationEpoch,
+      pulled.ids,
+      scope: pulled.scope,
+    );
     final rows =
         await (database.select(database.localNotes)..where(
               (n) =>

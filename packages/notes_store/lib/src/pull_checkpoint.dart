@@ -7,13 +7,19 @@ extension PullCheckpointStorage on NotesDatabase {
     pullCheckpoints,
   )..where((c) => c.accountId.equals(accountId))).getSingleOrNull();
 
-  Future<Set<int>> storedRemoteIds(String accountId) async {
+  Future<Set<int>> storedRemoteIds(
+    String accountId, {
+    bool notesOnly = false,
+  }) async {
     final rows =
         await (selectOnly(localNotes)
               ..addColumns([localNotes.remoteId])
               ..where(
                 localNotes.accountId.equals(accountId) &
-                    localNotes.remoteId.isNotNull(),
+                    localNotes.remoteId.isNotNull() &
+                    (notesOnly
+                        ? localNotes.kind.equals('note')
+                        : const Constant(true)),
               ))
             .get();
     return rows.map((r) => r.read(localNotes.remoteId)!).toSet();
@@ -54,6 +60,7 @@ extension PullCheckpointStorage on NotesDatabase {
     required int? watermark,
     required String? etag,
     required int? etagPruneBefore,
+    bool applyCensus = true,
   }) => transaction(() async {
     final a = await account(started.id);
     if (a == null ||
@@ -61,7 +68,7 @@ extension PullCheckpointStorage on NotesDatabase {
         a.generation != started.generation) {
       return;
     }
-    await census(a.id, a.mutationEpoch, ids, scope: scope);
+    if (applyCensus) await census(a.id, a.mutationEpoch, ids, scope: scope);
     // A skipped dirty row may not contain the server text represented by this
     // checkpoint. Keep the older baseline until those rows can be reconciled.
     final unresolved =

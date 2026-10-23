@@ -729,6 +729,21 @@ class NotesDatabase extends _$NotesDatabase {
       if (existing != null &&
           existing.syncState != 'clean' &&
           existing.syncState != 'unreadable') {
+        if (existing.kind == 'shared') {
+          // Route changes do not acknowledge local edits or reuse a DAV ETag.
+          await (update(
+            localNotes,
+          )..where((n) => n.id.equals(existing.id))).write(
+            LocalNotesCompanion(
+              kind: const Value('note'),
+              davPath: const Value(null),
+              remotePath: Value(record.internalPath),
+              etag: const Value(null),
+              readonly: Value(record.readonly),
+              missingSince: const Value(null),
+            ),
+          );
+        }
         continue;
       }
       final values = LocalNotesCompanion(

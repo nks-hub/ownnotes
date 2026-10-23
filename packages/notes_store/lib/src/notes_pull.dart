@@ -1,19 +1,24 @@
+import 'dart:convert';
 import 'package:notes_protocol/notes_protocol.dart';
 import 'database.dart';
 import 'pull_checkpoint.dart';
 
+typedef NotesPullSnapshot = ({Set<int> ids, Account account, String? scope});
+
 /// A page ETag is never a validator for the complete collection. Conditional
 /// requests use chunkSize=0; oversized responses fall back to bounded chunks.
-Future<void> pullNotes({
+Future<NotesPullSnapshot?> pullNotes({
   required NotesDatabase database,
   required NotesClient client,
   required String accountId,
   required Future<void> Function() keepLease,
   required Future<String?> Function(Account)? scopeFor,
   required bool forceFull,
+  bool deferCensus = false,
 }) async {
   final account = await database.account(accountId);
-  if (account == null) return;
+  if (account == null) return null;
+  NotesPullSnapshot? snapshot;
   String? scope;
   var scopeKnown = scopeFor == null;
   if (scopeFor != null) {
@@ -68,7 +73,15 @@ Future<void> pullNotes({
             );
       if (result is NotesListNotModified) {
         // Recheck after the request: a recovery action may have changed the cache.
-        return checkpoint != null && await database.canReuseList(checkpoint);
+        if (checkpoint == null || !await database.canReuseList(checkpoint)) {
+          return false;
+        }
+        snapshot = (
+          ids: (jsonDecode(checkpoint.remoteIds) as List).cast<int>().toSet(),
+          account: started,
+          scope: scope,
+        );
+        return true;
       }
       final page = result as NotesPage;
       if (pages++ == 0) {
@@ -95,7 +108,8 @@ Future<void> pullNotes({
         throw const NotesProtocolException('repeated_chunk_cursor');
       }
     } while (cursor != null);
-    final known = await database.storedRemoteIds(accountId);
+    // A DAV row needs a full REST body before changing its route and ETag.
+    final known = await database.storedRemoteIds(accountId, notesOnly: true);
     if (!known.containsAll(listed.difference(sent))) return false;
     await database.finishPull(
       started: started,
@@ -116,7 +130,17 @@ Future<void> pullNotes({
           ? responseEtag
           : null,
       etagPruneBefore: prune,
+      applyCensus: !deferCensus,
     );
+    final current = await database.account(accountId);
+    if (current?.mutationEpoch == started.mutationEpoch &&
+        current?.generation == started.generation) {
+      snapshot = (
+        ids: Set.unmodifiable(listed),
+        account: started,
+        scope: scope,
+      );
+    }
     return true;
   }
 
@@ -141,4 +165,5 @@ Future<void> pullNotes({
       throw const NotesProtocolException('incomplete_full_listing');
     }
   }
+  return snapshot;
 }
