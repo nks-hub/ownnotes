@@ -767,29 +767,25 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
   }
 
   Future<void> _leave() async {
-    await _save();
-    // A sync may have combined a version from another device meanwhile.
-    if (_dirty && !_failed) await _save();
-    if (!mounted || _failed || _dirty) return;
-    // A new note left empty would reach the server as "New note".
-    if (widget.note.remoteId == null &&
-        _title.text.trim().isEmpty &&
-        _text.text.trim().isEmpty &&
-        _category.text.trim().isEmpty) {
-      try {
-        await ref
-            .read(runtimeProvider)
-            .database
-            .markDeleted(widget.note.accountId, widget.note.id);
-      } catch (_) {
-        // Already sending; it stays like any other note.
+    if (!_attachments.beginClosing()) return;
+    try {
+      await _save();
+      if (_dirty && !_failed) await _save();
+      if (!mounted || _failed || _dirty) return;
+      if (_row.remoteId == null &&
+          _title.text.trim().isEmpty &&
+          _text.text.trim().isEmpty &&
+          _category.text.trim().isEmpty) {
+        await discardEmptyEditorDraft(ref, _row);
+        if (!mounted) return;
       }
-      if (!mounted) return;
+      setState(() => _allowPop = true);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) Navigator.of(context).pop();
+      });
+    } finally {
+      if (!_allowPop) _attachments.cancelClosing();
     }
-    setState(() => _allowPop = true);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) Navigator.of(context).pop();
-    });
   }
 
   Future<void> _delete() async {

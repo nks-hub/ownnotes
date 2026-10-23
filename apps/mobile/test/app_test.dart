@@ -1,4 +1,7 @@
 import 'dart:convert';
+import 'dart:io';
+import 'package:nextcloudnotes/data/attachments/providers.dart';
+import 'support/transfer_fixtures.dart' show attachmentServiceFor, FakeServer;
 import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
@@ -538,6 +541,9 @@ void main() {
       ),
     ))!;
     addTearDown(runtime.close);
+    final dir = (await tester.runAsync(() => Directory.systemTemp.createTemp('empty-draft')))!;
+    addTearDown(() => dir.delete(recursive: true));
+    final attachments = attachmentServiceFor(dir, runtime.database, FakeServer(), const []);
     await tester.runAsync(
       () => runtime.accounts.add(
         LoginCredentials(
@@ -555,7 +561,10 @@ void main() {
     });
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [runtimeProvider.overrideWithValue(runtime)],
+        overrides: [
+          runtimeProvider.overrideWithValue(runtime),
+          attachmentServiceProvider.overrideWith((_) => attachments),
+        ],
         child: const OwnNotesApp(),
       ),
     );

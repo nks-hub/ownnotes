@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nextcloudnotes/data/attachments/attachment_insertion.dart';
 import 'package:nextcloudnotes/data/attachments/attachment_service.dart';
@@ -13,6 +14,32 @@ void main() {
     await env.addNote();
   });
   tearDown(() => env.dispose());
+
+  test('closing waits for the picker and prevents a new insertion', () async {
+    final delivery = EditorAttachmentDelivery();
+    addTearDown(delivery.dispose);
+    final picker = Completer<AttachmentInsertion?>();
+    final insertion = delivery.insert(
+      AttachKind.file,
+      (_) => picker.future,
+      editable: () => true,
+      apply: (_) => fail('cancelled picker must not insert'),
+      save: () async => fail('cancelled picker must not save'),
+    );
+    expect(delivery.beginClosing(), isFalse);
+    picker.complete(null);
+    await insertion;
+    expect(delivery.beginClosing(), isTrue);
+    await delivery.insert(
+      AttachKind.file,
+      (_) => fail('closing editor must not open a picker'),
+      editable: () => true,
+      apply: (_) => fail('closing editor must not insert'),
+      save: () async => fail('closing editor must not save'),
+    );
+    delivery.cancelClosing();
+    expect(delivery.beginClosing(), isTrue);
+  });
 
   Future<AttachmentInsertion> upload(String name) async {
     final item = await env.service.stage(

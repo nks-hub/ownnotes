@@ -5,12 +5,23 @@ import 'package:notes_store/notes_store.dart';
 import '../../core/markdown/live_controller.dart';
 import '../../data/runtime.dart';
 import '../../data/attachments/attachment_insertion.dart';
+import '../../data/attachments/providers.dart';
 import '../attachments/attachments_sheet.dart';
 import 'edit_history.dart';
 import 'format_dock.dart';
 
 class EditorAttachmentDelivery {
   final _pending = <AttachmentInsertion>{};
+  int _picking = 0;
+  bool _closing = false;
+
+  bool beginClosing() {
+    if (_closing || _picking != 0) return false;
+    _closing = true;
+    return true;
+  }
+
+  void cancelClosing() => _closing = false;
 
   Future<void> insert(
     AttachKind kind,
@@ -19,15 +30,21 @@ class EditorAttachmentDelivery {
     required void Function(String) apply,
     required Future<void> Function() save,
   }) async {
-    final insertion = await pick(kind);
-    if (insertion == null) return;
-    if (!editable()) {
-      insertion.release();
-      return;
+    if (_closing || !editable()) return;
+    _picking++;
+    try {
+      final insertion = await pick(kind);
+      if (insertion == null) return;
+      if (!editable()) {
+        insertion.release();
+        return;
+      }
+      _pending.add(insertion);
+      apply(insertion.markdown);
+      await save();
+    } finally {
+      _picking--;
     }
-    _pending.add(insertion);
-    apply(insertion.markdown);
-    await save();
   }
 
   /// A write may finish after another file was inserted; confirm only its snapshot.
@@ -46,6 +63,23 @@ class EditorAttachmentDelivery {
       insertion.release();
     }
     _pending.clear();
+  }
+}
+
+Future<void> discardEmptyEditorDraft(WidgetRef ref, LocalNote note) async {
+  try {
+    final database = ref.read(runtimeProvider).database;
+    final attachments = await ref.read(attachmentServiceProvider.future);
+    if ((await attachments.pending(
+      note.accountId,
+      note.id,
+      strict: true,
+    )).isNotEmpty) {
+      return;
+    }
+    await database.discardEmptyDraft(note.accountId, note.id);
+  } on Object {
+    // Cleanup is optional; unknown staging or database state must retain the draft.
   }
 }
 

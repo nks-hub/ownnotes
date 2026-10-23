@@ -165,17 +165,31 @@ final class AttachmentStaging {
   Future<void> update(StagedAttachment item) => _write(item);
 
   /// Entries of one draft, oldest first; all entries when [noteId] is null.
+  /// Strict reads reject unreadable entries before automatic draft deletion.
   Future<List<StagedAttachment>> list({
     String? accountId,
     String? noteId,
+    bool strict = false,
   }) async {
-    if (!await root.exists()) return const [];
+    if (!await root.exists()) {
+      if (strict &&
+          await FileSystemEntity.type(root.path) !=
+              FileSystemEntityType.notFound) {
+        throw StateError('attachment_storage_unreadable');
+      }
+      return const [];
+    }
     final items = <StagedAttachment>[];
     await for (final entry in root.list()) {
       if (entry is! Directory) continue;
       final id = entry.uri.pathSegments.lastWhere((s) => s.isNotEmpty);
       final item = await get(id);
-      if (item == null) continue;
+      if (item == null) {
+        if (strict && await entry.exists()) {
+          throw StateError('attachment_metadata_unreadable');
+        }
+        continue;
+      }
       if ((accountId == null || item.accountId == accountId) &&
           (noteId == null || item.noteId == noteId)) {
         items.add(item);

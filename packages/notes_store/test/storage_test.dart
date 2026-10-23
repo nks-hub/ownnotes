@@ -52,6 +52,32 @@ void main() {
   tearDown(() async {
     await db.close();
   });
+
+  test('automatic empty-draft cleanup respects current identity and content', () async {
+    final account = await accounts.add(credentials);
+    final empty = await db.createDraft(account);
+    expect(await db.discardEmptyDraft('another-account', empty), isFalse);
+    expect(await db.discardEmptyDraft(account, empty), isTrue);
+    expect(await db.note(account, empty), isNull);
+    final changes = <LocalNotesCompanion>[
+      const LocalNotesCompanion(remoteId: Value(42), syncState: Value('clean')),
+      const LocalNotesCompanion(content: Value('new text')),
+      const LocalNotesCompanion(title: Value('new title')),
+      const LocalNotesCompanion(category: Value('Work')),
+      const LocalNotesCompanion(favorite: Value(true)),
+      const LocalNotesCompanion(readonly: Value(true)),
+      const LocalNotesCompanion(kind: Value('shared')),
+      const LocalNotesCompanion(syncState: Value('sending')),
+      const LocalNotesCompanion(syncState: Value('needsDecision')),
+    ];
+    for (final change in changes) {
+      final id = await db.createDraft(account);
+      await (db.update(db.localNotes)..where((n) => n.id.equals(id))).write(change);
+      final before = await db.note(account, id);
+      expect(await db.discardEmptyDraft(account, id), isFalse);
+      expect(await db.note(account, id), before);
+    }
+  });
   test('secure write failure creates no account', () async {
     vault.failWrite = true;
     await expectLater(accounts.add(credentials), throwsStateError);

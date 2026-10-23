@@ -91,10 +91,11 @@ final class AttachmentService {
 
   Future<List<StagedAttachment>> pending(
     String accountId,
-    String noteId,
-  ) async {
+    String noteId, {
+    bool strict = false,
+  }) async {
     await _ready();
-    return staging.list(accountId: accountId, noteId: noteId);
+    return staging.list(accountId: accountId, noteId: noteId, strict: strict);
   }
 
   /// Uploads one staged file. The result is stored before this returns, so a

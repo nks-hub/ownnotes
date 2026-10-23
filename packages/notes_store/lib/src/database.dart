@@ -335,6 +335,28 @@ class NotesDatabase extends _$NotesDatabase {
     return saved;
   });
 
+  /// Automatic cleanup must never turn into a remote deletion.
+  Future<bool> discardEmptyDraft(String accountId, String id) => transaction(
+    () async {
+      final current = await note(accountId, id);
+      if (current == null ||
+          current.remoteId != null ||
+          current.syncState != 'draft' ||
+          current.kind != 'note' ||
+          current.readonly ||
+          current.favorite ||
+          current.title.trim().isNotEmpty ||
+          current.content.trim().isNotEmpty ||
+          current.category.trim().isNotEmpty) {
+        return false;
+      }
+      return await (delete(localNotes)
+                ..where((n) => n.id.equals(id) & n.accountId.equals(accountId)))
+              .go() !=
+          0;
+    },
+  );
+
   /// A note never uploaded goes away at once; an uploaded one is hidden and
   /// waits for the next sync to delete it on the server.
   Future<void> markDeleted(String accountId, String id) =>
