@@ -904,5 +904,7 @@
   "aboutPrivacy": "Privacy policy",
   "aboutSupport": "Contact support",
   "aboutLicenses": "Open source licenses",
-  "aboutCopyright": "© 2026 NKS Hub"
+  "aboutCopyright": "© 2026 NKS Hub",
+  "rowSharedByYou": "Shared by you",
+  "shareOtherMethods": "This note also uses other sharing methods, such as links or groups. Manage those in Nextcloud."
 }

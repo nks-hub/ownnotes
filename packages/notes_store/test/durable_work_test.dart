@@ -648,6 +648,8 @@ void main() {
       for (final c in ['delete_error', 'unreadable', 'missing_since']) {
         await first.customStatement('ALTER TABLE local_notes DROP COLUMN $c');
       }
+      await first.customStatement('ALTER TABLE local_notes DROP COLUMN shared_with_me');
+      await first.customStatement('ALTER TABLE local_notes DROP COLUMN shared_by_me');
       await first.customStatement('PRAGMA user_version = 3');
       await first.close();
 

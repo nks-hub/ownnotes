@@ -1891,4 +1891,11 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get aboutCopyright => '© 2026 NKS Hub';
+
+  @override
+  String get rowSharedByYou => 'Sdílíš s ostatními';
+
+  @override
+  String get shareOtherMethods =>
+      'Poznámka je sdílená i jiným způsobem, například odkazem nebo se skupinou. Toto sdílení spravuješ v Nextcloudu.';
 }

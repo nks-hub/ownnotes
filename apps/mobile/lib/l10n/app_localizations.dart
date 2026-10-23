@@ -3159,6 +3159,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'© 2026 NKS Hub'**
   String get aboutCopyright;
+
+  /// No description provided for @rowSharedByYou.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared by you'**
+  String get rowSharedByYou;
+
+  /// No description provided for @shareOtherMethods.
+  ///
+  /// In en, this message translates to:
+  /// **'This note also uses other sharing methods, such as links or groups. Manage those in Nextcloud.'**
+  String get shareOtherMethods;
 }
 
 class _AppLocalizationsDelegate

@@ -153,11 +153,41 @@ final class SharingClient {
   }
 
   Future<List<FileShare>> sharesOf(String path) async {
+    return (await shareSummary(path)).users;
+  }
+
+  /// Includes group and link shares in the badge while the editor lists users.
+  Future<({List<FileShare> users, bool isShared, bool hasOtherShares})>
+  shareSummary(String path) async {
     final data = await _ocs('GET', const ['shares'], query: {'path': path});
-    return [
-      for (final s in data as List<Object?>)
-        if (s is Map<String, Object?> && s['share_type'] == 0) _fileShare(s),
-    ];
+    final shares = data as List<Object?>;
+    return (
+      users: [
+        for (final s in shares)
+          if (s is Map<String, Object?> && s['share_type'] == 0) _fileShare(s),
+      ],
+      isShared: shares.isNotEmpty,
+      hasOtherShares: shares.any(
+        (s) => s is Map<String, Object?> && s['share_type'] != 0,
+      ),
+    );
+  }
+
+  /// Direct outgoing file shares, including public links and group shares.
+  Future<Set<int>> sharedFileIds() async {
+    final data = await _ocs('GET', const ['shares']);
+    final ids = <int>{};
+    for (final share in data as List<Object?>) {
+      if (share is! Map<String, Object?> || share['item_type'] != 'file') {
+        continue;
+      }
+      final id = share['file_source'];
+      if (id is! int || id <= 0) {
+        throw const NotesProtocolException('invalid_share_file');
+      }
+      ids.add(id);
+    }
+    return ids;
   }
 
   /// Removes a share; the recipient may remove one shared with them as well.
@@ -178,7 +208,7 @@ final class SharingClient {
     return [
       for (final s in data as List<Object?>)
         if (s is Map<String, Object?> &&
-            s['share_type'] == 0 &&
+            (s['share_type'] == 0 || s['share_type'] == 1) &&
             s['item_type'] == 'file' &&
             s['file_target'] is String &&
             s['file_source'] is int)

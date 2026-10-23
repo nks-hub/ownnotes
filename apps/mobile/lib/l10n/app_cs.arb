@@ -700,5 +700,7 @@
   "aboutPrivacy": "Zásady ochrany soukromí",
   "aboutSupport": "Napsat podpoře",
   "aboutLicenses": "Licence open-source součástí",
-  "aboutCopyright": "© 2026 NKS Hub"
+  "aboutCopyright": "© 2026 NKS Hub",
+  "rowSharedByYou": "Sdílíš s ostatními",
+  "shareOtherMethods": "Poznámka je sdílená i jiným způsobem, například odkazem nebo se skupinou. Toto sdílení spravuješ v Nextcloudu."
 }

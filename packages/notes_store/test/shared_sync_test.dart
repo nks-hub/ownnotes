@@ -13,8 +13,12 @@ class FakeServer {
   String content = 'milk\nbread\neggs\n';
   int version = 1;
   int permissions = 3;
+  int? listedPermissions;
+  List<Map<String, Object?>> otherIncoming = [];
   bool shared = true;
   bool offline = false;
+  int outgoingStatus = 200;
+  Set<int> outgoing = {};
   List<Map<String, Object?>> notes = [];
   final requests = <String>[];
 
@@ -37,6 +41,21 @@ class FakeServer {
       );
     }
     if (path.endsWith('/shares')) {
+      if (r.url.queryParameters['shared_with_me'] != 'true') {
+        return http.Response(
+          jsonEncode({
+            'ocs': {
+              'meta': {'statuscode': outgoingStatus},
+              'data': [
+                for (final id in outgoing)
+                  {'item_type': 'file', 'file_source': id, 'share_type': 3},
+              ],
+            },
+          }),
+          200,
+          headers: {'content-type': 'application/json'},
+        );
+      }
       return http.Response(
         jsonEncode({
           'ocs': {
@@ -51,8 +70,9 @@ class FakeServer {
                       'file_target': '/shopping.md',
                       'uid_owner': 'ann',
                       'displayname_owner': 'Ann',
-                      'permissions': permissions,
+                      'permissions': listedPermissions ?? permissions,
                     },
+                    ...otherIncoming,
                   ]
                 : <Object?>[],
           },
@@ -140,6 +160,33 @@ void main() {
     );
   });
   tearDown(() => db.close());
+
+  test(
+    'a writable group share keeps an edited file writable beside a view-only share',
+    () async {
+      await sync.sync('a');
+      final note = await shared();
+      await edit(note, 'local edit through group');
+      server.listedPermissions = 1;
+      server.otherIncoming = [
+        {
+          'id': 'group',
+          'share_type': 1,
+          'item_type': 'file',
+          'file_source': 1480,
+          'file_target': '/shopping.md',
+          'uid_owner': 'ann',
+          'permissions': 3,
+        },
+      ];
+      await sync.sync('a');
+      final rows = await db.select(db.localNotes).get();
+      expect(rows, hasLength(1));
+      expect(rows.single.readonly, isFalse);
+      expect(rows.single.syncState, 'clean');
+      expect(server.content, 'local edit through group');
+    },
+  );
 
   test('an incoming share becomes a shared note', () async {
     await sync.sync('a');
@@ -325,10 +372,65 @@ void main() {
       final rows = await db.select(db.localNotes).get();
       expect(rows, hasLength(1));
       expect(rows.single.kind, 'note');
+      expect(rows.single.sharedWithMe, isTrue);
+      expect(rows.single.sharedByMe, isFalse);
       expect(rows.single.davPath, isNull);
       expect(rows.single.etag, 'notes-etag');
+      final before = rows.single;
+      server.outgoing.add(1480);
+      await sync.sync('a');
+      expect((await db.note('a', before.id))!.sharedByMe, isTrue);
+      server.shared = false;
+      server.outgoingStatus = 503;
+      await sync.sync('a');
+      final partial = (await db.note('a', before.id))!;
+      expect(partial.sharedWithMe, isFalse);
+      expect(partial.sharedByMe, isTrue);
+      expect(partial.content, before.content);
+      expect(partial.kind, 'note');
+      server.outgoingStatus = 200;
+      server.outgoing.clear();
+      await sync.sync('a');
+      expect((await db.note('a', before.id))!.sharedByMe, isFalse);
     },
   );
+
+  test('a schema 4 draft survives the sharing-metadata upgrade', () async {
+    final dir = await Directory.systemTemp.createTemp('ownnotes-v4-');
+    final file = File('${dir.path}/notes.sqlite');
+    final old = NotesDatabase(NativeDatabase(file));
+    await old
+        .into(old.accounts)
+        .insert(
+          AccountsCompanion.insert(
+            id: 'legacy',
+            server: 'https://cloud.test/',
+            loginName: 'test',
+            credentialRef: 'ref',
+          ),
+        );
+    final id = await old.createDraft('legacy', content: 'unsent text');
+    await old.customStatement(
+      'ALTER TABLE local_notes DROP COLUMN shared_with_me',
+    );
+    await old.customStatement(
+      'ALTER TABLE local_notes DROP COLUMN shared_by_me',
+    );
+    await old.customStatement('PRAGMA user_version = 4');
+    await old.close();
+    final upgraded = NotesDatabase(NativeDatabase(file));
+    try {
+      final note = (await upgraded.note('legacy', id))!;
+      expect(note.content, 'unsent text');
+      expect(note.syncState, 'draft');
+      expect(note.sharedWithMe, isNull);
+      expect(note.sharedByMe, isNull);
+      expect(upgraded.schemaVersion, 5);
+    } finally {
+      await upgraded.close();
+      await dir.delete(recursive: true);
+    }
+  });
 
   test('a database from schema 2 gains the shared columns', () async {
     final dir = await Directory.systemTemp.createTemp('ownnotes-schema-');
@@ -342,6 +444,12 @@ void main() {
     for (final c in ['delete_error', 'unreadable', 'missing_since']) {
       await first.customStatement('ALTER TABLE local_notes DROP COLUMN $c');
     }
+    await first.customStatement(
+      'ALTER TABLE local_notes DROP COLUMN shared_with_me',
+    );
+    await first.customStatement(
+      'ALTER TABLE local_notes DROP COLUMN shared_by_me',
+    );
     await first.customStatement('PRAGMA user_version = 2');
     await first.close();
     final upgraded = NotesDatabase(NativeDatabase(file));

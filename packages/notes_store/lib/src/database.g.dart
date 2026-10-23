@@ -683,6 +683,34 @@ class $LocalNotesTable extends LocalNotes
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _sharedWithMeMeta = const VerificationMeta(
+    'sharedWithMe',
+  );
+  @override
+  late final GeneratedColumn<bool> sharedWithMe = GeneratedColumn<bool>(
+    'shared_with_me',
+    aliasedName,
+    true,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("shared_with_me" IN (0, 1))',
+    ),
+  );
+  static const VerificationMeta _sharedByMeMeta = const VerificationMeta(
+    'sharedByMe',
+  );
+  @override
+  late final GeneratedColumn<bool> sharedByMe = GeneratedColumn<bool>(
+    'shared_by_me',
+    aliasedName,
+    true,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("shared_by_me" IN (0, 1))',
+    ),
+  );
   static const VerificationMeta _deleteErrorMeta = const VerificationMeta(
     'deleteError',
   );
@@ -739,6 +767,8 @@ class $LocalNotesTable extends LocalNotes
     updatedAt,
     kind,
     davPath,
+    sharedWithMe,
+    sharedByMe,
     deleteError,
     unreadable,
     missingSince,
@@ -879,6 +909,24 @@ class $LocalNotesTable extends LocalNotes
         davPath.isAcceptableOrUnknown(data['dav_path']!, _davPathMeta),
       );
     }
+    if (data.containsKey('shared_with_me')) {
+      context.handle(
+        _sharedWithMeMeta,
+        sharedWithMe.isAcceptableOrUnknown(
+          data['shared_with_me']!,
+          _sharedWithMeMeta,
+        ),
+      );
+    }
+    if (data.containsKey('shared_by_me')) {
+      context.handle(
+        _sharedByMeMeta,
+        sharedByMe.isAcceptableOrUnknown(
+          data['shared_by_me']!,
+          _sharedByMeMeta,
+        ),
+      );
+    }
     if (data.containsKey('delete_error')) {
       context.handle(
         _deleteErrorMeta,
@@ -988,6 +1036,14 @@ class $LocalNotesTable extends LocalNotes
         DriftSqlType.string,
         data['${effectivePrefix}dav_path'],
       ),
+      sharedWithMe: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}shared_with_me'],
+      ),
+      sharedByMe: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}shared_by_me'],
+      ),
       deleteError: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}delete_error'],
@@ -1034,6 +1090,10 @@ class LocalNote extends DataClass implements Insertable<LocalNote> {
   final String kind;
   final String? davPath;
 
+  /// Last successful OCS listing; null means the share state is not known yet.
+  final bool? sharedWithMe;
+  final bool? sharedByMe;
+
   /// Category of the last failed attempt to delete the note on the server
   /// (`offline`, `auth`, `server`, ...); null while nothing failed.
   final String? deleteError;
@@ -1064,6 +1124,8 @@ class LocalNote extends DataClass implements Insertable<LocalNote> {
     required this.updatedAt,
     required this.kind,
     this.davPath,
+    this.sharedWithMe,
+    this.sharedByMe,
     this.deleteError,
     this.unreadable,
     this.missingSince,
@@ -1102,6 +1164,12 @@ class LocalNote extends DataClass implements Insertable<LocalNote> {
     map['kind'] = Variable<String>(kind);
     if (!nullToAbsent || davPath != null) {
       map['dav_path'] = Variable<String>(davPath);
+    }
+    if (!nullToAbsent || sharedWithMe != null) {
+      map['shared_with_me'] = Variable<bool>(sharedWithMe);
+    }
+    if (!nullToAbsent || sharedByMe != null) {
+      map['shared_by_me'] = Variable<bool>(sharedByMe);
     }
     if (!nullToAbsent || deleteError != null) {
       map['delete_error'] = Variable<String>(deleteError);
@@ -1147,6 +1215,12 @@ class LocalNote extends DataClass implements Insertable<LocalNote> {
       davPath: davPath == null && nullToAbsent
           ? const Value.absent()
           : Value(davPath),
+      sharedWithMe: sharedWithMe == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sharedWithMe),
+      sharedByMe: sharedByMe == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sharedByMe),
       deleteError: deleteError == null && nullToAbsent
           ? const Value.absent()
           : Value(deleteError),
@@ -1183,6 +1257,8 @@ class LocalNote extends DataClass implements Insertable<LocalNote> {
       updatedAt: serializer.fromJson<int>(json['updatedAt']),
       kind: serializer.fromJson<String>(json['kind']),
       davPath: serializer.fromJson<String?>(json['davPath']),
+      sharedWithMe: serializer.fromJson<bool?>(json['sharedWithMe']),
+      sharedByMe: serializer.fromJson<bool?>(json['sharedByMe']),
       deleteError: serializer.fromJson<String?>(json['deleteError']),
       unreadable: serializer.fromJson<bool?>(json['unreadable']),
       missingSince: serializer.fromJson<int?>(json['missingSince']),
@@ -1210,6 +1286,8 @@ class LocalNote extends DataClass implements Insertable<LocalNote> {
       'updatedAt': serializer.toJson<int>(updatedAt),
       'kind': serializer.toJson<String>(kind),
       'davPath': serializer.toJson<String?>(davPath),
+      'sharedWithMe': serializer.toJson<bool?>(sharedWithMe),
+      'sharedByMe': serializer.toJson<bool?>(sharedByMe),
       'deleteError': serializer.toJson<String?>(deleteError),
       'unreadable': serializer.toJson<bool?>(unreadable),
       'missingSince': serializer.toJson<int?>(missingSince),
@@ -1235,6 +1313,8 @@ class LocalNote extends DataClass implements Insertable<LocalNote> {
     int? updatedAt,
     String? kind,
     Value<String?> davPath = const Value.absent(),
+    Value<bool?> sharedWithMe = const Value.absent(),
+    Value<bool?> sharedByMe = const Value.absent(),
     Value<String?> deleteError = const Value.absent(),
     Value<bool?> unreadable = const Value.absent(),
     Value<int?> missingSince = const Value.absent(),
@@ -1257,6 +1337,8 @@ class LocalNote extends DataClass implements Insertable<LocalNote> {
     updatedAt: updatedAt ?? this.updatedAt,
     kind: kind ?? this.kind,
     davPath: davPath.present ? davPath.value : this.davPath,
+    sharedWithMe: sharedWithMe.present ? sharedWithMe.value : this.sharedWithMe,
+    sharedByMe: sharedByMe.present ? sharedByMe.value : this.sharedByMe,
     deleteError: deleteError.present ? deleteError.value : this.deleteError,
     unreadable: unreadable.present ? unreadable.value : this.unreadable,
     missingSince: missingSince.present ? missingSince.value : this.missingSince,
@@ -1287,6 +1369,12 @@ class LocalNote extends DataClass implements Insertable<LocalNote> {
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
       kind: data.kind.present ? data.kind.value : this.kind,
       davPath: data.davPath.present ? data.davPath.value : this.davPath,
+      sharedWithMe: data.sharedWithMe.present
+          ? data.sharedWithMe.value
+          : this.sharedWithMe,
+      sharedByMe: data.sharedByMe.present
+          ? data.sharedByMe.value
+          : this.sharedByMe,
       deleteError: data.deleteError.present
           ? data.deleteError.value
           : this.deleteError,
@@ -1320,6 +1408,8 @@ class LocalNote extends DataClass implements Insertable<LocalNote> {
           ..write('updatedAt: $updatedAt, ')
           ..write('kind: $kind, ')
           ..write('davPath: $davPath, ')
+          ..write('sharedWithMe: $sharedWithMe, ')
+          ..write('sharedByMe: $sharedByMe, ')
           ..write('deleteError: $deleteError, ')
           ..write('unreadable: $unreadable, ')
           ..write('missingSince: $missingSince')
@@ -1347,6 +1437,8 @@ class LocalNote extends DataClass implements Insertable<LocalNote> {
     updatedAt,
     kind,
     davPath,
+    sharedWithMe,
+    sharedByMe,
     deleteError,
     unreadable,
     missingSince,
@@ -1373,6 +1465,8 @@ class LocalNote extends DataClass implements Insertable<LocalNote> {
           other.updatedAt == this.updatedAt &&
           other.kind == this.kind &&
           other.davPath == this.davPath &&
+          other.sharedWithMe == this.sharedWithMe &&
+          other.sharedByMe == this.sharedByMe &&
           other.deleteError == this.deleteError &&
           other.unreadable == this.unreadable &&
           other.missingSince == this.missingSince);
@@ -1397,6 +1491,8 @@ class LocalNotesCompanion extends UpdateCompanion<LocalNote> {
   final Value<int> updatedAt;
   final Value<String> kind;
   final Value<String?> davPath;
+  final Value<bool?> sharedWithMe;
+  final Value<bool?> sharedByMe;
   final Value<String?> deleteError;
   final Value<bool?> unreadable;
   final Value<int?> missingSince;
@@ -1420,6 +1516,8 @@ class LocalNotesCompanion extends UpdateCompanion<LocalNote> {
     this.updatedAt = const Value.absent(),
     this.kind = const Value.absent(),
     this.davPath = const Value.absent(),
+    this.sharedWithMe = const Value.absent(),
+    this.sharedByMe = const Value.absent(),
     this.deleteError = const Value.absent(),
     this.unreadable = const Value.absent(),
     this.missingSince = const Value.absent(),
@@ -1444,6 +1542,8 @@ class LocalNotesCompanion extends UpdateCompanion<LocalNote> {
     required int updatedAt,
     this.kind = const Value.absent(),
     this.davPath = const Value.absent(),
+    this.sharedWithMe = const Value.absent(),
+    this.sharedByMe = const Value.absent(),
     this.deleteError = const Value.absent(),
     this.unreadable = const Value.absent(),
     this.missingSince = const Value.absent(),
@@ -1472,6 +1572,8 @@ class LocalNotesCompanion extends UpdateCompanion<LocalNote> {
     Expression<int>? updatedAt,
     Expression<String>? kind,
     Expression<String>? davPath,
+    Expression<bool>? sharedWithMe,
+    Expression<bool>? sharedByMe,
     Expression<String>? deleteError,
     Expression<bool>? unreadable,
     Expression<int>? missingSince,
@@ -1496,6 +1598,8 @@ class LocalNotesCompanion extends UpdateCompanion<LocalNote> {
       if (updatedAt != null) 'updated_at': updatedAt,
       if (kind != null) 'kind': kind,
       if (davPath != null) 'dav_path': davPath,
+      if (sharedWithMe != null) 'shared_with_me': sharedWithMe,
+      if (sharedByMe != null) 'shared_by_me': sharedByMe,
       if (deleteError != null) 'delete_error': deleteError,
       if (unreadable != null) 'unreadable': unreadable,
       if (missingSince != null) 'missing_since': missingSince,
@@ -1522,6 +1626,8 @@ class LocalNotesCompanion extends UpdateCompanion<LocalNote> {
     Value<int>? updatedAt,
     Value<String>? kind,
     Value<String?>? davPath,
+    Value<bool?>? sharedWithMe,
+    Value<bool?>? sharedByMe,
     Value<String?>? deleteError,
     Value<bool?>? unreadable,
     Value<int?>? missingSince,
@@ -1546,6 +1652,8 @@ class LocalNotesCompanion extends UpdateCompanion<LocalNote> {
       updatedAt: updatedAt ?? this.updatedAt,
       kind: kind ?? this.kind,
       davPath: davPath ?? this.davPath,
+      sharedWithMe: sharedWithMe ?? this.sharedWithMe,
+      sharedByMe: sharedByMe ?? this.sharedByMe,
       deleteError: deleteError ?? this.deleteError,
       unreadable: unreadable ?? this.unreadable,
       missingSince: missingSince ?? this.missingSince,
@@ -1610,6 +1718,12 @@ class LocalNotesCompanion extends UpdateCompanion<LocalNote> {
     if (davPath.present) {
       map['dav_path'] = Variable<String>(davPath.value);
     }
+    if (sharedWithMe.present) {
+      map['shared_with_me'] = Variable<bool>(sharedWithMe.value);
+    }
+    if (sharedByMe.present) {
+      map['shared_by_me'] = Variable<bool>(sharedByMe.value);
+    }
     if (deleteError.present) {
       map['delete_error'] = Variable<String>(deleteError.value);
     }
@@ -1646,6 +1760,8 @@ class LocalNotesCompanion extends UpdateCompanion<LocalNote> {
           ..write('updatedAt: $updatedAt, ')
           ..write('kind: $kind, ')
           ..write('davPath: $davPath, ')
+          ..write('sharedWithMe: $sharedWithMe, ')
+          ..write('sharedByMe: $sharedByMe, ')
           ..write('deleteError: $deleteError, ')
           ..write('unreadable: $unreadable, ')
           ..write('missingSince: $missingSince, ')
@@ -4335,6 +4451,8 @@ typedef $$LocalNotesTableCreateCompanionBuilder =
       required int updatedAt,
       Value<String> kind,
       Value<String?> davPath,
+      Value<bool?> sharedWithMe,
+      Value<bool?> sharedByMe,
       Value<String?> deleteError,
       Value<bool?> unreadable,
       Value<int?> missingSince,
@@ -4360,6 +4478,8 @@ typedef $$LocalNotesTableUpdateCompanionBuilder =
       Value<int> updatedAt,
       Value<String> kind,
       Value<String?> davPath,
+      Value<bool?> sharedWithMe,
+      Value<bool?> sharedByMe,
       Value<String?> deleteError,
       Value<bool?> unreadable,
       Value<int?> missingSince,
@@ -4497,6 +4617,16 @@ class $$LocalNotesTableFilterComposer
 
   ColumnFilters<String> get davPath => $composableBuilder(
     column: $table.davPath,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get sharedWithMe => $composableBuilder(
+    column: $table.sharedWithMe,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get sharedByMe => $composableBuilder(
+    column: $table.sharedByMe,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4658,6 +4788,16 @@ class $$LocalNotesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get sharedWithMe => $composableBuilder(
+    column: $table.sharedWithMe,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get sharedByMe => $composableBuilder(
+    column: $table.sharedByMe,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get deleteError => $composableBuilder(
     column: $table.deleteError,
     builder: (column) => ColumnOrderings(column),
@@ -4762,6 +4902,16 @@ class $$LocalNotesTableAnnotationComposer
 
   GeneratedColumn<String> get davPath =>
       $composableBuilder(column: $table.davPath, builder: (column) => column);
+
+  GeneratedColumn<bool> get sharedWithMe => $composableBuilder(
+    column: $table.sharedWithMe,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get sharedByMe => $composableBuilder(
+    column: $table.sharedByMe,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<String> get deleteError => $composableBuilder(
     column: $table.deleteError,
@@ -4873,6 +5023,8 @@ class $$LocalNotesTableTableManager
                 Value<int> updatedAt = const Value.absent(),
                 Value<String> kind = const Value.absent(),
                 Value<String?> davPath = const Value.absent(),
+                Value<bool?> sharedWithMe = const Value.absent(),
+                Value<bool?> sharedByMe = const Value.absent(),
                 Value<String?> deleteError = const Value.absent(),
                 Value<bool?> unreadable = const Value.absent(),
                 Value<int?> missingSince = const Value.absent(),
@@ -4896,6 +5048,8 @@ class $$LocalNotesTableTableManager
                 updatedAt: updatedAt,
                 kind: kind,
                 davPath: davPath,
+                sharedWithMe: sharedWithMe,
+                sharedByMe: sharedByMe,
                 deleteError: deleteError,
                 unreadable: unreadable,
                 missingSince: missingSince,
@@ -4921,6 +5075,8 @@ class $$LocalNotesTableTableManager
                 required int updatedAt,
                 Value<String> kind = const Value.absent(),
                 Value<String?> davPath = const Value.absent(),
+                Value<bool?> sharedWithMe = const Value.absent(),
+                Value<bool?> sharedByMe = const Value.absent(),
                 Value<String?> deleteError = const Value.absent(),
                 Value<bool?> unreadable = const Value.absent(),
                 Value<int?> missingSince = const Value.absent(),
@@ -4944,6 +5100,8 @@ class $$LocalNotesTableTableManager
                 updatedAt: updatedAt,
                 kind: kind,
                 davPath: davPath,
+                sharedWithMe: sharedWithMe,
+                sharedByMe: sharedByMe,
                 deleteError: deleteError,
                 unreadable: unreadable,
                 missingSince: missingSince,

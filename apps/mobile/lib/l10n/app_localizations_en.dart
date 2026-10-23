@@ -1863,4 +1863,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aboutCopyright => '© 2026 NKS Hub';
+
+  @override
+  String get rowSharedByYou => 'Shared by you';
+
+  @override
+  String get shareOtherMethods =>
+      'This note also uses other sharing methods, such as links or groups. Manage those in Nextcloud.';
 }

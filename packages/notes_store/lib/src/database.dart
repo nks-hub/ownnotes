@@ -42,6 +42,10 @@ class LocalNotes extends Table {
   TextColumn get kind => text().withDefault(const Constant('note'))();
   TextColumn get davPath => text().nullable()();
 
+  /// Last successful OCS listing; null means the share state is not known yet.
+  BoolColumn get sharedWithMe => boolean().nullable()();
+  BoolColumn get sharedByMe => boolean().nullable()();
+
   /// Category of the last failed attempt to delete the note on the server
   /// (`offline`, `auth`, `server`, ...); null while nothing failed.
   TextColumn get deleteError => text().nullable()();
@@ -173,7 +177,7 @@ final class AccountSyncStatus {
 class NotesDatabase extends _$NotesDatabase {
   NotesDatabase(super.executor);
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) => m.createAll(),
@@ -189,6 +193,10 @@ class NotesDatabase extends _$NotesDatabase {
         await m.addColumn(localNotes, localNotes.deleteError);
         await m.addColumn(localNotes, localNotes.unreadable);
         await m.addColumn(localNotes, localNotes.missingSince);
+      }
+      if (from < 5) {
+        await m.addColumn(localNotes, localNotes.sharedWithMe);
+        await m.addColumn(localNotes, localNotes.sharedByMe);
       }
     },
     beforeOpen: (_) async {
@@ -334,6 +342,43 @@ class NotesDatabase extends _$NotesDatabase {
         .write(const LocalNotesCompanion(syncState: Value('needsDecision')));
     return saved;
   });
+
+  /// Share metadata does not change content, revisions, or the sync route.
+  Future<void> recordSharing(
+    String accountId, {
+    required Set<int> incoming,
+    required Set<int>? outgoing,
+  }) => transaction(() async {
+    final rows =
+        await (select(localNotes)..where(
+              (n) => n.accountId.equals(accountId) & n.remoteId.isNotNull(),
+            ))
+            .get();
+    for (final row in rows) {
+      final received = incoming.contains(row.remoteId);
+      final sent = outgoing?.contains(row.remoteId);
+      if (row.sharedWithMe == received &&
+          (sent == null || row.sharedByMe == sent)) {
+        continue;
+      }
+      await (update(localNotes)..where((n) => n.id.equals(row.id))).write(
+        LocalNotesCompanion(
+          sharedWithMe: Value(received),
+          sharedByMe: sent == null ? const Value.absent() : Value(sent),
+        ),
+      );
+    }
+  });
+
+  Future<void> recordOutgoingSharing(
+    String accountId,
+    int remoteId,
+    bool shared,
+  ) =>
+      (update(localNotes)..where(
+            (n) => n.accountId.equals(accountId) & n.remoteId.equals(remoteId),
+          ))
+          .write(LocalNotesCompanion(sharedByMe: Value(shared)));
 
   /// Automatic cleanup must never turn into a remote deletion.
   Future<bool> discardEmptyDraft(String accountId, String id) => transaction(

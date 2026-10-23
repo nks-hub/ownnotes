@@ -38,6 +38,49 @@ const propfind =
     '</d:prop></d:propstat></d:response></d:multistatus>';
 
 void main() {
+  test(
+    'outgoing file IDs include user, group and public shares without folders',
+    () async {
+      final api = client(
+        (r) async => ocs([
+          {'item_type': 'file', 'file_source': 7, 'share_type': 0},
+          {'item_type': 'file', 'file_source': 7, 'share_type': 1},
+          {'item_type': 'file', 'file_source': 8, 'share_type': 3},
+          {'item_type': 'folder', 'file_source': 9, 'share_type': 0},
+        ]),
+      );
+      expect(await api.sharedFileIds(), {7, 8});
+      final invalid = client(
+        (_) async => ocs([
+          {'item_type': 'file', 'file_source': 'bad'},
+        ]),
+      );
+      await expectLater(
+        invalid.sharedFileIds(),
+        throwsA(isA<NotesProtocolException>()),
+      );
+    },
+  );
+
+  test(
+    'share summary retains a public-link badge without a user row',
+    () async {
+      final api = client(
+        (_) async => ocs([
+          {'share_type': 3},
+        ]),
+      );
+      final summary = await api.shareSummary('/Notes/Plan.md');
+      expect(summary.users, isEmpty);
+      expect(summary.isShared, isTrue);
+      expect(
+        (await client(
+          (_) async => ocs([]),
+        ).shareSummary('/Notes/Plan.md')).isShared,
+        isFalse,
+      );
+    },
+  );
   test('sharee search keeps users and drops the caller', () async {
     late http.Request sent;
     final api = client(
@@ -154,9 +197,18 @@ void main() {
           'file_target': '/Dir',
           'permissions': 31,
         },
+        {
+          'id': '7', 'share_type': 1, 'item_type': 'file',
+          'file_source': 1481, 'file_target': '/group.md',
+          'uid_owner': 'ann', 'permissions': 1,
+        },
       ]),
     );
-    final incoming = (await api.sharedWithMe()).single;
+    final shares = await api.sharedWithMe();
+    expect(shares, hasLength(2));
+    expect(shares.last.fileId, 1481);
+    expect(shares.last.canEdit, isFalse);
+    final incoming = shares.first;
     expect(incoming.fileId, 1480);
     expect(incoming.path, '/share-probe.md');
     expect(incoming.ownerName, 'Ann');

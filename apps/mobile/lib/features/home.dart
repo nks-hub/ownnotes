@@ -1560,21 +1560,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final previous = old?.accountId == accountId
         ? {for (final r in old!.rows) r.note.id: r}
         : const <String, NoteRow>{};
-    final counts = <String, int>{};
-    var favorites = 0;
-    var uncategorised = 0;
-    var shared = 0;
-    for (final n in notes) {
-      if (n.kind == 'shared') {
-        shared++;
-      } else if (n.category.isEmpty) {
-        uncategorised++;
-      } else {
-        counts.update(n.category, (v) => v + 1, ifAbsent: () => 1);
-      }
-      if (n.favorite) favorites++;
-    }
-    final tree = buildCategoryTree(counts);
+    final counts = countNotes(notes);
+    final tree = buildCategoryTree(counts.categories);
     final paths = <String>{};
     void walk(List<CategoryNode> nodes) {
       for (final n in nodes) {
@@ -1600,9 +1587,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       rows: [for (final n in notes) NoteRow.of(n, previous[n.id])],
       tree: tree,
       paths: paths,
-      favorites: favorites,
-      uncategorised: uncategorised,
-      shared: shared,
+      favorites: counts.favorites,
+      uncategorised: counts.uncategorised,
+      shared: counts.shared,
     );
   }
 

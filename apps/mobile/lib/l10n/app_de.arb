@@ -700,5 +700,7 @@
   "aboutPrivacy": "Datenschutzerklärung",
   "aboutSupport": "Support kontaktieren",
   "aboutLicenses": "Open-Source-Lizenzen",
-  "aboutCopyright": "© 2026 NKS Hub"
+  "aboutCopyright": "© 2026 NKS Hub",
+  "rowSharedByYou": "Von dir geteilt",
+  "shareOtherMethods": "Diese Notiz wird auch auf andere Weise geteilt, etwa über Links oder Gruppen. Verwalte diese Freigaben in Nextcloud."
 }

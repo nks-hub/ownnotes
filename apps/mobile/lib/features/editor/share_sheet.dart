@@ -109,6 +109,7 @@ class _ShareSheetBodyState extends ConsumerState<ShareSheetBody> {
   SharingClient? _sharing;
   String? _path;
   List<FileShare> _shares = const [];
+  bool _hasOtherShares = false;
   final _search = TextEditingController();
   List<Sharee> _found = const [];
   bool _searching = false;
@@ -123,7 +124,7 @@ class _ShareSheetBodyState extends ConsumerState<ShareSheetBody> {
   @override
   void initState() {
     super.initState();
-    if (widget.note.kind == 'shared') {
+    if (widget.note.kind == 'shared' || widget.note.sharedWithMe == true) {
       _phase = _Phase.incoming;
     } else if (widget.note.remoteId == null) {
       _phase = _Phase.notUploaded;
@@ -168,12 +169,14 @@ class _ShareSheetBodyState extends ConsumerState<ShareSheetBody> {
       final path = remote is RemoteNote ? remote.internalPath : null;
       if (path == null) throw StateError('no_path');
       final sharing = await runtime.sharingFor(account);
-      final shares = await sharing.sharesOf(path);
+      final summary = await sharing.shareSummary(path);
+      await _rememberSharing(runtime.database, summary.isShared);
       if (!mounted) return;
       setState(() {
         _sharing = sharing;
         _path = path;
-        _shares = shares;
+        _shares = summary.users;
+        _hasOtherShares = summary.hasOtherShares;
         _phase = _Phase.ready;
       });
     } on Object {
@@ -184,8 +187,25 @@ class _ShareSheetBodyState extends ConsumerState<ShareSheetBody> {
   Future<void> _refreshShares() async {
     final sharing = _sharing, path = _path;
     if (sharing == null || path == null) return;
-    final shares = await sharing.sharesOf(path);
-    if (mounted) setState(() => _shares = shares);
+    final database = ref.read(runtimeProvider).database;
+    final summary = await sharing.shareSummary(path);
+    await _rememberSharing(database, summary.isShared);
+    if (mounted) {
+      setState(() {
+        _shares = summary.users;
+        _hasOtherShares = summary.hasOtherShares;
+      });
+    }
+  }
+
+  Future<void> _rememberSharing(NotesDatabase database, bool shared) async {
+    final remoteId = _note.remoteId;
+    if (remoteId == null) return;
+    try {
+      await database.recordOutgoingSharing(_note.accountId, remoteId, shared);
+    } on Object {
+      // A badge write must not replay a successful server share operation.
+    }
   }
 
   void _onSearch(String value) {
@@ -400,7 +420,12 @@ class _ShareSheetBodyState extends ConsumerState<ShareSheetBody> {
       if (_picked != null) _picker(context, l, _picked!),
       const SizedBox(height: 8),
       _header(context, l.sharePeopleWithAccess),
-      if (_shares.isEmpty && _operations.isEmpty)
+      if (_hasOtherShares)
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: Text(l.shareOtherMethods),
+        ),
+      if (_shares.isEmpty && _operations.isEmpty && !_hasOtherShares)
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 8),
           child: Text(l.shareNone),

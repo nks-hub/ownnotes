@@ -4,6 +4,7 @@ import 'package:notes_protocol/notes_protocol.dart';
 import 'package:uuid/uuid.dart';
 import 'database.dart';
 import 'recovery.dart';
+import 'shared_listing.dart';
 
 /// One coordinator per process (the app, a background worker). They share
 /// the database and take turns through a per-account lease, renewed before
@@ -582,7 +583,6 @@ final class SyncCoordinator {
 
   // --- Notes shared with this account, synced over WebDAV ---
 
-  static final RegExp _noteFile = RegExp(r'\.(md|txt)$', caseSensitive: false);
 
   /// The note as the file holds it now; for the conflict screen.
   Future<RemoteNote> readShared(LocalNote note) async {
@@ -615,7 +615,8 @@ final class SyncCoordinator {
     final listed = _sharesListed[account.id];
     if (listed == null ||
         DateTime.now().difference(listed) >= shareListInterval) {
-      await _listShares(sharing, account.id);
+      await refreshSharedNotes(database, sharing, account.id,
+        keepLease: () => _keepLease(account.id));
       _sharesListed[account.id] = DateTime.now();
     }
     final rows =
@@ -642,74 +643,6 @@ final class SyncCoordinator {
         // Unshared or deleted by the owner; the share listing decides.
         if (e.statusCode != 404) rethrow;
       }
-    }
-  }
-
-  /// New incoming shares become rows; rows whose share ended (or whose file
-  /// the Notes API lists now) go when they hold no local edits.
-  Future<void> _listShares(SharingClient sharing, String accountId) async {
-    final incoming = [
-      for (final s in await sharing.sharedWithMe())
-        if (_noteFile.hasMatch(s.path)) s,
-    ];
-    final rows =
-        await (database.select(database.localNotes)..where(
-              (n) => n.accountId.equals(accountId) & n.remoteId.isNotNull(),
-            ))
-            .get();
-    final viaNotes = {
-      for (final n in rows)
-        if (n.kind == 'note') n.remoteId!,
-    };
-    final byFile = {
-      for (final n in rows)
-        if (n.kind == 'shared') n.remoteId!: n,
-    };
-    final wanted = <int>{};
-    for (final share in incoming) {
-      if (viaNotes.contains(share.fileId)) continue;
-      wanted.add(share.fileId);
-      final row = byFile[share.fileId];
-      if (row != null) {
-        await (database.update(
-          database.localNotes,
-        )..where((n) => n.id.equals(row.id))).write(
-          LocalNotesCompanion(
-            davPath: Value(share.path),
-            readonly: Value(!share.canEdit),
-          ),
-        );
-        continue;
-      }
-      final file = await sharing.read(share.path);
-      final name = share.path.split('/').last.replaceAll(_noteFile, '');
-      await database
-          .into(database.localNotes)
-          .insert(
-            LocalNotesCompanion.insert(
-              id: const Uuid().v4(),
-              accountId: accountId,
-              remoteId: Value(share.fileId),
-              title: name,
-              content: file.content,
-              readonly: Value(!share.canEdit),
-              etag: Value(file.etag),
-              baseContent: Value(file.content),
-              baseTitle: Value(name),
-              baseCategory: const Value(''),
-              baseFavorite: const Value(false),
-              syncState: const Value('clean'),
-              kind: const Value('shared'),
-              davPath: Value(share.path),
-              updatedAt: DateTime.now().millisecondsSinceEpoch,
-            ),
-          );
-    }
-    for (final row in byFile.values) {
-      if (wanted.contains(row.remoteId)) continue;
-      await (database.delete(
-        database.localNotes,
-      )..where((n) => n.id.equals(row.id) & n.syncState.equals('clean'))).go();
     }
   }
 

@@ -77,7 +77,8 @@ class NoteRow {
 
   bool get attachments => attachmentCount > 0;
   bool get hasOpenTasks => tasksTotal > tasksDone;
-  bool get isShared => note.kind == 'shared';
+  bool get isIncoming => note.kind == 'shared' || note.sharedWithMe == true;
+  bool get isShared => isIncoming || note.sharedByMe == true;
 
   /// The server or this device cannot hand out a current copy of the text.
   bool get unavailable =>
@@ -91,8 +92,8 @@ class NoteRow {
   bool inScope(NoteScope scope, String category) => switch (scope) {
     NoteScope.all => true,
     NoteScope.favorites => note.favorite,
-    NoteScope.uncategorised => note.category.isEmpty && !isShared,
-    NoteScope.shared => isShared,
+    NoteScope.uncategorised => note.category.isEmpty && note.kind != 'shared',
+    NoteScope.shared => isIncoming,
     NoteScope.attention => needsAttention,
     NoteScope.category =>
       note.category == category || note.category.startsWith('$category/'),
@@ -138,4 +139,28 @@ List<CategoryNode> buildCategoryTree(Map<String, int> counts) {
 
   sort(roots);
   return roots;
+}
+
+/// Received Notes files keep their category and also belong in Shared with me.
+({Map<String, int> categories, int favorites, int uncategorised, int shared})
+countNotes(Iterable<LocalNote> notes) {
+  final categories = <String, int>{};
+  var favorites = 0, uncategorised = 0, shared = 0;
+  for (final note in notes) {
+    if (note.kind == 'shared' || note.sharedWithMe == true) shared++;
+    if (note.kind != 'shared') {
+      if (note.category.isEmpty) {
+        uncategorised++;
+      } else {
+        categories.update(note.category, (n) => n + 1, ifAbsent: () => 1);
+      }
+    }
+    if (note.favorite) favorites++;
+  }
+  return (
+    categories: categories,
+    favorites: favorites,
+    uncategorised: uncategorised,
+    shared: shared,
+  );
 }

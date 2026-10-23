@@ -53,11 +53,13 @@ List<NoteStateLine> noteStateLines(AppLocalizations l, NoteRow row) {
       NoteStateLine(text: l.rowSavedWaiting, icon: Icons.schedule),
     if (note.syncState == 'sending')
       NoteStateLine(text: l.rowUploading, icon: Icons.cloud_upload_outlined),
-    if (row.isShared)
+    if (row.isIncoming)
       NoteStateLine(
         text: note.readonly ? l.rowSharedView : l.rowSharedEdit,
         icon: Icons.group_outlined,
       ),
+    if (note.sharedByMe == true)
+      NoteStateLine(text: l.rowSharedByYou, icon: Icons.share_outlined),
   ];
 }
 

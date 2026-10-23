@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:drift/drift.dart' show Value;
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nextcloudnotes/features/collection/editor_pane.dart';
@@ -41,6 +42,34 @@ Widget app(Widget child, {Locale locale = const Locale('en')}) => MaterialApp(
 );
 
 void main() {
+  test(
+    'incoming Notes files belong to shared scope without changing category',
+    () {
+      final incoming = note(
+        category: 'Work',
+      ).copyWith(sharedWithMe: const Value(true));
+      final outgoing = note().copyWith(sharedByMe: const Value(true));
+      final dav = note().copyWith(kind: 'shared');
+      final row = NoteRow.of(incoming);
+      expect(row.isShared, isTrue);
+      expect(row.inScope(NoteScope.shared, ''), isTrue);
+      expect(row.inScope(NoteScope.category, 'Work'), isTrue);
+      final owner = NoteRow.of(outgoing);
+      expect(owner.isShared, isTrue);
+      expect(owner.inScope(NoteScope.shared, ''), isFalse);
+      expect(owner.inScope(NoteScope.uncategorised, ''), isTrue);
+      expect(const NoteFilters(shared: true).matches(owner), isTrue);
+      final counts = countNotes([incoming, outgoing, dav]);
+      expect(counts.shared, 2);
+      expect(counts.uncategorised, 1);
+      expect(counts.categories, {'Work': 1});
+      final refreshed = NoteRow.of(
+        incoming.copyWith(sharedWithMe: const Value(false)),
+        row,
+      );
+      expect(refreshed.isShared, isFalse);
+    },
+  );
   group('noteExcerpt', () {
     test('skips a first line that repeats the title', () {
       expect(
