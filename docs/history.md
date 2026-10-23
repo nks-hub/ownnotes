@@ -3,6 +3,10 @@
 Finished work with how it was verified. Newest first is not guaranteed; dates are exact.
 
 
+- 2026-10-23 Prázdný koncept se při zavření ponechá, pokud má čekající přílohu nebo nelze frontu spolehlivě přečíst. Automatické mazání kontroluje aktuální řádek v databázové transakci a nikdy nezadá smazání na serveru. Výběr přílohy se nemůže rozběhnout během zavírání. Regresní test před opravou ztratil koncept s přílohou; po opravě prošel i s nečitelným úložištěm a poškozenými metadaty. Revize `7baad8f`: 360 mobilních a 74 databázových testů prošlo, tři živé databázové testy bez přístupů se přeskočily; statická kontrola bez nálezů.
+- 2026-10-23 Debug kandidát 0.2.3+6, SHA-256 `9898592ca768c359aa52aa8bb3027fa099fbde24dd0fe1dd081afa90c433c083`, ověřen na S9+ a S21. Na S9+ bez aktivní sítě vznikl prázdný koncept s přílohou 4 524 B; po zavření zůstal v seznamu. Po ukončení aplikace, dalším spuštění a obnovení sítě se koncept otevřel a příloha se nahrála a zobrazila. Čistě offline nové spuštění nebylo tímto fyzickým během prokázáno. Wi-Fi i mobilní data byly obnoveny. Na S21 prošlo otevření a zrušení systémového výběru souboru i následné zavření editoru.
+
+
 - 2026-10-23 Potvrzení nové přílohy se maže až po zápisu poznámky do SQLite. Otevřený editor dočasně drží své přenosy, aby souběžná synchronizace nevložila odkaz podruhé. Po restartu lze obnovit odkaz z uloženého potvrzení serveru bez nového odesílání souboru. Starší zápis potvrzuje jen přílohy, které do něj patřily. Revize `d86cd81`: 355 mobilních testů prošlo, statická kontrola bez nálezů; testy pokrývají restart před i po zápisu, odmítnutý zápis do SQLite, opakování uložení a vrácení vloženého odkazu.
 - 2026-10-23 Debug kandidát 0.2.3+6, SHA-256 `f14ef52f47f80555297d2136a35b361d95ab39215fd5db76a05d53dd684ee60d`, ověřen na S9+ a S21: výběr skutečného souboru, vložení odkazu a prázdná fronta po uložení. Na S9+ navíc ukončení aplikace a nové spuštění bez aktivní sítě po dokončeném uložení; odkaz zůstal zachovaný. Síťová nastavení byla obnovena. Výpadky přesně mezi zápisy byly ověřeny automatickými testy, nikoli fyzickým přerušením v těchto bodech.
 

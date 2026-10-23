@@ -16,8 +16,6 @@ references: [docs/research/review-2026-10-20.md](docs/research/review-2026-10-20
 
 ## Now
 
-- [ ] Prověřit zavření nového konceptu s čekající přílohou: `_leave` zahazuje prázdnou poznámku bez kontroly fronty příloh. Takový koncept musí zůstat dostupný i bez připojení.
-
 - [ ] Real Galaxy Fold: open flat, half open like a book and like a laptop
       (Flex mode), folded to the cover screen with a note open. The
       emulator reports the laptop posture as flat, so that layout was only
