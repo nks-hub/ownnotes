@@ -16,7 +16,7 @@ references: [docs/research/review-2026-10-20.md](docs/research/review-2026-10-20
 
 ## Now
 
-- [ ] Při vložení nové přílohy se fronta maže před uložením odkazu v editoru (`add_attachment.dart`); pád mezi těmito kroky může nechat soubor na serveru bez odkazu. Potvrzení přenosu musí následovat až po uložení poznámky.
+- [ ] Prověřit zavření nového konceptu s čekající přílohou: `_leave` zahazuje prázdnou poznámku bez kontroly fronty příloh. Takový koncept musí zůstat dostupný i bez připojení.
 
 - [ ] Real Galaxy Fold: open flat, half open like a book and like a laptop
       (Flex mode), folded to the cover screen with a note open. The
