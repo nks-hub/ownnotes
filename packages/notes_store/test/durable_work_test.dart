@@ -655,6 +655,9 @@ void main() {
         'ALTER TABLE local_notes DROP COLUMN shared_by_me',
       );
       await first.customStatement('DROP TABLE pull_checkpoints');
+      await first.customStatement(
+        'ALTER TABLE local_notes DROP COLUMN remote_path',
+      );
       await first.customStatement('PRAGMA user_version = 3');
       await first.close();
 

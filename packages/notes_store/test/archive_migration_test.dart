@@ -83,6 +83,9 @@ void main() {
         if (version == 5) {
           await old.customStatement('DROP TABLE pull_checkpoints');
         }
+        await old.customStatement(
+          'ALTER TABLE local_notes DROP COLUMN remote_path',
+        );
         await old.customStatement('PRAGMA user_version = $version');
         await old.close();
 
@@ -162,6 +165,9 @@ void main() {
               remoteIds: '[41]',
             ),
           );
+      await old.customStatement(
+        'ALTER TABLE local_notes DROP COLUMN remote_path',
+      );
       await old.customStatement('PRAGMA user_version = 6');
       await old.close();
 

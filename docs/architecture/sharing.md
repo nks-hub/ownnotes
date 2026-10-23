@@ -92,6 +92,13 @@ acceptance workflows (`share_folder`, pending shares).
 - Share ids of incoming shares are not stored; read them from
   `sharedWithMe()` (match on `fileId == note.remoteId`).
 
+Od verze databáze 8 se děděné sdílení vyhodnocuje podle `remote_path`
+poznámky a cest složek vrácených OCS. Příjemce používá `file_target`, vlastník
+`path`. Porovnání respektuje hranice složek; `/Notes/Team` nezahrnuje
+`/Notes/Team 2`. Neznámá cesta nesmaže dříve ověřené označení. Nabídka
+sdílení odkáže u zděděného přístupu na Nextcloud a neupravuje oprávnění
+nadřazené složky. Složky mimo Notes se zatím neprocházejí, viz TODO.
+
 Tests: `packages/notes_protocol/test/sharing_test.dart` (fake client),
 `packages/notes_store/test/shared_sync_test.dart` (real SQLite, fake server),
 `packages/notes_store/test/live_sharing_test.dart` (skipped unless

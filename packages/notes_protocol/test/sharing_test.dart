@@ -38,29 +38,112 @@ const propfind =
     '</d:prop></d:propstat></d:response></d:multistatus>';
 
 void main() {
+  test('folder targets respect path boundaries and unknown paths', () {
+    const targets = ShareTargets(
+      fileIds: {7},
+      folderPaths: {'/Notes/Tým', '/Notes/a%2Fb'},
+    );
+    expect(targets.contains(7, null), isTrue);
+    expect(targets.contains(8, null), isNull);
+    expect(targets.contains(8, '/Notes/Tým/Plan.md'), isTrue);
+    expect(targets.contains(8, '/Notes/Tým/Nested/Plan.md'), isTrue);
+    expect(targets.contains(8, '/Notes/Tým 2/Plan.md'), isFalse);
+    expect(targets.contains(8, '/Notes/Tým'), isFalse);
+    expect(targets.contains(8, '/Notes/a/b/Plan.md'), isFalse);
+    expect(targets.contains(8, '/Notes/a%2Fb/Plan.md'), isTrue);
+    expect(const ShareTargets().contains(8, null), isFalse);
+  });
+
   test(
-    'outgoing file IDs include user, group and public shares without folders',
+    'inherited access keeps the badge after the last direct share is removed',
     () async {
-      final api = client(
-        (r) async => ocs([
-          {'item_type': 'file', 'file_source': 7, 'share_type': 0},
-          {'item_type': 'file', 'file_source': 7, 'share_type': 1},
-          {'item_type': 'file', 'file_source': 8, 'share_type': 3},
-          {'item_type': 'folder', 'file_source': 9, 'share_type': 0},
-        ]),
+      var direct = true;
+      final api = client((request) async {
+        if (request.method == 'DELETE') {
+          direct = false;
+          return ocs([]);
+        }
+        expect(request.url.path.endsWith('/shares'), isTrue);
+        if (request.url.queryParameters.containsKey('path')) {
+          return ocs([
+            if (direct)
+              {
+                'id': '5',
+                'share_type': 0,
+                'share_with': 'bob',
+                'permissions': 3,
+                'path': '/Notes/Team/Plan.md',
+              },
+          ]);
+        }
+        return ocs([
+          {
+            'item_type': 'folder',
+            'file_source': 40,
+            'path': '/Notes/Team/',
+            'share_type': 0,
+          },
+        ]);
+      });
+      expect(
+        (await api.shareSummary('/Notes/Team/Plan.md')).users,
+        hasLength(1),
       );
-      expect(await api.sharedFileIds(), {7, 8});
-      final invalid = client(
+      await api.unshare('5');
+      final summary = await api.shareSummary('/Notes/Team/Plan.md');
+      expect(summary.users, isEmpty);
+      expect(summary.isShared, isTrue);
+      expect(summary.hasOtherShares, isTrue);
+    },
+  );
+
+  test('malformed folder paths cannot change inherited badges', () async {
+    for (final path in [
+      'Notes/Team',
+      '/Notes/../Team',
+      '/Notes//Team',
+      '//',
+      '/Notes\\Team',
+    ]) {
+      final api = client(
         (_) async => ocs([
-          {'item_type': 'file', 'file_source': 'bad'},
+          {'item_type': 'folder', 'path': path},
         ]),
       );
       await expectLater(
-        invalid.sharedFileIds(),
+        api.sharedTargets(),
         throwsA(isA<NotesProtocolException>()),
       );
-    },
-  );
+    }
+  });
+
+  test('outgoing targets include files and inherited folder shares', () async {
+    final api = client(
+      (r) async => ocs([
+        {'item_type': 'file', 'file_source': 7, 'share_type': 0},
+        {'item_type': 'file', 'file_source': 7, 'share_type': 1},
+        {'item_type': 'file', 'file_source': 8, 'share_type': 3},
+        {
+          'item_type': 'folder',
+          'file_source': 9,
+          'share_type': 0,
+          'path': '/Notes/Team',
+        },
+      ]),
+    );
+    final targets = await api.sharedTargets();
+    expect(targets.fileIds, {7, 8});
+    expect(targets.folderPaths, {'/Notes/Team'});
+    final invalid = client(
+      (_) async => ocs([
+        {'item_type': 'file', 'file_source': 'bad'},
+      ]),
+    );
+    await expectLater(
+      invalid.sharedTargets(),
+      throwsA(isA<NotesProtocolException>()),
+    );
+  });
 
   test(
     'share summary retains a public-link badge without a user row',
@@ -176,7 +259,7 @@ void main() {
     expect(() => api.unshare('../7'), throwsArgumentError);
   });
 
-  test('shared with me lists files only', () async {
+  test('shared with me lists files and folders separately', () async {
     final api = client(
       (r) async => ocs([
         {
@@ -198,14 +281,20 @@ void main() {
           'permissions': 31,
         },
         {
-          'id': '7', 'share_type': 1, 'item_type': 'file',
-          'file_source': 1481, 'file_target': '/group.md',
-          'uid_owner': 'ann', 'permissions': 1,
+          'id': '7',
+          'share_type': 1,
+          'item_type': 'file',
+          'file_source': 1481,
+          'file_target': '/group.md',
+          'uid_owner': 'ann',
+          'permissions': 1,
         },
       ]),
     );
     final shares = await api.sharedWithMe();
-    expect(shares, hasLength(2));
+    expect(shares, hasLength(3));
+    expect(shares[1].isFolder, isTrue);
+    expect(shares.first.isFolder, isFalse);
     expect(shares.last.fileId, 1481);
     expect(shares.last.canEdit, isFalse);
     final incoming = shares.first;

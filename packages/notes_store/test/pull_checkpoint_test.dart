@@ -442,6 +442,9 @@ void main() {
       await addAccount(old);
       final id = await old.createDraft('a', content: 'unsent text');
       await old.customStatement('DROP TABLE pull_checkpoints');
+      await old.customStatement(
+        'ALTER TABLE local_notes DROP COLUMN remote_path',
+      );
       await old.customStatement('PRAGMA user_version = 5');
       await old.close();
       final upgraded = NotesDatabase(NativeDatabase(file));

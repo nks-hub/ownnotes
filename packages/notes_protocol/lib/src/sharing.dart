@@ -32,8 +32,7 @@ final class FileShare {
   bool get canEdit => permissions & 2 != 0;
 }
 
-/// A file somebody shared with this account. [path] is where it is mounted in
-/// the recipient's files, so it is the WebDAV path of the file.
+/// An incoming file or folder at its mount path in the recipient's files.
 final class IncomingShare {
   const IncomingShare({
     required this.id,
@@ -42,6 +41,7 @@ final class IncomingShare {
     required this.ownerId,
     required this.ownerName,
     required this.permissions,
+    this.isFolder = false,
   });
   final String id;
 
@@ -51,7 +51,45 @@ final class IncomingShare {
   final String ownerId;
   final String ownerName;
   final int permissions;
+  final bool isFolder;
   bool get canEdit => permissions & 2 != 0;
+}
+
+/// Direct file IDs and shared folders; a missing file path leaves inheritance unknown.
+final class ShareTargets {
+  const ShareTargets({this.fileIds = const {}, this.folderPaths = const {}});
+  final Set<int> fileIds;
+  final Set<String> folderPaths;
+
+  bool? contains(int id, String? path) {
+    if (fileIds.contains(id)) return true;
+    if (folderPaths.isEmpty) return false;
+    if (path == null || !path.startsWith('/')) return null;
+    return inherits(path);
+  }
+
+  bool inherits(String path) => folderPaths.any(
+    (folder) => path.startsWith(folder == '/' ? '/' : '$folder/'),
+  );
+}
+
+String _sharePath(Object? value) {
+  if (value is! String ||
+      !value.startsWith('/') ||
+      value.contains('\\') ||
+      value.contains('\u0000')) {
+    throw const NotesProtocolException('invalid_share_path');
+  }
+  final path = value.replaceFirst(RegExp(r'/+$'), '');
+  if (value == '/') return '/';
+  if (path.isEmpty ||
+      path
+          .substring(1)
+          .split('/')
+          .any((s) => s.isEmpty || s == '.' || s == '..')) {
+    throw const NotesProtocolException('invalid_share_path');
+  }
+  return path;
 }
 
 final class SharedFile {
@@ -161,24 +199,31 @@ final class SharingClient {
   shareSummary(String path) async {
     final data = await _ocs('GET', const ['shares'], query: {'path': path});
     final shares = data as List<Object?>;
+    final inherited = (await sharedTargets()).inherits(path);
     return (
       users: [
         for (final s in shares)
           if (s is Map<String, Object?> && s['share_type'] == 0) _fileShare(s),
       ],
-      isShared: shares.isNotEmpty,
-      hasOtherShares: shares.any(
-        (s) => s is Map<String, Object?> && s['share_type'] != 0,
-      ),
+      isShared: shares.isNotEmpty || inherited,
+      hasOtherShares:
+          inherited ||
+          shares.any((s) => s is Map<String, Object?> && s['share_type'] != 0),
     );
   }
 
-  /// Direct outgoing file shares, including public links and group shares.
-  Future<Set<int>> sharedFileIds() async {
+  /// Outgoing file and folder shares, including public links and group shares.
+  Future<ShareTargets> sharedTargets() async {
     final data = await _ocs('GET', const ['shares']);
     final ids = <int>{};
+    final folders = <String>{};
     for (final share in data as List<Object?>) {
-      if (share is! Map<String, Object?> || share['item_type'] != 'file') {
+      if (share is! Map<String, Object?>) continue;
+      if (share['item_type'] == 'folder') {
+        folders.add(_sharePath(share['path']));
+        continue;
+      }
+      if (share['item_type'] != 'file') {
         continue;
       }
       final id = share['file_source'];
@@ -187,7 +232,10 @@ final class SharingClient {
       }
       ids.add(id);
     }
-    return ids;
+    return ShareTargets(
+      fileIds: Set.unmodifiable(ids),
+      folderPaths: Set.unmodifiable(folders),
+    );
   }
 
   /// Removes a share; the recipient may remove one shared with them as well.
@@ -198,7 +246,7 @@ final class SharingClient {
     await _ocs('DELETE', ['shares', shareId]);
   }
 
-  /// Files shared with this account (folders are left out).
+  /// Files and folders shared directly with this account or one of its groups.
   Future<List<IncomingShare>> sharedWithMe() async {
     final data = await _ocs(
       'GET',
@@ -209,16 +257,17 @@ final class SharingClient {
       for (final s in data as List<Object?>)
         if (s is Map<String, Object?> &&
             (s['share_type'] == 0 || s['share_type'] == 1) &&
-            s['item_type'] == 'file' &&
+            (s['item_type'] == 'file' || s['item_type'] == 'folder') &&
             s['file_target'] is String &&
             s['file_source'] is int)
           IncomingShare(
             id: '${s['id']}',
-            fileId: s['file_source']! as int,
-            path: s['file_target']! as String,
+            fileId: noteId(s['file_source']),
+            path: _sharePath(s['file_target']),
             ownerId: '${s['uid_owner']}',
             ownerName: '${s['displayname_owner'] ?? s['uid_owner']}',
             permissions: s['permissions'] is int ? s['permissions']! as int : 1,
+            isFolder: s['item_type'] == 'folder',
           ),
     ];
   }

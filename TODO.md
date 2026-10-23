@@ -46,7 +46,8 @@ references: [docs/research/review-2026-10-20.md](docs/research/review-2026-10-20
 
 ## Later
 
-- [ ] Ověřit označení poznámek, které dědí sdílení z celé složky; současná evidence sdílení sleduje přímá souborová sdílení.
+- [ ] Načítat poznámky ze sdílených složek mimo nastavenou složku Notes; děděné sdílení se zatím označuje u již načtených poznámek.
+- [ ] Ošetřit souběžné načítání stejné přílohy v náhledu a miniatuře; cache nyní používá stejný dočasný soubor pro oba zápisy.
 
 - [ ] Backups that can be restored: ZIP with metadata and attachments.
 - [ ] File versions and trash from Nextcloud (DAV), restore keeps the draft.

@@ -509,6 +509,17 @@ class $LocalNotesTable extends LocalNotes
     type: DriftSqlType.int,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _remotePathMeta = const VerificationMeta(
+    'remotePath',
+  );
+  @override
+  late final GeneratedColumn<String> remotePath = GeneratedColumn<String>(
+    'remote_path',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _titleMeta = const VerificationMeta('title');
   @override
   late final GeneratedColumn<String> title = GeneratedColumn<String>(
@@ -752,6 +763,7 @@ class $LocalNotesTable extends LocalNotes
     id,
     accountId,
     remoteId,
+    remotePath,
     title,
     content,
     category,
@@ -802,6 +814,12 @@ class $LocalNotesTable extends LocalNotes
       context.handle(
         _remoteIdMeta,
         remoteId.isAcceptableOrUnknown(data['remote_id']!, _remoteIdMeta),
+      );
+    }
+    if (data.containsKey('remote_path')) {
+      context.handle(
+        _remotePathMeta,
+        remotePath.isAcceptableOrUnknown(data['remote_path']!, _remotePathMeta),
       );
     }
     if (data.containsKey('title')) {
@@ -976,6 +994,10 @@ class $LocalNotesTable extends LocalNotes
         DriftSqlType.int,
         data['${effectivePrefix}remote_id'],
       ),
+      remotePath: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}remote_path'],
+      ),
       title: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}title'],
@@ -1069,6 +1091,7 @@ class LocalNote extends DataClass implements Insertable<LocalNote> {
   final String id;
   final String accountId;
   final int? remoteId;
+  final String? remotePath;
   final String title;
   final String content;
   final String category;
@@ -1109,6 +1132,7 @@ class LocalNote extends DataClass implements Insertable<LocalNote> {
     required this.id,
     required this.accountId,
     this.remoteId,
+    this.remotePath,
     required this.title,
     required this.content,
     required this.category,
@@ -1137,6 +1161,9 @@ class LocalNote extends DataClass implements Insertable<LocalNote> {
     map['account_id'] = Variable<String>(accountId);
     if (!nullToAbsent || remoteId != null) {
       map['remote_id'] = Variable<int>(remoteId);
+    }
+    if (!nullToAbsent || remotePath != null) {
+      map['remote_path'] = Variable<String>(remotePath);
     }
     map['title'] = Variable<String>(title);
     map['content'] = Variable<String>(content);
@@ -1190,6 +1217,9 @@ class LocalNote extends DataClass implements Insertable<LocalNote> {
       remoteId: remoteId == null && nullToAbsent
           ? const Value.absent()
           : Value(remoteId),
+      remotePath: remotePath == null && nullToAbsent
+          ? const Value.absent()
+          : Value(remotePath),
       title: Value(title),
       content: Value(content),
       category: Value(category),
@@ -1242,6 +1272,7 @@ class LocalNote extends DataClass implements Insertable<LocalNote> {
       id: serializer.fromJson<String>(json['id']),
       accountId: serializer.fromJson<String>(json['accountId']),
       remoteId: serializer.fromJson<int?>(json['remoteId']),
+      remotePath: serializer.fromJson<String?>(json['remotePath']),
       title: serializer.fromJson<String>(json['title']),
       content: serializer.fromJson<String>(json['content']),
       category: serializer.fromJson<String>(json['category']),
@@ -1271,6 +1302,7 @@ class LocalNote extends DataClass implements Insertable<LocalNote> {
       'id': serializer.toJson<String>(id),
       'accountId': serializer.toJson<String>(accountId),
       'remoteId': serializer.toJson<int?>(remoteId),
+      'remotePath': serializer.toJson<String?>(remotePath),
       'title': serializer.toJson<String>(title),
       'content': serializer.toJson<String>(content),
       'category': serializer.toJson<String>(category),
@@ -1298,6 +1330,7 @@ class LocalNote extends DataClass implements Insertable<LocalNote> {
     String? id,
     String? accountId,
     Value<int?> remoteId = const Value.absent(),
+    Value<String?> remotePath = const Value.absent(),
     String? title,
     String? content,
     String? category,
@@ -1322,6 +1355,7 @@ class LocalNote extends DataClass implements Insertable<LocalNote> {
     id: id ?? this.id,
     accountId: accountId ?? this.accountId,
     remoteId: remoteId.present ? remoteId.value : this.remoteId,
+    remotePath: remotePath.present ? remotePath.value : this.remotePath,
     title: title ?? this.title,
     content: content ?? this.content,
     category: category ?? this.category,
@@ -1348,6 +1382,9 @@ class LocalNote extends DataClass implements Insertable<LocalNote> {
       id: data.id.present ? data.id.value : this.id,
       accountId: data.accountId.present ? data.accountId.value : this.accountId,
       remoteId: data.remoteId.present ? data.remoteId.value : this.remoteId,
+      remotePath: data.remotePath.present
+          ? data.remotePath.value
+          : this.remotePath,
       title: data.title.present ? data.title.value : this.title,
       content: data.content.present ? data.content.value : this.content,
       category: data.category.present ? data.category.value : this.category,
@@ -1393,6 +1430,7 @@ class LocalNote extends DataClass implements Insertable<LocalNote> {
           ..write('id: $id, ')
           ..write('accountId: $accountId, ')
           ..write('remoteId: $remoteId, ')
+          ..write('remotePath: $remotePath, ')
           ..write('title: $title, ')
           ..write('content: $content, ')
           ..write('category: $category, ')
@@ -1422,6 +1460,7 @@ class LocalNote extends DataClass implements Insertable<LocalNote> {
     id,
     accountId,
     remoteId,
+    remotePath,
     title,
     content,
     category,
@@ -1450,6 +1489,7 @@ class LocalNote extends DataClass implements Insertable<LocalNote> {
           other.id == this.id &&
           other.accountId == this.accountId &&
           other.remoteId == this.remoteId &&
+          other.remotePath == this.remotePath &&
           other.title == this.title &&
           other.content == this.content &&
           other.category == this.category &&
@@ -1476,6 +1516,7 @@ class LocalNotesCompanion extends UpdateCompanion<LocalNote> {
   final Value<String> id;
   final Value<String> accountId;
   final Value<int?> remoteId;
+  final Value<String?> remotePath;
   final Value<String> title;
   final Value<String> content;
   final Value<String> category;
@@ -1501,6 +1542,7 @@ class LocalNotesCompanion extends UpdateCompanion<LocalNote> {
     this.id = const Value.absent(),
     this.accountId = const Value.absent(),
     this.remoteId = const Value.absent(),
+    this.remotePath = const Value.absent(),
     this.title = const Value.absent(),
     this.content = const Value.absent(),
     this.category = const Value.absent(),
@@ -1527,6 +1569,7 @@ class LocalNotesCompanion extends UpdateCompanion<LocalNote> {
     required String id,
     required String accountId,
     this.remoteId = const Value.absent(),
+    this.remotePath = const Value.absent(),
     required String title,
     required String content,
     this.category = const Value.absent(),
@@ -1557,6 +1600,7 @@ class LocalNotesCompanion extends UpdateCompanion<LocalNote> {
     Expression<String>? id,
     Expression<String>? accountId,
     Expression<int>? remoteId,
+    Expression<String>? remotePath,
     Expression<String>? title,
     Expression<String>? content,
     Expression<String>? category,
@@ -1583,6 +1627,7 @@ class LocalNotesCompanion extends UpdateCompanion<LocalNote> {
       if (id != null) 'id': id,
       if (accountId != null) 'account_id': accountId,
       if (remoteId != null) 'remote_id': remoteId,
+      if (remotePath != null) 'remote_path': remotePath,
       if (title != null) 'title': title,
       if (content != null) 'content': content,
       if (category != null) 'category': category,
@@ -1611,6 +1656,7 @@ class LocalNotesCompanion extends UpdateCompanion<LocalNote> {
     Value<String>? id,
     Value<String>? accountId,
     Value<int?>? remoteId,
+    Value<String?>? remotePath,
     Value<String>? title,
     Value<String>? content,
     Value<String>? category,
@@ -1637,6 +1683,7 @@ class LocalNotesCompanion extends UpdateCompanion<LocalNote> {
       id: id ?? this.id,
       accountId: accountId ?? this.accountId,
       remoteId: remoteId ?? this.remoteId,
+      remotePath: remotePath ?? this.remotePath,
       title: title ?? this.title,
       content: content ?? this.content,
       category: category ?? this.category,
@@ -1672,6 +1719,9 @@ class LocalNotesCompanion extends UpdateCompanion<LocalNote> {
     }
     if (remoteId.present) {
       map['remote_id'] = Variable<int>(remoteId.value);
+    }
+    if (remotePath.present) {
+      map['remote_path'] = Variable<String>(remotePath.value);
     }
     if (title.present) {
       map['title'] = Variable<String>(title.value);
@@ -1745,6 +1795,7 @@ class LocalNotesCompanion extends UpdateCompanion<LocalNote> {
           ..write('id: $id, ')
           ..write('accountId: $accountId, ')
           ..write('remoteId: $remoteId, ')
+          ..write('remotePath: $remotePath, ')
           ..write('title: $title, ')
           ..write('content: $content, ')
           ..write('category: $category, ')
@@ -5071,6 +5122,7 @@ typedef $$LocalNotesTableCreateCompanionBuilder =
       required String id,
       required String accountId,
       Value<int?> remoteId,
+      Value<String?> remotePath,
       required String title,
       required String content,
       Value<String> category,
@@ -5098,6 +5150,7 @@ typedef $$LocalNotesTableUpdateCompanionBuilder =
       Value<String> id,
       Value<String> accountId,
       Value<int?> remoteId,
+      Value<String?> remotePath,
       Value<String> title,
       Value<String> content,
       Value<String> category,
@@ -5177,6 +5230,11 @@ class $$LocalNotesTableFilterComposer
 
   ColumnFilters<int> get remoteId => $composableBuilder(
     column: $table.remoteId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get remotePath => $composableBuilder(
+    column: $table.remotePath,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -5348,6 +5406,11 @@ class $$LocalNotesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get remotePath => $composableBuilder(
+    column: $table.remotePath,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get title => $composableBuilder(
     column: $table.title,
     builder: (column) => ColumnOrderings(column),
@@ -5486,6 +5549,11 @@ class $$LocalNotesTableAnnotationComposer
 
   GeneratedColumn<int> get remoteId =>
       $composableBuilder(column: $table.remoteId, builder: (column) => column);
+
+  GeneratedColumn<String> get remotePath => $composableBuilder(
+    column: $table.remotePath,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<String> get title =>
       $composableBuilder(column: $table.title, builder: (column) => column);
@@ -5643,6 +5711,7 @@ class $$LocalNotesTableTableManager
                 Value<String> id = const Value.absent(),
                 Value<String> accountId = const Value.absent(),
                 Value<int?> remoteId = const Value.absent(),
+                Value<String?> remotePath = const Value.absent(),
                 Value<String> title = const Value.absent(),
                 Value<String> content = const Value.absent(),
                 Value<String> category = const Value.absent(),
@@ -5668,6 +5737,7 @@ class $$LocalNotesTableTableManager
                 id: id,
                 accountId: accountId,
                 remoteId: remoteId,
+                remotePath: remotePath,
                 title: title,
                 content: content,
                 category: category,
@@ -5695,6 +5765,7 @@ class $$LocalNotesTableTableManager
                 required String id,
                 required String accountId,
                 Value<int?> remoteId = const Value.absent(),
+                Value<String?> remotePath = const Value.absent(),
                 required String title,
                 required String content,
                 Value<String> category = const Value.absent(),
@@ -5720,6 +5791,7 @@ class $$LocalNotesTableTableManager
                 id: id,
                 accountId: accountId,
                 remoteId: remoteId,
+                remotePath: remotePath,
                 title: title,
                 content: content,
                 category: category,

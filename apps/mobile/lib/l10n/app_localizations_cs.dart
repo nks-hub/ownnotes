@@ -1897,7 +1897,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get shareOtherMethods =>
-      'Poznámka je sdílená i jiným způsobem, například odkazem nebo se skupinou. Toto sdílení spravuješ v Nextcloudu.';
+      'Poznámka je sdílená i jiným způsobem, například přes složku, odkaz nebo skupinu. Toto sdílení spravuješ v Nextcloudu.';
 
   @override
   String get backgroundSyncTitle => 'Synchronizace na pozadí';

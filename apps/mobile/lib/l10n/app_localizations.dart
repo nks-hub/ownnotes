@@ -3169,7 +3169,7 @@ abstract class AppLocalizations {
   /// No description provided for @shareOtherMethods.
   ///
   /// In en, this message translates to:
-  /// **'This note also uses other sharing methods, such as links or groups. Manage those in Nextcloud.'**
+  /// **'This note also uses other sharing methods, such as folders, links or groups. Manage those in Nextcloud.'**
   String get shareOtherMethods;
 
   /// No description provided for @backgroundSyncTitle.

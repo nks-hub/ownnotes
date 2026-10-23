@@ -21,6 +21,7 @@ class LocalNotes extends Table {
   TextColumn get accountId =>
       text().references(Accounts, #id, onDelete: KeyAction.cascade)();
   IntColumn get remoteId => integer().nullable()();
+  TextColumn get remotePath => text().nullable()();
   TextColumn get title => text()();
   TextColumn get content => text()();
   TextColumn get category => text().withDefault(const Constant(''))();
@@ -194,7 +195,7 @@ final class AccountSyncStatus {
 class NotesDatabase extends _$NotesDatabase {
   NotesDatabase(super.executor);
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 8;
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) => m.createAll(),
@@ -222,6 +223,11 @@ class NotesDatabase extends _$NotesDatabase {
           "UPDATE local_notes SET remote_id = NULL, etag = NULL "
           "WHERE sync_state = 'recoveryArchived'",
         );
+      }
+      if (from < 8) {
+        await m.addColumn(localNotes, localNotes.remotePath);
+        // Pruned rows have no path; refill them before caching another listing.
+        await customStatement('DELETE FROM pull_checkpoints');
       }
     },
     beforeOpen: (_) async {
@@ -371,8 +377,8 @@ class NotesDatabase extends _$NotesDatabase {
   /// Share metadata does not change content, revisions, or the sync route.
   Future<void> recordSharing(
     String accountId, {
-    required Set<int> incoming,
-    required Set<int>? outgoing,
+    required ShareTargets incoming,
+    required ShareTargets? outgoing,
   }) => transaction(() async {
     final rows =
         await (select(localNotes)..where(
@@ -380,15 +386,18 @@ class NotesDatabase extends _$NotesDatabase {
             ))
             .get();
     for (final row in rows) {
-      final received = incoming.contains(row.remoteId);
-      final sent = outgoing?.contains(row.remoteId);
-      if (row.sharedWithMe == received &&
+      final path = row.kind == 'shared' ? row.davPath : row.remotePath;
+      final received = incoming.contains(row.remoteId!, path);
+      final sent = outgoing?.contains(row.remoteId!, path);
+      if ((received == null || row.sharedWithMe == received) &&
           (sent == null || row.sharedByMe == sent)) {
         continue;
       }
       await (update(localNotes)..where((n) => n.id.equals(row.id))).write(
         LocalNotesCompanion(
-          sharedWithMe: Value(received),
+          sharedWithMe: received == null
+              ? const Value.absent()
+              : Value(received),
           sharedByMe: sent == null ? const Value.absent() : Value(sent),
         ),
       );
@@ -723,6 +732,7 @@ class NotesDatabase extends _$NotesDatabase {
         continue;
       }
       final values = LocalNotesCompanion(
+        remotePath: Value(record.internalPath),
         unreadable: const Value(false),
         missingSince: const Value(null),
         title: Value(record.title),

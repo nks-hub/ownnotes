@@ -222,6 +222,7 @@ final class SyncCoordinator {
             .write(
               LocalNotesCompanion(
                 deleteError: const Value(null),
+                remotePath: Value(read.internalPath),
                 title: Value(read.title),
                 content: Value(read.content),
                 category: Value(read.category),
@@ -464,6 +465,7 @@ final class SyncCoordinator {
                 : current.favorite,
           ),
           etag: Value(read.etag),
+          remotePath: Value(read.internalPath),
           baseTitle: Value(read.title),
           baseContent: Value(read.content),
           baseCategory: Value(read.category),
@@ -799,6 +801,7 @@ final class SyncCoordinator {
           const LocalNotesCompanion(
             remoteId: Value(null),
             etag: Value(null),
+            remotePath: Value(null),
             syncState: Value('needsDecision'),
           ),
         );
@@ -838,6 +841,9 @@ final class SyncCoordinator {
     )..where((n) => n.id.equals(current.id))).write(
       LocalNotesCompanion(
         remoteId: Value(result.id),
+        remotePath: result is RemoteNote
+            ? Value(result.internalPath)
+            : const Value.absent(),
         title: adoptTitle ? Value(result.title) : const Value.absent(),
         category: adoptCategory ? Value(result.category) : const Value.absent(),
         etag: result is RemoteNote ? Value(result.etag) : const Value.absent(),

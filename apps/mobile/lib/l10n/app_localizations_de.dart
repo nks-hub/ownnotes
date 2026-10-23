@@ -1888,7 +1888,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get shareOtherMethods =>
-      'Diese Notiz wird auch auf andere Weise geteilt, etwa über Links oder Gruppen. Verwalte diese Freigaben in Nextcloud.';
+      'Diese Notiz wird auch auf andere Weise geteilt, etwa über Ordner, Links oder Gruppen. Verwalte diese Freigaben in Nextcloud.';
 
   @override
   String get backgroundSyncTitle => 'Hintergrundsynchronisierung';

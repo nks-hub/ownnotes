@@ -1869,7 +1869,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get shareOtherMethods =>
-      'This note also uses other sharing methods, such as links or groups. Manage those in Nextcloud.';
+      'This note also uses other sharing methods, such as folders, links or groups. Manage those in Nextcloud.';
 
   @override
   String get backgroundSyncTitle => 'Background sync';

@@ -455,6 +455,7 @@ final class NoteRecovery {
         baseCategory: Value(remote.category),
         baseFavorite: Value(remote.favorite),
         etag: Value(remote.etag),
+        remotePath: Value(remote.internalPath),
         readonly: Value(remote.readonly),
         revision: Value(current.revision + 1),
         syncState: Value(keepLocal ? 'draft' : 'clean'),
@@ -493,6 +494,7 @@ final class NoteRecovery {
           const LocalNotesCompanion(
             remoteId: Value(null),
             etag: Value(null),
+            remotePath: Value(null),
             syncState: Value('recoveryArchived'),
           ),
         );

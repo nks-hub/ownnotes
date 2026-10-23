@@ -19,6 +19,8 @@ class FakeServer {
   bool offline = false;
   int outgoingStatus = 200;
   Set<int> outgoing = {};
+  Set<String> outgoingFolders = {};
+  String filePath = '/shopping.md';
   List<Map<String, Object?>> notes = [];
   final requests = <String>[];
 
@@ -49,6 +51,8 @@ class FakeServer {
               'data': [
                 for (final id in outgoing)
                   {'item_type': 'file', 'file_source': id, 'share_type': 3},
+                for (final path in outgoingFolders)
+                  {'item_type': 'folder', 'file_source': 99, 'path': path},
               ],
             },
           }),
@@ -67,7 +71,7 @@ class FakeServer {
                       'share_type': 0,
                       'item_type': 'file',
                       'file_source': 1480,
-                      'file_target': '/shopping.md',
+                      'file_target': filePath,
                       'uid_owner': 'ann',
                       'displayname_owner': 'Ann',
                       'permissions': listedPermissions ?? permissions,
@@ -160,6 +164,21 @@ void main() {
     );
   });
   tearDown(() => db.close());
+
+  test(
+    'a moved DAV file uses its new path for inherited outgoing shares',
+    () async {
+      await sync.sync('a');
+      server.outgoingFolders.add('/Team');
+      server.filePath = '/Team/shopping.md';
+      await sync.sync('a');
+      expect((await shared()).davPath, '/Team/shopping.md');
+      expect((await shared()).sharedByMe, isTrue);
+      server.filePath = '/Other/shopping.md';
+      await sync.sync('a');
+      expect((await shared()).sharedByMe, isFalse);
+    },
+  );
 
   test(
     'a writable group share keeps an edited file writable beside a view-only share',
@@ -417,6 +436,9 @@ void main() {
       'ALTER TABLE local_notes DROP COLUMN shared_by_me',
     );
     await old.customStatement('DROP TABLE pull_checkpoints');
+    await old.customStatement(
+      'ALTER TABLE local_notes DROP COLUMN remote_path',
+    );
     await old.customStatement('PRAGMA user_version = 4');
     await old.close();
     final upgraded = NotesDatabase(NativeDatabase(file));
@@ -426,7 +448,7 @@ void main() {
       expect(note.syncState, 'draft');
       expect(note.sharedWithMe, isNull);
       expect(note.sharedByMe, isNull);
-      expect(upgraded.schemaVersion, 7);
+      expect(upgraded.schemaVersion, 8);
     } finally {
       await upgraded.close();
       await dir.delete(recursive: true);
@@ -452,6 +474,9 @@ void main() {
       'ALTER TABLE local_notes DROP COLUMN shared_by_me',
     );
     await first.customStatement('DROP TABLE pull_checkpoints');
+    await first.customStatement(
+      'ALTER TABLE local_notes DROP COLUMN remote_path',
+    );
     await first.customStatement('PRAGMA user_version = 2');
     await first.close();
     final upgraded = NotesDatabase(NativeDatabase(file));

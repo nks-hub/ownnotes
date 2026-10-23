@@ -15,20 +15,23 @@ Future<void> refreshSharedNotes(
   await keepLease();
   final received = await sharing.sharedWithMe();
   await keepLease();
-  Set<int>? outgoing;
+  ShareTargets? outgoing;
   try {
-    outgoing = await sharing.sharedFileIds();
+    outgoing = await sharing.sharedTargets();
   } on Object {
     // Optional outgoing badges must not block incoming DAV synchronization.
   }
   await database.recordSharing(
     accountId,
-    incoming: received.map((s) => s.fileId).toSet(),
+    incoming: ShareTargets(
+      fileIds: received.where((s) => !s.isFolder).map((s) => s.fileId).toSet(),
+      folderPaths: received.where((s) => s.isFolder).map((s) => s.path).toSet(),
+    ),
     outgoing: outgoing,
   );
   final incoming = <int, IncomingShare>{};
   for (final share in received) {
-    if (!_noteFile.hasMatch(share.path)) continue;
+    if (share.isFolder || !_noteFile.hasMatch(share.path)) continue;
     final previous = incoming[share.fileId];
     if (previous == null || (!previous.canEdit && share.canEdit)) {
       incoming[share.fileId] = share;
@@ -59,6 +62,9 @@ Future<void> refreshSharedNotes(
         LocalNotesCompanion(
           davPath: Value(share.path),
           readonly: Value(!share.canEdit),
+          sharedByMe: outgoing == null
+              ? const Value.absent()
+              : Value(outgoing.contains(share.fileId, share.path)),
         ),
       );
       continue;
@@ -84,7 +90,7 @@ Future<void> refreshSharedNotes(
             syncState: const Value('clean'),
             kind: const Value('shared'),
             sharedWithMe: const Value(true),
-            sharedByMe: Value(outgoing?.contains(share.fileId)),
+            sharedByMe: Value(outgoing?.contains(share.fileId, share.path)),
             davPath: Value(share.path),
             updatedAt: DateTime.now().millisecondsSinceEpoch,
           ),

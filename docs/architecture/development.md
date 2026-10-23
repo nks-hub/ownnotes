@@ -38,6 +38,9 @@ změny, neověřená složka nebo neúplné stahování neposunou uložený bod.
 Ruční obnovení načte celý seznam. Markdown na serveru se tímto nemění.
 Verze 7 uvolňuje staré vazby archivovaných konfliktů na serverové poznámky;
 text archivu i záznamy o operacích zachovává.
+Verze 8 ukládá serverovou cestu poznámky pro vyhodnocení sdílených nadřazených
+složek. Při migraci zahodí jen uložený bod synchronizace, aby další úplný
+seznam doplnil cesty; koncepty a archivované texty zůstávají zachované.
 
 Na Androidu lze synchronizaci na pozadí vypnout nebo zvolit 15/30 minut,
 1/6 hodin a připojení jen přes Wi-Fi. Volba platí i pro odesílání změn

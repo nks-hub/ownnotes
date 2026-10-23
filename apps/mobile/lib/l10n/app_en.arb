@@ -906,7 +906,7 @@
   "aboutLicenses": "Open source licenses",
   "aboutCopyright": "© 2026 NKS Hub",
   "rowSharedByYou": "Shared by you",
-  "shareOtherMethods": "This note also uses other sharing methods, such as links or groups. Manage those in Nextcloud.",
+  "shareOtherMethods": "This note also uses other sharing methods, such as folders, links or groups. Manage those in Nextcloud.",
   "backgroundSyncTitle": "Background sync",
   "backgroundSyncOff": "Off",
   "backgroundSyncMinutes": "Every {minutes} minutes",
