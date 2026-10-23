@@ -1870,4 +1870,41 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get shareOtherMethods =>
       'This note also uses other sharing methods, such as links or groups. Manage those in Nextcloud.';
+
+  @override
+  String get backgroundSyncTitle => 'Background sync';
+
+  @override
+  String get backgroundSyncOff => 'Off';
+
+  @override
+  String backgroundSyncMinutes(int minutes) {
+    return 'Every $minutes minutes';
+  }
+
+  @override
+  String backgroundSyncHours(int hours) {
+    String _temp0 = intl.Intl.pluralLogic(
+      hours,
+      locale: localeName,
+      other: 'Every $hours hours',
+      one: 'Every hour',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get backgroundSyncWifi => 'Wi-Fi only';
+
+  @override
+  String get backgroundSyncHint =>
+      'Applies while the app is closed, including widget changes. The open app uses any available network. Android decides when background work runs.';
+
+  @override
+  String get backgroundSyncLoadFailed =>
+      'Cannot read sync settings. Tap to retry.';
+
+  @override
+  String get backgroundSyncSaveFailed =>
+      'Could not save or apply sync settings.';
 }

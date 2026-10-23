@@ -6,11 +6,13 @@ import 'package:notes_store/notes_store.dart';
 import '../data/export.dart';
 import '../data/runtime.dart';
 import '../data/settings.dart';
+import '../data/background_policy.dart';
 import '../l10n/app_localizations.dart';
 import 'about.dart';
 import 'accounts.dart';
 import 'lock.dart' show localAuthProvider;
 import 'templates/templates_screen.dart';
+import 'settings/background_sync_controls.dart';
 
 /// Languages the user can pick; null follows the system. Each is shown in
 /// its own language. German is listed ahead of its translation files.
@@ -164,11 +166,16 @@ class SettingsScreen extends ConsumerWidget {
                       controller.update(settings.copyWith(secure: v)),
                 ),
               _Section(l.settingsSync),
+              const BackgroundSyncControls(),
               ListTile(
                 leading: const Icon(Icons.storage_outlined),
                 title: Text(l.storageNotes(notes?.length ?? 0)),
-                subtitle: Text('${l.storageUnsent(unsent)}\n${l.syncHint}'),
-                isThreeLine: true,
+                subtitle: Text(
+                  hasAndroidBackgroundSync
+                      ? l.storageUnsent(unsent)
+                      : '${l.storageUnsent(unsent)}\n${l.syncHint}',
+                ),
+                isThreeLine: !hasAndroidBackgroundSync,
               ),
               _Section(l.settingsTransfer),
               ListTile(
@@ -191,9 +198,12 @@ class SettingsScreen extends ConsumerWidget {
                 leading: const Icon(Icons.info_outline),
                 title: Text(l.appTitle),
                 subtitle: Text(
-                  ref.watch(packageInfoProvider).whenOrNull(
-                        data: (i) => l.aboutVersion(i.version, i.buildNumber),
-                      ) ??
+                  ref
+                          .watch(packageInfoProvider)
+                          .whenOrNull(
+                            data: (i) =>
+                                l.aboutVersion(i.version, i.buildNumber),
+                          ) ??
                       l.settingsAbout,
                 ),
                 onTap: () => Navigator.of(context).push<void>(

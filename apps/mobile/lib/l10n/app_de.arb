@@ -702,5 +702,15 @@
   "aboutLicenses": "Open-Source-Lizenzen",
   "aboutCopyright": "© 2026 NKS Hub",
   "rowSharedByYou": "Von dir geteilt",
-  "shareOtherMethods": "Diese Notiz wird auch auf andere Weise geteilt, etwa über Links oder Gruppen. Verwalte diese Freigaben in Nextcloud."
+  "shareOtherMethods": "Diese Notiz wird auch auf andere Weise geteilt, etwa über Links oder Gruppen. Verwalte diese Freigaben in Nextcloud.",
+  "backgroundSyncTitle": "Hintergrundsynchronisierung",
+  "backgroundSyncOff": "Aus",
+  "backgroundSyncMinutes": "Alle {minutes} Minuten",
+  "@backgroundSyncMinutes": {"placeholders": {"minutes": {"type": "int"}}},
+  "backgroundSyncHours": "{hours, plural, one {Jede Stunde} other {Alle {hours} Stunden}}",
+  "@backgroundSyncHours": {"placeholders": {"hours": {"type": "int"}}},
+  "backgroundSyncWifi": "Nur WLAN",
+  "backgroundSyncHint": "Gilt bei geschlossener App, auch für Widget-Änderungen. Die geöffnete App nutzt jedes verfügbare Netzwerk. Android bestimmt den Zeitpunkt der Hintergrundausführung.",
+  "backgroundSyncLoadFailed": "Synchronisierungseinstellungen können nicht gelesen werden. Zum Wiederholen tippen.",
+  "backgroundSyncSaveFailed": "Synchronisierungseinstellungen konnten nicht gespeichert oder angewendet werden."
 }

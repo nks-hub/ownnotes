@@ -1,9 +1,11 @@
 import 'dart:io';
 import 'dart:ui' show PluginUtilities;
 import 'package:home_widget/home_widget.dart';
+import 'package:http/http.dart' as http;
 import 'package:notes_store/notes_store.dart';
 import '../features/widgets/widget_config_main.dart' show widgetConfigMain;
 import 'runtime.dart';
+import 'background_policy.dart';
 import 'widgets/ios_widgets.dart';
 import 'widgets/widget_snapshots.dart';
 import 'widgets/widget_publisher.dart';
@@ -184,9 +186,12 @@ Future<void> widgetBackgroundCallback(Uri? _) {
 Future<void> _tail = Future<void>.value();
 
 Future<void> _drainAndUpload() async {
-  final runtime = AppRuntime.production();
+  final runtime = AppRuntime.production(
+    transport: () => BackgroundSyncClient(http.Client()),
+  );
   try {
     final changed = await publishAllWidgets(runtime.database);
+    if (!await backgroundSyncAllowed()) return;
     for (final account in changed) {
       try {
         await runtime.sync.sync(account).timeout(const Duration(seconds: 25));

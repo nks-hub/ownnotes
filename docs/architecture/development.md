@@ -39,6 +39,13 @@ Ruční obnovení načte celý seznam. Markdown na serveru se tímto nemění.
 Verze 7 uvolňuje staré vazby archivovaných konfliktů na serverové poznámky;
 text archivu i záznamy o operacích zachovává.
 
+Na Androidu lze synchronizaci na pozadí vypnout nebo zvolit 15/30 minut,
+1/6 hodin a připojení jen přes Wi-Fi. Volba platí i pro odesílání změn
+z widgetů; otevřená aplikace používá dostupnou síť. Pracovník čte uložené
+nastavení a kontroluje připojení před každým požadavkem. Změna intervalu
+používá [WorkManager UPDATE](https://developer.android.com/develop/background-work/background-tasks/persistent/how-to/update-work),
+aby nezrušila právě běžící přenos. Vypnutí ruší pravidelnou i jednorázovou úlohu.
+
 Run formatter, analyzer and meaningful tests before a commit. Verify changed
 mobile flows with a fresh application run, not only hot reload. Track analyzed,
 designed, implemented, automated and live-device evidence separately. Do not

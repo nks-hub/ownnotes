@@ -48,7 +48,6 @@ references: [docs/research/review-2026-10-20.md](docs/research/review-2026-10-20
 
 - [ ] Ověřit označení poznámek, které dědí sdílení z celé složky; současná evidence sdílení sleduje přímá souborová sdílení.
 
-- [ ] Android sync settings (interval, Wi-Fi only).
 - [ ] Backups that can be restored: ZIP with metadata and attachments.
 - [ ] File versions and trash from Nextcloud (DAV), restore keeps the draft.
 - [ ] Instant updates through notify_push when the server has it, instead

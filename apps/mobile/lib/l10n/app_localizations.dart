@@ -3171,6 +3171,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This note also uses other sharing methods, such as links or groups. Manage those in Nextcloud.'**
   String get shareOtherMethods;
+
+  /// No description provided for @backgroundSyncTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Background sync'**
+  String get backgroundSyncTitle;
+
+  /// No description provided for @backgroundSyncOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get backgroundSyncOff;
+
+  /// No description provided for @backgroundSyncMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'Every {minutes} minutes'**
+  String backgroundSyncMinutes(int minutes);
+
+  /// No description provided for @backgroundSyncHours.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours, plural, one {Every hour} other {Every {hours} hours}}'**
+  String backgroundSyncHours(int hours);
+
+  /// No description provided for @backgroundSyncWifi.
+  ///
+  /// In en, this message translates to:
+  /// **'Wi-Fi only'**
+  String get backgroundSyncWifi;
+
+  /// No description provided for @backgroundSyncHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Applies while the app is closed, including widget changes. The open app uses any available network. Android decides when background work runs.'**
+  String get backgroundSyncHint;
+
+  /// No description provided for @backgroundSyncLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot read sync settings. Tap to retry.'**
+  String get backgroundSyncLoadFailed;
+
+  /// No description provided for @backgroundSyncSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save or apply sync settings.'**
+  String get backgroundSyncSaveFailed;
 }
 
 class _AppLocalizationsDelegate

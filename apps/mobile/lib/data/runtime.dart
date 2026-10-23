@@ -53,16 +53,18 @@ final class AppRuntime {
 
   /// The app and the background worker may run in one process; sharing the
   /// connection there lets the note list see the worker's writes at once.
-  factory AppRuntime.production() => AppRuntime(
-    NotesDatabase(
-      driftDatabase(
-        name: 'ownnotes_candidate',
-        native: const DriftNativeOptions(shareAcrossIsolates: true),
-      ),
-    ),
-    const SecureVault(),
-    serverChecks: true,
-  );
+  factory AppRuntime.production({http.Client Function()? transport}) =>
+      AppRuntime(
+        NotesDatabase(
+          driftDatabase(
+            name: 'ownnotes_candidate',
+            native: const DriftNativeOptions(shareAcrossIsolates: true),
+          ),
+        ),
+        const SecureVault(),
+        transport: transport,
+        serverChecks: true,
+      );
   final NotesDatabase database;
   final CredentialVault vault;
   late final AccountRepository accounts;

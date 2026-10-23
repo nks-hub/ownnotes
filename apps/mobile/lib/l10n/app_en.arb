@@ -906,5 +906,15 @@
   "aboutLicenses": "Open source licenses",
   "aboutCopyright": "© 2026 NKS Hub",
   "rowSharedByYou": "Shared by you",
-  "shareOtherMethods": "This note also uses other sharing methods, such as links or groups. Manage those in Nextcloud."
+  "shareOtherMethods": "This note also uses other sharing methods, such as links or groups. Manage those in Nextcloud.",
+  "backgroundSyncTitle": "Background sync",
+  "backgroundSyncOff": "Off",
+  "backgroundSyncMinutes": "Every {minutes} minutes",
+  "@backgroundSyncMinutes": {"placeholders": {"minutes": {"type": "int"}}},
+  "backgroundSyncHours": "{hours, plural, one {Every hour} other {Every {hours} hours}}",
+  "@backgroundSyncHours": {"placeholders": {"hours": {"type": "int"}}},
+  "backgroundSyncWifi": "Wi-Fi only",
+  "backgroundSyncHint": "Applies while the app is closed, including widget changes. The open app uses any available network. Android decides when background work runs.",
+  "backgroundSyncLoadFailed": "Cannot read sync settings. Tap to retry.",
+  "backgroundSyncSaveFailed": "Could not save or apply sync settings."
 }

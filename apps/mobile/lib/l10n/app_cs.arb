@@ -702,5 +702,15 @@
   "aboutLicenses": "Licence open-source součástí",
   "aboutCopyright": "© 2026 NKS Hub",
   "rowSharedByYou": "Sdílíš s ostatními",
-  "shareOtherMethods": "Poznámka je sdílená i jiným způsobem, například odkazem nebo se skupinou. Toto sdílení spravuješ v Nextcloudu."
+  "shareOtherMethods": "Poznámka je sdílená i jiným způsobem, například odkazem nebo se skupinou. Toto sdílení spravuješ v Nextcloudu.",
+  "backgroundSyncTitle": "Synchronizace na pozadí",
+  "backgroundSyncOff": "Vypnuto",
+  "backgroundSyncMinutes": "Každých {minutes} minut",
+  "@backgroundSyncMinutes": {"placeholders": {"minutes": {"type": "int"}}},
+  "backgroundSyncHours": "{hours, plural, one {Každou hodinu} few {Každé {hours} hodiny} other {Každých {hours} hodin}}",
+  "@backgroundSyncHours": {"placeholders": {"hours": {"type": "int"}}},
+  "backgroundSyncWifi": "Jen Wi-Fi",
+  "backgroundSyncHint": "Platí při zavřené aplikaci, včetně změn z widgetů. Otevřená aplikace používá dostupnou síť. Čas spuštění na pozadí určuje Android.",
+  "backgroundSyncLoadFailed": "Nastavení synchronizace nelze načíst. Klepnutím zkuste znovu.",
+  "backgroundSyncSaveFailed": "Nastavení synchronizace se nepodařilo uložit nebo použít."
 }

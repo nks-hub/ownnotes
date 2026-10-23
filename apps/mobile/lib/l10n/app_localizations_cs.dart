@@ -1898,4 +1898,42 @@ class AppLocalizationsCs extends AppLocalizations {
   @override
   String get shareOtherMethods =>
       'Poznámka je sdílená i jiným způsobem, například odkazem nebo se skupinou. Toto sdílení spravuješ v Nextcloudu.';
+
+  @override
+  String get backgroundSyncTitle => 'Synchronizace na pozadí';
+
+  @override
+  String get backgroundSyncOff => 'Vypnuto';
+
+  @override
+  String backgroundSyncMinutes(int minutes) {
+    return 'Každých $minutes minut';
+  }
+
+  @override
+  String backgroundSyncHours(int hours) {
+    String _temp0 = intl.Intl.pluralLogic(
+      hours,
+      locale: localeName,
+      other: 'Každých $hours hodin',
+      few: 'Každé $hours hodiny',
+      one: 'Každou hodinu',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get backgroundSyncWifi => 'Jen Wi-Fi';
+
+  @override
+  String get backgroundSyncHint =>
+      'Platí při zavřené aplikaci, včetně změn z widgetů. Otevřená aplikace používá dostupnou síť. Čas spuštění na pozadí určuje Android.';
+
+  @override
+  String get backgroundSyncLoadFailed =>
+      'Nastavení synchronizace nelze načíst. Klepnutím zkuste znovu.';
+
+  @override
+  String get backgroundSyncSaveFailed =>
+      'Nastavení synchronizace se nepodařilo uložit nebo použít.';
 }
