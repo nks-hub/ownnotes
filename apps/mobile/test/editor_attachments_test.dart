@@ -356,6 +356,11 @@ void main() {
     expect(find.text('Delete file on server'), findsNothing);
     await tester.binding.handlePopRoute();
     pendingImage!.complete();
+    // Both the preview and panel thumbnail must finish their cache writes.
+    await until(
+      tester,
+      () => find.byType(Image, skipOffstage: false).evaluate().length == 2,
+    );
     await close(tester);
   });
 
