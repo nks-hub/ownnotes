@@ -25,6 +25,20 @@ jobs:
         run: |
           sudo xcode-select --switch /Applications/Xcode_26.3.app/Contents/Developer
           xcodebuild -version
+      - name: Prepare Android build resources
+        if: matrix.platform == 'android'
+        run: |
+          sudo rm -r /usr/share/dotnet /opt/ghc /usr/local/share/boost /opt/hostedtoolcache/CodeQL /usr/share/swift || true
+          mkdir -p "$HOME/.gradle"
+          cat > "$HOME/.gradle/gradle.properties" <<'EOF'
+          org.gradle.jvmargs=-Xmx4G -XX:MaxMetaspaceSize=1G -XX:ReservedCodeCacheSize=256m
+          org.gradle.workers.max=2
+          org.gradle.parallel=false
+          org.gradle.vfs.watch=false
+          kotlin.compiler.execution.strategy=in-process
+          EOF
+          df -h /
+          free -m
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.47.7'
@@ -59,7 +73,11 @@ jobs:
       - name: Build Google Play bundle
         if: matrix.platform == 'android'
         working-directory: apps/mobile
-        run: flutter build appbundle --release --dart-define-from-file=telemetry.env
+        run: |
+          (while sleep 60; do df -h /; free -m; done) &
+          resource_pid=$!
+          trap 'kill "$resource_pid" 2>/dev/null || true' EXIT
+          flutter build appbundle --release --dart-define-from-file=telemetry.env
       - name: Compile iOS release
         if: matrix.platform == 'ios'
         working-directory: apps/mobile
