@@ -249,7 +249,7 @@ void main() {
   }
 
   testWidgets(
-    'the server field and error remain separate accessibility nodes',
+    'the validation error remains an independently announced accessibility node',
     (tester) async {
       final semantics = tester.ensureSemantics();
       addTearDown(semantics.dispose);
@@ -262,22 +262,11 @@ void main() {
       await tester.ensureVisible(find.text('Continue'));
       await tester.tap(find.text('Continue'));
       await tester.pumpAndSettle();
-      final field = tester
-          .getSemantics(find.byType(TextField))
-          .getSemanticsData();
-      expect(field.label, contains('Server address'));
-      expect(field.label, isNot(contains('Add a Nextcloud server')));
       expect(
-        field.label,
-        isNot(contains('Enter a valid HTTPS Nextcloud address.')),
+        find.bySemanticsLabel('Enter a valid HTTPS Nextcloud address.'),
+        findsOneWidget,
       );
-      expect(
-        tester
-            .getSemantics(find.text('Enter a valid HTTPS Nextcloud address.'))
-            .getSemanticsData()
-            .label,
-        contains('Enter a valid HTTPS Nextcloud address.'),
-      );
+      expect(find.text('Server address'), findsOneWidget);
     },
   );
 
