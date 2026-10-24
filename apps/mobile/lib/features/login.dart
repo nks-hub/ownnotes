@@ -200,6 +200,7 @@ class _LoginScreenState extends ConsumerState<_LoginContent> {
 
   Future<void> _connect([String? address]) async {
     if (_busy) return;
+    _focus.unfocus();
     final ServerBase server;
     try {
       server = parseServerAddress(address ?? _url.text);

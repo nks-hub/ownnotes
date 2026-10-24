@@ -263,6 +263,10 @@ void main() {
       await tester.tap(find.text('Continue'));
       await tester.pumpAndSettle();
       expect(
+        find.text('Enter a valid HTTPS Nextcloud address.'),
+        findsOneWidget,
+      );
+      expect(
         find.bySemanticsLabel('Enter a valid HTTPS Nextcloud address.'),
         findsOneWidget,
       );
