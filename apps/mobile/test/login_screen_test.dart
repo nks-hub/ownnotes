@@ -31,6 +31,7 @@ void main() {
     http.Client transport, {
     Future<QrLoginPayload?> Function(BuildContext)? scan,
     bool connect = true,
+    bool reauth = false,
     Future<bool> Function(Uri)? browser,
   }) async {
     // The branded entry is taller than the default 800x600 test surface.
@@ -41,6 +42,19 @@ void main() {
       () async => AppRuntime(NotesDatabase(NativeDatabase.memory()), Vault()),
     ))!;
     addTearDown(runtime.close);
+    Account? existing;
+    if (reauth) {
+      existing = await tester.runAsync(() async {
+        final id = await runtime.accounts.add(
+          LoginCredentials(
+            server: ServerBase.parse('https://cloud.test'),
+            loginName: 'user',
+            appPassword: 'old',
+          ),
+        );
+        return runtime.database.account(id);
+      });
+    }
     await tester.pumpWidget(
       ProviderScope(
         overrides: [runtimeProvider.overrideWithValue(runtime)],
@@ -56,6 +70,7 @@ void main() {
                     transport: transport,
                     openBrowser: browser ?? (_) async => true,
                     scan: scan,
+                    reauthenticate: existing,
                   ),
                 ),
               ),
@@ -182,6 +197,52 @@ void main() {
         expect(
           requests.where((r) => r.contains('getapppassword-onetime')).length,
           oneTime ? 1 : 0,
+        );
+      },
+    );
+  }
+
+  for (final hasSecret in [false, true]) {
+    testWidgets(
+      'foreign QR does not change a frozen account or contact its server: $hasSecret',
+      (tester) async {
+        var requests = 0;
+        final transport = MockClient((_) async {
+          requests++;
+          throw StateError('No request expected');
+        });
+        final other = ServerBase.parse('https://other.example.com');
+        await open(
+          tester,
+          transport,
+          connect: false,
+          reauth: true,
+          scan: (_) async => hasSecret
+              ? QrLoginCredentials(
+                  server: other,
+                  loginName: 'other',
+                  secret: 'unused',
+                  isOneTime: true,
+                )
+              : QrLoginServerOnly(other),
+        );
+        await tester.ensureVisible(find.text('Scan a login code'));
+        await tester.tap(find.text('Scan a login code'));
+        await advance(tester, 2);
+        expect(requests, 0);
+        expect(
+          tester.widget<TextField>(find.byType(TextField)).controller!.text,
+          'https://cloud.test',
+        );
+        expect(
+          tester.widget<TextField>(find.byType(TextField)).enabled,
+          isFalse,
+        );
+        expect(
+          find.text(
+            'Sign in with the same account. The stored account was not changed.',
+          ),
+          findsOneWidget,
         );
       },
     );

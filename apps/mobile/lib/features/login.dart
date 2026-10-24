@@ -200,14 +200,19 @@ class _LoginScreenState extends ConsumerState<_LoginContent> {
 
   Future<void> _connect([String? address]) async {
     if (_busy) return;
-    if (address != null) _url.text = address;
     final ServerBase server;
     try {
-      server = parseServerAddress(_url.text);
+      server = parseServerAddress(address ?? _url.text);
     } on ServerAddressException {
       _back(problem: 'invalid_server');
       return;
     }
+    final existing = widget.reauthenticate;
+    if (existing != null && existing.server != server.uri.toString()) {
+      _back(problem: 'identity_mismatch');
+      return;
+    }
+    if (address != null) _url.text = address;
     final attempt = _begin(server);
     try {
       final transport = await _client(server, attempt);
@@ -353,6 +358,13 @@ class _LoginScreenState extends ConsumerState<_LoginContent> {
   }
 
   Future<void> _commitScanned(QrLoginCredentials payload) async {
+    final existing = widget.reauthenticate;
+    if (existing != null &&
+        (existing.server != payload.server.uri.toString() ||
+            existing.loginName != payload.loginName)) {
+      _back(problem: 'identity_mismatch');
+      return;
+    }
     final attempt = _begin(payload.server);
     try {
       final transport = await _client(
