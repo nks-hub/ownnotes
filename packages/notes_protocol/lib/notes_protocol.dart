@@ -8,3 +8,5 @@ export 'src/server_base.dart';
 export 'src/sharing.dart';
 
 export 'src/login.dart';
+export 'src/security/certificate_trust.dart';
+export 'src/security/certificate_http_client.dart';

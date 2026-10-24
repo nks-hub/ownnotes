@@ -6,6 +6,7 @@ environment:
   sdk: '>=3.12.2 <4.0.0'
 dependencies:
   http: ^1.6.0
+  crypto: ^3.0.7
   xml: 7.0.1
 dev_dependencies:
   test: ^1.26.3
