@@ -220,8 +220,9 @@ final class AttachmentCache {
     await for (final e in root.list(recursive: true)) {
       if (e is File &&
           e.uri.pathSegments.last != _lockFileName &&
-          !e.path.endsWith('.tmp'))
+          !e.path.endsWith('.tmp')) {
         total += await e.length();
+      }
     }
     return total;
   });
