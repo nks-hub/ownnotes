@@ -16,6 +16,11 @@ references: [docs/research/review-2026-10-20.md](docs/research/review-2026-10-20
 
 ## Now
 
+- [x] Login sjednocený s OwnTalkem včetně rozložení, ikon, CS/EN textů a odpovídajících DE překladů; QR server-only/app-password/one-time, kontrola serveru, browser návrat, cancel, účtový TLS pin, SAN a přístupné chyby jsou implementované v `d324696` (nevydáno do obchodů).
+- [x] Login ověření: 54 cílených mobilních testů a analyzátor prošly na `d324696`; 135 protokolových a 116 databázových testů prošlo na `52b63bd`, příslušné package stromy se nezměnily. Osm live testů bez přístupů bylo přeskočeno. Testy běžely na pozadí v oddělených neměnných worktrees.
+- [ ] S9+ login průchod zatím neověřený: candidate `d324696` se aktualizoval původním signerem bez mazání dat, ale ovladač nenašel přepínač účtu označený ve stromu jen iniciálami. Browser/QR/persistovaný pin na telefonu nejsou potvrzené; žádný fixture účet nevznikl. Lokální HTTPS fixture byl ukončen a jeho ADB reverse odstraněn.
+- [ ] Opravit Windows souběh `AttachmentCache`: `File.rename` vrací AccessDenied při zápisu dvou instancí do stejného adresáře. Reprodukováno i na původním `39c0a72` příkazem `flutter test test/attachment_cache_test.dart --plain-name "independent cache instances never share a temporary write file"` z `apps/mobile`; nejde o regresi loginu. Oprava sdíleného diskového zámku právě probíhá.
+
 - [ ] Real Galaxy Fold: open flat, half open like a book and like a laptop
       (Flex mode), folded to the cover screen with a note open. The
       emulator reports the laptop posture as flat, so that layout was only
