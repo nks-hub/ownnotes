@@ -52,7 +52,7 @@ void main() {
             appPassword: 'old',
           ),
         );
-        return runtime.database.account(id);
+        return (await runtime.database.account(id))!;
       });
     }
     await tester.pumpWidget(
