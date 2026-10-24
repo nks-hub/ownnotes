@@ -658,6 +658,9 @@ void main() {
       await first.customStatement(
         'ALTER TABLE local_notes DROP COLUMN remote_path',
       );
+      await first.customStatement(
+        'ALTER TABLE accounts DROP COLUMN certificate_fingerprint',
+      );
       await first.customStatement('PRAGMA user_version = 3');
       await first.close();
 

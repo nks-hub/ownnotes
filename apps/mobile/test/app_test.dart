@@ -82,7 +82,7 @@ void main() {
       const Duration(seconds: 5),
     );
 
-    expect(find.text('Nextcloud server URL'), findsOneWidget);
+    expect(find.text('Server address'), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
     await tester.pumpAndSettle();
   });
@@ -313,7 +313,10 @@ void main() {
     );
     await settle();
     expect(find.text('From HTTP'), findsOneWidget);
-    expect(requests, ['GET /index.php/apps/notes/api/v1/notes']);
+    expect(requests.where((r) => r.contains('/apps/notes/')), [
+      'GET /index.php/apps/notes/api/v1/notes',
+    ]);
+    expect(requests, contains('GET /ocs/v2.php/cloud/user'));
 
     await tester.tap(find.text('From HTTP'));
     await settle();

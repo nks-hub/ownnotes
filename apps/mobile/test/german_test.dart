@@ -33,8 +33,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Deine Notizen in deiner eigenen Nextcloud'), findsOne);
-    expect(find.text('Verbinden'), findsWidgets);
+    expect(find.text('Alle Notizen in einer App'), findsOne);
+    expect(find.text('Weiter'), findsWidgets);
     expect(tester.takeException(), isNull);
   });
 }

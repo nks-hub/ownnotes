@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:drift/native.dart';
@@ -8,6 +9,8 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:nextcloudnotes/data/runtime.dart';
 import 'package:nextcloudnotes/features/login.dart';
+import 'package:nextcloudnotes/features/qr_login.dart';
+import 'package:notes_protocol/notes_protocol.dart';
 import 'package:nextcloudnotes/l10n/app_localizations.dart';
 import 'package:notes_store/notes_store.dart';
 
@@ -23,7 +26,13 @@ void main() {
   late AppRuntime runtime;
   late int polls;
 
-  Future<void> open(WidgetTester tester, http.Client transport) async {
+  Future<void> open(
+    WidgetTester tester,
+    http.Client transport, {
+    Future<QrLoginPayload?> Function(BuildContext)? scan,
+    bool connect = true,
+    Future<bool> Function(Uri)? browser,
+  }) async {
     // The branded entry is taller than the default 800x600 test surface.
     tester.view.physicalSize = const Size(800, 1600);
     tester.view.devicePixelRatio = 1;
@@ -45,7 +54,8 @@ void main() {
                 MaterialPageRoute(
                   builder: (_) => LoginScreen(
                     transport: transport,
-                    openBrowser: (_) async => true,
+                    openBrowser: browser ?? (_) async => true,
+                    scan: scan,
                   ),
                 ),
               ),
@@ -57,8 +67,11 @@ void main() {
     );
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextField), 'https://cloud.test');
-    await tester.tap(find.text('Continue'));
+    if (connect) {
+      await tester.enterText(find.byType(TextField), 'https://cloud.test');
+      await tester.ensureVisible(find.text('Continue'));
+      await tester.tap(find.text('Continue'));
+    }
   }
 
   Future<void> advance(WidgetTester tester, int seconds) async {
@@ -111,6 +124,112 @@ void main() {
       });
     });
   }
+
+  for (final oneTime in [false, true]) {
+    testWidgets(
+      'scanned credentials finish without browser flow, oneTime=$oneTime',
+      (tester) async {
+        final requests = <String>[];
+        final transport = MockClient((r) async {
+          requests.add('${r.method} ${r.url.path}');
+          if (r.url.path == '/status.php')
+            return json({
+              'installed': true,
+              'maintenance': false,
+              'needsDbUpgrade': false,
+            });
+          if (r.url.path.endsWith('getapppassword-onetime'))
+            return json({
+              'ocs': {
+                'data': {'apppassword': 'exchanged'},
+              },
+            });
+          if (r.url.path.endsWith('/cloud/user'))
+            return json({
+              'ocs': {
+                'data': {'displayname': 'Test user'},
+              },
+            });
+          if (r.url.path.endsWith('/notes')) return json([]);
+          throw StateError('unexpected request');
+        });
+        await open(
+          tester,
+          transport,
+          connect: false,
+          scan: (_) async => QrLoginCredentials(
+            server: ServerBase.parse('https://cloud.test'),
+            loginName: 'user',
+            secret: 'scanned',
+            isOneTime: oneTime,
+          ),
+        );
+        await tester.ensureVisible(find.text('Scan a login code'));
+        await tester.tap(find.text('Scan a login code'));
+        await advance(tester, 4);
+        final accounts = await tester.runAsync(
+          () => runtime.database.watchAccounts().first,
+        );
+        expect(accounts!.single.loginName, 'user');
+        expect(
+          await runtime.vault.read(accounts.single.credentialRef),
+          oneTime ? 'exchanged' : 'scanned',
+        );
+        expect(requests.any((r) => r.contains('/login/v2')), isFalse);
+        expect(
+          requests.where((r) => r.contains('getapppassword-onetime')).length,
+          oneTime ? 1 : 0,
+        );
+      },
+    );
+  }
+
+  testWidgets('maintenance prevents browser initialization', (tester) async {
+    final paths = <String>[];
+    await open(
+      tester,
+      MockClient((r) async {
+        paths.add(r.url.path);
+        return json({
+          'installed': true,
+          'maintenance': true,
+          'needsDbUpgrade': false,
+        });
+      }),
+    );
+    await advance(tester, 2);
+    expect(paths, ['/status.php']);
+    expect(
+      find.text('This server is currently in maintenance mode.'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('leaving during readiness check never opens a late browser', (
+    tester,
+  ) async {
+    final status = Completer<http.Response>();
+    var opened = false;
+    await open(
+      tester,
+      MockClient((_) => status.future),
+      browser: (_) async {
+        opened = true;
+        return true;
+      },
+    );
+    await tester.pump();
+    await tester.pageBack();
+    status.complete(
+      json({'installed': true, 'maintenance': false, 'needsDbUpgrade': false}),
+    );
+    await advance(tester, 2);
+    expect(opened, isFalse);
+    expect(
+      await tester.runAsync(() => runtime.database.watchAccounts().first),
+      isEmpty,
+    );
+  });
 
   testWidgets('a failed poll is retried and the login completes', (
     tester,

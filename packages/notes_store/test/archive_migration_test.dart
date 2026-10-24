@@ -86,6 +86,9 @@ void main() {
         await old.customStatement(
           'ALTER TABLE local_notes DROP COLUMN remote_path',
         );
+        await old.customStatement(
+          'ALTER TABLE accounts DROP COLUMN certificate_fingerprint',
+        );
         await old.customStatement('PRAGMA user_version = $version');
         await old.close();
 
@@ -167,6 +170,9 @@ void main() {
           );
       await old.customStatement(
         'ALTER TABLE local_notes DROP COLUMN remote_path',
+      );
+      await old.customStatement(
+        'ALTER TABLE accounts DROP COLUMN certificate_fingerprint',
       );
       await old.customStatement('PRAGMA user_version = 6');
       await old.close();

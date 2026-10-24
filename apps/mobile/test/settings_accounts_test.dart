@@ -463,6 +463,7 @@ void main() {
       await boot(tester, const Size(411, 900));
       await openLogin(tester, MockClient((r) async => http.Response('', 500)));
       await tester.enterText(find.byType(TextField), 'http://plain.test');
+      await tester.ensureVisible(find.text('Continue'));
       await tester.tap(find.text('Continue'));
       await settle(tester);
       final field = tester.widget<TextField>(find.byType(TextField));
@@ -486,6 +487,7 @@ void main() {
         MockClient((r) async => throw http.ClientException('down')),
       );
       await tester.enterText(find.byType(TextField), 'https://down.test');
+      await tester.ensureVisible(find.text('Continue'));
       await tester.tap(find.text('Continue'));
       await settle(tester, steps: 8);
       expect(
@@ -534,6 +536,7 @@ void main() {
       });
       await openLogin(tester, server);
       await tester.enterText(find.byType(TextField), 'https://cloud.test');
+      await tester.ensureVisible(find.text('Continue'));
       await tester.tap(find.text('Continue'));
       await settle(tester, steps: 4);
       expect(find.text('Finish signing in in your browser'), findsOneWidget);

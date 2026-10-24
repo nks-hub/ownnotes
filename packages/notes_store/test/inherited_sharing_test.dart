@@ -62,6 +62,9 @@ void main() {
       await old.customStatement(
         'ALTER TABLE local_notes DROP COLUMN remote_path',
       );
+      await old.customStatement(
+        'ALTER TABLE accounts DROP COLUMN certificate_fingerprint',
+      );
       await old.customStatement('PRAGMA user_version = 7');
       await old.close();
       final db = NotesDatabase(NativeDatabase(file));
