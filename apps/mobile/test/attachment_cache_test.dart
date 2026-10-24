@@ -1,8 +1,13 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:isolate';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nextcloudnotes/data/attachments/attachment_cache.dart';
+
+Future<bool> _writeFromIsolate(String path, int marker) => AttachmentCache(
+  Directory(path),
+).write('a', 7, 'image.png', List.filled(131072 * marker, marker));
 
 void main() {
   late Directory directory;
@@ -240,6 +245,56 @@ void main() {
           .where((f) => f.path.endsWith('.tmp'))
           .toList();
       expect(leftovers, isEmpty);
+    },
+  );
+
+  test(
+    'isolates sharing a new cache directory publish complete files',
+    () async {
+      final path = '${directory.path}/shared';
+      final results = await Future.wait([
+        for (final marker in [1, 2, 3])
+          Isolate.run(() => _writeFromIsolate(path, marker)),
+      ]);
+      expect(results, everyElement(isTrue));
+      final shared = AttachmentCache(Directory(path));
+      final bytes = (await shared.read('a', 7, 'image.png'))!;
+      expect(bytes.first, isIn([1, 2, 3]));
+      expect(bytes.length, 131072 * bytes.first);
+      expect(bytes, everyElement(bytes.first));
+      expect(await shared.sizeBytes(), bytes.length);
+      expect(
+        await Directory(
+          path,
+        ).list(recursive: true).where((f) => f.path.endsWith('.tmp')).toList(),
+        isEmpty,
+      );
+    },
+  );
+
+  test('trimming a shared cache keeps its coordination usable', () async {
+    final limited = AttachmentCache(directory, maxTotalBytes: 8);
+    final other = AttachmentCache(directory, maxTotalBytes: 8);
+    expect(await limited.write('a', 7, 'first.png', List.filled(8, 1)), isTrue);
+    expect(await other.write('a', 7, 'second.png', List.filled(8, 2)), isTrue);
+    expect(await limited.sizeBytes(), lessThanOrEqualTo(8));
+    expect(await limited.write('a', 7, 'third.png', List.filled(8, 3)), isTrue);
+    expect(await other.read('a', 7, 'third.png'), List.filled(8, 3));
+  });
+
+  test(
+    'unavailable cache storage does not hide a successful download',
+    () async {
+      final blocked = File('${directory.path}/not-a-directory');
+      await blocked.writeAsString('keep');
+      final unavailable = AttachmentCache(Directory(blocked.path));
+      expect(await unavailable.contains('a', 7, 'image.png'), isFalse);
+      expect(await unavailable.read('a', 7, 'image.png'), isNull);
+      expect(
+        await unavailable.load('a', 7, 'image.png', () async => [1, 2, 3]),
+        [1, 2, 3],
+      );
+      expect(await blocked.readAsString(), 'keep');
     },
   );
 }
