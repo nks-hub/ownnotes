@@ -63,13 +63,14 @@ final class CertificateHttpClient extends http.BaseClient {
           requestedHost: host,
           certificateHost: certificateSubjectHost(certificate.subject) ?? '',
           presentedFingerprint: certificateFingerprint(certificate.der),
-          pinnedFingerprints: {if (fingerprint != null) fingerprint!},
+          pinnedFingerprints: {?fingerprint},
         );
         final sameOrigin =
             host.toLowerCase() == server.host.toLowerCase() &&
             port == server.port;
-        if (sameOrigin && outcome.decision == CertificateTrustDecision.allow)
+        if (sameOrigin && outcome.decision == CertificateTrustDecision.allow) {
           return true;
+        }
         lastEncounter = CertificateEncounter(
           host: host,
           port: port,
