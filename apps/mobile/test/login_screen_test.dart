@@ -248,6 +248,39 @@ void main() {
     );
   }
 
+  testWidgets(
+    'the server field and error remain separate accessibility nodes',
+    (tester) async {
+      final semantics = tester.ensureSemantics();
+      addTearDown(semantics.dispose);
+      await open(
+        tester,
+        MockClient((_) async => throw StateError('No request expected')),
+        connect: false,
+      );
+      await tester.enterText(find.byType(TextField), 'http://cloud.test');
+      await tester.ensureVisible(find.text('Continue'));
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
+      final field = tester
+          .getSemantics(find.byType(TextField))
+          .getSemanticsData();
+      expect(field.label, contains('Server address'));
+      expect(field.label, isNot(contains('Add a Nextcloud server')));
+      expect(
+        field.label,
+        isNot(contains('Enter a valid HTTPS Nextcloud address.')),
+      );
+      expect(
+        tester
+            .getSemantics(find.text('Enter a valid HTTPS Nextcloud address.'))
+            .getSemanticsData()
+            .label,
+        contains('Enter a valid HTTPS Nextcloud address.'),
+      );
+    },
+  );
+
   testWidgets('maintenance prevents browser initialization', (tester) async {
     final paths = <String>[];
     await open(

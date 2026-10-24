@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:http/io_client.dart';
 
 import 'certificate_trust.dart';
+import 'certificate_host.dart';
 
 final class CertificateEncounter {
   const CertificateEncounter({
@@ -61,7 +62,9 @@ final class CertificateHttpClient extends http.BaseClient {
       ..badCertificateCallback = (certificate, host, port) {
         final outcome = decideCertificateTrust(
           requestedHost: host,
-          certificateHost: certificateSubjectHost(certificate.subject) ?? '',
+          certificateHost: certificateMatchesHost(certificate.der, host)
+              ? host
+              : '',
           presentedFingerprint: certificateFingerprint(certificate.der),
           pinnedFingerprints: {?fingerprint},
         );

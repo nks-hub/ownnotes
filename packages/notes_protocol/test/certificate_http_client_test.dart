@@ -13,7 +13,7 @@ void main() {
     certificates = await Directory.systemTemp.createTemp(
       'own-client-tls-test-',
     );
-    for (final name in ['first', 'second']) {
+    for (final name in ['first', 'second', 'wrong-san', 'other-cn']) {
       final result = await Process.run('openssl', [
         'req',
         '-x509',
@@ -24,9 +24,11 @@ void main() {
         '1',
         '-nodes',
         '-subj',
-        '/CN=127.0.0.1',
+        name == 'other-cn' ? '/CN=other.example.com' : '/CN=127.0.0.1',
         '-addext',
-        'subjectAltName=IP:127.0.0.1',
+        name == 'wrong-san'
+            ? 'subjectAltName=DNS:other.example.com'
+            : 'subjectAltName=IP:127.0.0.1',
         '-keyout',
         '${certificates.path}/$name.key',
         '-out',
@@ -160,4 +162,35 @@ void main() {
       );
     }
   });
+
+  for (final name in ['wrong-san', 'other-cn']) {
+    test('SAN takes precedence over CN: $name', () async {
+      var received = 0;
+      final server = await serve(name, () => received++);
+      final uri = Uri.parse('https://127.0.0.1:${server.port}');
+      final pem = await File('${certificates.path}/$name.pem').readAsString();
+      final der = base64Decode(
+        pem.split('\n').where((line) => !line.startsWith('-----')).join(),
+      );
+      final client = CertificateHttpClient(
+        server: uri,
+        fingerprint: certificateFingerprint(der),
+      );
+      addTearDown(client.close);
+      if (name == 'wrong-san') {
+        await expectLater(
+          client.get(uri, headers: {'Authorization': 'Basic test-only'}),
+          throwsA(isA<http.ClientException>()),
+        );
+        expect(received, 0);
+        expect(
+          client.lastEncounter?.outcome.refusal,
+          CertificateRefusal.hostMismatch,
+        );
+      } else {
+        expect((await client.get(uri)).body, 'accepted');
+        expect(received, 1);
+      }
+    });
+  }
 }
