@@ -58,7 +58,7 @@ void main() {
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'https://cloud.test');
-    await tester.tap(find.text('Connect'));
+    await tester.tap(find.text('Continue'));
   }
 
   Future<void> advance(WidgetTester tester, int seconds) async {
@@ -73,6 +73,16 @@ void main() {
   MockClient server({required bool grant}) {
     polls = 0;
     return MockClient((r) async {
+      if (r.url.path == '/status.php')
+        return http.Response(
+          jsonEncode({
+            'installed': true,
+            'maintenance': false,
+            'needsDbUpgrade': false,
+          }),
+          200,
+          headers: {'content-type': 'application/json'},
+        );
       if (r.url.path == '/index.php/login/v2') {
         return json({
           'login': 'https://cloud.test/index.php/login/v2/flow/x',

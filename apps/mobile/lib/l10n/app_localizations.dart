@@ -121,7 +121,7 @@ abstract class AppLocalizations {
   /// No description provided for @connect.
   ///
   /// In en, this message translates to:
-  /// **'Connect'**
+  /// **'Continue'**
   String get connect;
 
   /// No description provided for @cancel.
@@ -811,7 +811,7 @@ abstract class AppLocalizations {
   /// No description provided for @browserUnavailable.
   ///
   /// In en, this message translates to:
-  /// **'Could not open the browser for the login.'**
+  /// **'The sign-in page could not be opened.'**
   String get browserUnavailable;
 
   /// No description provided for @loginExpired.
@@ -823,19 +823,19 @@ abstract class AppLocalizations {
   /// No description provided for @scannedLoginRejected.
   ///
   /// In en, this message translates to:
-  /// **'The server refused the scanned code. It may be old or revoked. Create a new one.'**
+  /// **'The scanned login code could not be used. Create a new one on the server.'**
   String get scannedLoginRejected;
 
   /// No description provided for @onboardingTitle.
   ///
   /// In en, this message translates to:
-  /// **'Your notes on your own Nextcloud'**
+  /// **'Your notes, one app'**
   String get onboardingTitle;
 
   /// No description provided for @onboardingBody.
   ///
   /// In en, this message translates to:
-  /// **'OwnNotes syncs Markdown notes with the Nextcloud Notes app. They go to your server and nowhere else.'**
+  /// **'Connect any supported Nextcloud server. Accounts, their stored data and background work stay strictly separated.'**
   String get onboardingBody;
 
   /// No description provided for @multiAccountTitle.
@@ -865,19 +865,19 @@ abstract class AppLocalizations {
   /// No description provided for @checkingServer.
   ///
   /// In en, this message translates to:
-  /// **'Checking server…'**
+  /// **'Checking the server…'**
   String get checkingServer;
 
   /// No description provided for @waitingForLogin.
   ///
   /// In en, this message translates to:
-  /// **'Waiting for the login'**
+  /// **'Finish signing in in your browser'**
   String get waitingForLogin;
 
   /// No description provided for @waitingForLoginBody.
   ///
   /// In en, this message translates to:
-  /// **'Approve the access in your browser, then come back to the app.'**
+  /// **'This screen will continue automatically after Nextcloud approves the app.'**
   String get waitingForLoginBody;
 
   /// No description provided for @savingAccount.
@@ -886,22 +886,22 @@ abstract class AppLocalizations {
   /// **'Signing in…'**
   String get savingAccount;
 
-  /// No description provided for @scanLoginCode.
+  /// Button that opens the camera to scan a Nextcloud login QR code
   ///
   /// In en, this message translates to:
-  /// **'Scan QR code'**
+  /// **'Scan a login code'**
   String get scanLoginCode;
 
   /// No description provided for @scanLoginCodeHint.
   ///
   /// In en, this message translates to:
-  /// **'Point the camera at the login QR code from Nextcloud (Settings, Security, app passwords).'**
+  /// **'Point the camera at the QR code your server shows under Settings, Security, Create new app password.'**
   String get scanLoginCodeHint;
 
   /// No description provided for @scanLoginCodeUnreadable.
   ///
   /// In en, this message translates to:
-  /// **'That is not a Nextcloud login code.'**
+  /// **'This is not a Nextcloud login code.'**
   String get scanLoginCodeUnreadable;
 
   /// No description provided for @scanCameraDenied.
@@ -919,7 +919,7 @@ abstract class AppLocalizations {
   /// No description provided for @openAppSettings.
   ///
   /// In en, this message translates to:
-  /// **'Open app settings'**
+  /// **'Open settings'**
   String get openAppSettings;
 
   /// No description provided for @accounts.
@@ -3243,6 +3243,180 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not save the diagnostics setting.'**
   String get telemetrySaveFailed;
+
+  /// No description provided for @addServerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a Nextcloud server'**
+  String get addServerTitle;
+
+  /// No description provided for @certificateChangedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{host} now presents a different certificate than the one this account trusts. If you replaced the certificate yourself, remove the account and add it again.'**
+  String certificateChangedBody(String host);
+
+  /// No description provided for @certificateChangedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Server certificate changed'**
+  String get certificateChangedTitle;
+
+  /// No description provided for @certificateFingerprintLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'SHA-256 fingerprint'**
+  String get certificateFingerprintLabel;
+
+  /// No description provided for @certificateTrustAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Trust and continue'**
+  String get certificateTrustAction;
+
+  /// No description provided for @certificateUnverifiedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{host} presented a certificate this device cannot verify. Continue only if the fingerprint below is the one your server shows.'**
+  String certificateUnverifiedBody(String host);
+
+  /// No description provided for @certificateUnverifiedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Unverified server certificate'**
+  String get certificateUnverifiedTitle;
+
+  /// No description provided for @close.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get close;
+
+  /// No description provided for @invalidResponse.
+  ///
+  /// In en, this message translates to:
+  /// **'The server returned a response this app cannot safely use.'**
+  String get invalidResponse;
+
+  /// No description provided for @invalidServer.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid HTTPS Nextcloud address.'**
+  String get invalidServer;
+
+  /// No description provided for @localPersistenceFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The account could not be stored securely on this device.'**
+  String get localPersistenceFailed;
+
+  /// No description provided for @loginTimedOut.
+  ///
+  /// In en, this message translates to:
+  /// **'The sign-in request expired. Start it again.'**
+  String get loginTimedOut;
+
+  /// No description provided for @multiServerBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Add personal and work accounts without rebuilding the app or sharing their data.'**
+  String get multiServerBody;
+
+  /// No description provided for @multiServerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Built for multiple servers'**
+  String get multiServerTitle;
+
+  /// No description provided for @openingLogin.
+  ///
+  /// In en, this message translates to:
+  /// **'Opening secure sign-in…'**
+  String get openingLogin;
+
+  /// No description provided for @reauthenticateAccountAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in again'**
+  String get reauthenticateAccountAction;
+
+  /// No description provided for @reauthenticateAccountMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in with the same account. The stored account was not changed.'**
+  String get reauthenticateAccountMismatch;
+
+  /// No description provided for @reauthenticateAccountTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to this account again'**
+  String get reauthenticateAccountTitle;
+
+  /// No description provided for @scanLoginCodeCameraDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera access is turned off. Allow it in system settings to scan a login code.'**
+  String get scanLoginCodeCameraDenied;
+
+  /// No description provided for @scanLoginCodeCameraUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'This device has no camera that can read a login code.'**
+  String get scanLoginCodeCameraUnavailable;
+
+  /// No description provided for @secureBody.
+  ///
+  /// In en, this message translates to:
+  /// **'App passwords are stored in the system Keychain or Keystore, never in the notes database.'**
+  String get secureBody;
+
+  /// No description provided for @secureTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Credentials stay on this device'**
+  String get secureTitle;
+
+  /// No description provided for @serverAddressHint.
+  ///
+  /// In en, this message translates to:
+  /// **'cloud.example.com'**
+  String get serverAddressHint;
+
+  /// No description provided for @serverAddressLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Server address'**
+  String get serverAddressLabel;
+
+  /// No description provided for @serverMaintenance.
+  ///
+  /// In en, this message translates to:
+  /// **'This server is currently in maintenance mode.'**
+  String get serverMaintenance;
+
+  /// No description provided for @serverNotInstalled.
+  ///
+  /// In en, this message translates to:
+  /// **'Nextcloud is not installed on this server yet.'**
+  String get serverNotInstalled;
+
+  /// No description provided for @serverUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'The server could not be reached. Check the address and your connection.'**
+  String get serverUnavailable;
+
+  /// No description provided for @serverUpgrade.
+  ///
+  /// In en, this message translates to:
+  /// **'The server must finish its database upgrade first.'**
+  String get serverUpgrade;
+
+  /// No description provided for @unexpectedError.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong. No account data was changed.'**
+  String get unexpectedError;
 }
 
 class _AppLocalizationsDelegate

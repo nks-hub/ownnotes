@@ -57,7 +57,7 @@ final suggestionSourceFactoryProvider = Provider<SuggestionSourceFactory>((
     if (password == null) throw StateError('reauth_required');
     return NextcloudSuggestionSource(
       base: ServerBase.parse(account.server),
-      client: http.Client(),
+      client: runtime.createAccountTransport(account),
       loginName: account.loginName,
       appPassword: password,
     );

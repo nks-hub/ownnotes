@@ -7,6 +7,7 @@ class Accounts extends Table {
   TextColumn get id => text()();
   TextColumn get server => text()();
   TextColumn get loginName => text()();
+  TextColumn get certificateFingerprint => text().nullable()();
   TextColumn get credentialRef => text().unique()();
   TextColumn get state =>
       text().withDefault(const Constant('capabilitiesPending'))();
@@ -195,11 +196,13 @@ final class AccountSyncStatus {
 class NotesDatabase extends _$NotesDatabase {
   NotesDatabase(super.executor);
   @override
-  int get schemaVersion => 8;
+  int get schemaVersion => 9;
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) => m.createAll(),
     onUpgrade: (m, from, to) async {
+      if (from < 9)
+        await m.addColumn(accounts, accounts.certificateFingerprint);
       if (from < 2) await m.createTable(syncLeases);
       if (from < 3) {
         await m.addColumn(localNotes, localNotes.kind);

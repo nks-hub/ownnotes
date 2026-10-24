@@ -38,7 +38,9 @@ final class AppRuntime {
     this.vault, {
     http.Client Function()? transport,
     bool serverChecks = false,
-  }) : _transport = transport ?? http.Client.new {
+    http.Client Function(http.Client)? decorateTransport,
+  }) : _transport = transport,
+       _decorateTransport = decorateTransport {
     accounts = AccountRepository(database, vault);
     sync = SyncCoordinator(
       database,
@@ -53,31 +55,49 @@ final class AppRuntime {
 
   /// The app and the background worker may run in one process; sharing the
   /// connection there lets the note list see the worker's writes at once.
-  factory AppRuntime.production({http.Client Function()? transport}) =>
-      AppRuntime(
-        NotesDatabase(
-          driftDatabase(
-            name: 'ownnotes_candidate',
-            native: const DriftNativeOptions(shareAcrossIsolates: true),
-          ),
-        ),
-        const SecureVault(),
-        transport: transport,
-        serverChecks: true,
-      );
+  factory AppRuntime.production({
+    http.Client Function()? transport,
+    http.Client Function(http.Client)? decorateTransport,
+  }) => AppRuntime(
+    NotesDatabase(
+      driftDatabase(
+        name: 'ownnotes_candidate',
+        native: const DriftNativeOptions(shareAcrossIsolates: true),
+      ),
+    ),
+    const SecureVault(),
+    transport: transport,
+    decorateTransport: decorateTransport,
+    serverChecks: true,
+  );
   final NotesDatabase database;
   final CredentialVault vault;
   late final AccountRepository accounts;
   late final SyncCoordinator sync;
   late final AttentionFeed attention;
-  final http.Client Function() _transport;
+  final http.Client Function()? _transport;
+  final http.Client Function(http.Client)? _decorateTransport;
+
+  http.Client createAccountTransport(Account account) {
+    final client =
+        _transport?.call() ??
+        CertificateHttpClient(
+          server: ServerBase.parse(account.server).uri,
+          fingerprint: account.certificateFingerprint,
+        );
+    return _decorateTransport?.call(client) ?? client;
+  }
+
   final _clients = <String, http.Client>{};
   Future<NotesClient> clientFor(Account account) async {
     final password = await vault.read(account.credentialRef);
     if (password == null) throw StateError('reauth_required');
     return NotesClient(
       base: ServerBase.parse(account.server),
-      transport: _clients.putIfAbsent(account.id, _transport),
+      transport: _clients.putIfAbsent(
+        account.id,
+        () => createAccountTransport(account),
+      ),
       loginName: account.loginName,
       appPassword: password,
     );
@@ -88,7 +108,10 @@ final class AppRuntime {
     if (password == null) throw StateError('reauth_required');
     return SharingClient(
       base: ServerBase.parse(account.server),
-      transport: _clients.putIfAbsent(account.id, _transport),
+      transport: _clients.putIfAbsent(
+        account.id,
+        () => createAccountTransport(account),
+      ),
       loginName: account.loginName,
       appPassword: password,
     );

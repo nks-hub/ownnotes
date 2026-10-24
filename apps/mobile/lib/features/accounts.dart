@@ -17,8 +17,8 @@ final selectedAccountIdProvider = StateProvider<String?>((ref) => null);
 
 /// Test seam: where account calls get their HTTP client from. Each call opens
 /// and closes its own client.
-final accountTransportProvider = Provider<http.Client Function()>(
-  (ref) => http.Client.new,
+final accountTransportProvider = Provider<http.Client Function()?>(
+  (ref) => null,
 );
 
 /// Server-side display name, null while unknown or when the server is
@@ -30,7 +30,9 @@ final accountDisplayNameProvider = FutureProvider.autoDispose
           .vault
           .read(account.credentialRef);
       if (password == null) return null;
-      final client = ref.read(accountTransportProvider)();
+      final client =
+          ref.read(accountTransportProvider)?.call() ??
+          ref.read(runtimeProvider).createAccountTransport(account);
       try {
         return await AccountApi(client).displayName(
           ServerBase.parse(account.server),
@@ -59,12 +61,12 @@ Future<String?> openAccounts(BuildContext context, {String? currentId}) =>
 Future<bool> removeAccountEverywhere(
   AppRuntime runtime,
   Account account,
-  http.Client Function() transport,
+  http.Client Function()? transport,
 ) async {
   var revoked = false;
   final password = await runtime.vault.read(account.credentialRef);
   if (password != null) {
-    final client = transport();
+    final client = transport?.call() ?? runtime.createAccountTransport(account);
     try {
       await AccountApi(
         client,

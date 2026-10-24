@@ -3,7 +3,7 @@
   "appTitle": "OwnNotes",
   "addAccount": "Přidat účet",
   "serverUrl": "Adresa serveru Nextcloud",
-  "connect": "Připojit",
+  "connect": "Pokračovat",
   "cancel": "Zrušit",
   "waitingLogin": "Dokonči přihlášení v prohlížeči…",
   "loginFailed": "Přihlášení selhalo. Zkontroluj adresu serveru a zkus to znovu.",
@@ -118,25 +118,25 @@
   "serverInvalid": "Tohle není platná adresa serveru. Příklad: cloud.example.com",
   "serverNoLogin": "Tento server nenabídl přihlášení Nextcloud. Zkontroluj adresu.",
   "serverUnreachable": "Server se nepodařilo zastihnout. Zkontroluj adresu a připojení.",
-  "browserUnavailable": "Prohlížeč se pro přihlášení nepodařilo otevřít.",
+  "browserUnavailable": "Přihlašovací stránku se nepodařilo otevřít.",
   "loginExpired": "Přihlášení trvalo moc dlouho. Začni znovu.",
-  "scannedLoginRejected": "Server naskenovaný kód odmítl. Možná je starý nebo zrušený. Vytvoř nový.",
-  "onboardingTitle": "Tvoje poznámky na tvém Nextcloudu",
-  "onboardingBody": "OwnNotes synchronizuje poznámky v Markdownu s aplikací Nextcloud Notes. Jdou na tvůj server a nikam jinam.",
+  "scannedLoginRejected": "Načtený přihlašovací kód se nepodařilo použít. Vytvořte na serveru nový.",
+  "onboardingTitle": "Všechny poznámky v jedné aplikaci",
+  "onboardingBody": "Připojte libovolný podporovaný Nextcloud server. Účty, jejich uložená data i práce na pozadí zůstávají přísně oddělené.",
   "multiAccountTitle": "Více účtů",
   "multiAccountBody": "Přidej další servery nebo uživatele a přepínej mezi nimi kdykoli.",
   "secureLoginTitle": "Žádné heslo v aplikaci",
   "secureLoginBody": "Přihlásíš se v prohlížeči. Telefon si ponechá jen heslo aplikace, které můžeš zrušit.",
-  "checkingServer": "Kontroluji server…",
-  "waitingForLogin": "Čekám na přihlášení",
-  "waitingForLoginBody": "Schval přístup v prohlížeči a vrať se do aplikace.",
+  "checkingServer": "Kontrola serveru…",
+  "waitingForLogin": "Dokončete přihlášení v prohlížeči",
+  "waitingForLoginBody": "Po schválení aplikace v Nextcloudu bude tato obrazovka automaticky pokračovat.",
   "savingAccount": "Přihlašuji…",
-  "scanLoginCode": "Skenovat QR kód",
-  "scanLoginCodeHint": "Namiř kameru na přihlašovací QR kód z Nextcloudu (Nastavení, Zabezpečení, hesla aplikací).",
+  "scanLoginCode": "Načíst přihlašovací kód",
+  "scanLoginCodeHint": "Namiřte fotoaparát na QR kód, který server ukáže v Nastavení, Zabezpečení, Vytvořit nové heslo aplikace.",
   "scanLoginCodeUnreadable": "Tohle není přihlašovací kód Nextcloudu.",
   "scanCameraDenied": "Přístup ke kameře je vypnutý. Povol ho v nastavení aplikace, aby šel kód naskenovat.",
   "scanCameraUnavailable": "Kameru se nepodařilo spustit.",
-  "openAppSettings": "Otevřít nastavení aplikace",
+  "openAppSettings": "Otevřít nastavení",
   "accounts": "Účty",
   "currentAccount": "Aktuální účet",
   "accountRemovedRevoked": "Účet je odebraný. Jeho heslo aplikace je na serveru zrušené.",
@@ -706,9 +706,21 @@
   "backgroundSyncTitle": "Synchronizace na pozadí",
   "backgroundSyncOff": "Vypnuto",
   "backgroundSyncMinutes": "Každých {minutes} minut",
-  "@backgroundSyncMinutes": {"placeholders": {"minutes": {"type": "int"}}},
+  "@backgroundSyncMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
   "backgroundSyncHours": "{hours, plural, one {Každou hodinu} few {Každé {hours} hodiny} other {Každých {hours} hodin}}",
-  "@backgroundSyncHours": {"placeholders": {"hours": {"type": "int"}}},
+  "@backgroundSyncHours": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
   "backgroundSyncWifi": "Jen Wi-Fi",
   "backgroundSyncHint": "Platí při zavřené aplikaci, včetně změn z widgetů. Otevřená aplikace používá dostupnou síť. Čas spuštění na pozadí určuje Android.",
   "backgroundSyncLoadFailed": "Nastavení synchronizace nelze načíst. Klepnutím zkuste znovu.",
@@ -716,5 +728,51 @@
   "telemetryTitle": "Diagnostika a používání aplikace",
   "telemetryDescription": "Odesílá chyby a názvy obrazovek do Sentry a Rybbit. Texty poznámek ani přihlašovací údaje se neodesílají. Vypnutí platí ihned, zapnutí po novém spuštění.",
   "telemetryRestart": "Diagnostika se zapne při příštím spuštění aplikace.",
-  "telemetrySaveFailed": "Volbu diagnostiky se nepodařilo uložit."
+  "telemetrySaveFailed": "Volbu diagnostiky se nepodařilo uložit.",
+  "addServerTitle": "Přidat Nextcloud server",
+  "certificateChangedBody": "Server {host} nyní předkládá jiný certifikát, než kterému tento účet důvěřuje. Pokud jste certifikát vyměnili vy, účet odeberte a přidejte znovu.",
+  "@certificateChangedBody": {
+    "placeholders": {
+      "host": {
+        "type": "String"
+      }
+    }
+  },
+  "certificateChangedTitle": "Certifikát serveru se změnil",
+  "certificateFingerprintLabel": "Otisk SHA-256",
+  "certificateTrustAction": "Důvěřovat a pokračovat",
+  "certificateUnverifiedBody": "Server {host} předložil certifikát, který zařízení neumí ověřit. Pokračujte jen tehdy, když otisk níže odpovídá tomu, co ukazuje váš server.",
+  "@certificateUnverifiedBody": {
+    "placeholders": {
+      "host": {
+        "type": "String"
+      }
+    }
+  },
+  "certificateUnverifiedTitle": "Neověřený certifikát serveru",
+  "close": "Zavřít",
+  "invalidResponse": "Server vrátil odpověď, kterou aplikace nemůže bezpečně použít.",
+  "invalidServer": "Zadejte platnou HTTPS adresu Nextcloud serveru.",
+  "localPersistenceFailed": "Účet se nepodařilo bezpečně uložit do tohoto zařízení.",
+  "loginTimedOut": "Požadavek na přihlášení vypršel. Spusťte jej znovu.",
+  "multiServerBody": "Přidejte osobní i pracovní účty bez nového sestavení aplikace a bez sdílení jejich dat.",
+  "multiServerTitle": "Připraveno pro více serverů",
+  "openingLogin": "Otevírá se bezpečné přihlášení…",
+  "reauthenticateAccountAction": "Přihlásit se znovu",
+  "reauthenticateAccountMismatch": "Přihlaste se ke stejnému účtu. Uložený účet nebyl změněn.",
+  "reauthenticateAccountTitle": "Znovu se přihlásit k tomuto účtu",
+  "@scanLoginCode": {
+    "description": "Button that opens the camera to scan a Nextcloud login QR code"
+  },
+  "scanLoginCodeCameraDenied": "Přístup k fotoaparátu je vypnutý. Povolte jej v nastavení systému, aby šlo kód načíst.",
+  "scanLoginCodeCameraUnavailable": "Toto zařízení nemá fotoaparát, kterým by šlo kód načíst.",
+  "secureBody": "Hesla aplikace se ukládají do systémového Keychainu nebo Keystoru, nikdy do databáze poznámek.",
+  "secureTitle": "Přihlašovací údaje zůstávají v zařízení",
+  "serverAddressHint": "cloud.example.com",
+  "serverAddressLabel": "Adresa serveru",
+  "serverMaintenance": "Server je právě v režimu údržby.",
+  "serverNotInstalled": "Nextcloud na tomto serveru zatím není nainstalovaný.",
+  "serverUnavailable": "Server se nepodařilo kontaktovat. Zkontrolujte adresu a připojení.",
+  "serverUpgrade": "Server musí nejdřív dokončit aktualizaci databáze.",
+  "unexpectedError": "Něco se nepodařilo. Data účtu nebyla změněna."
 }

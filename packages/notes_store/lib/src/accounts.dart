@@ -22,21 +22,31 @@ final class AccountRepository {
     return result;
   }
 
-  Future<String> add(LoginCredentials credentials) => _serialize(() async {
+  Future<String> add(
+    LoginCredentials credentials, {
+    String? certificateFingerprint,
+    bool Function()? canCommit,
+  }) => _serialize(() async {
     final id = const Uuid().v4();
     final reference = 'ownnotes.account.$id';
+    _checkCommit(canCommit);
     await vault.write(reference, credentials.appPassword);
     try {
-      await database
-          .into(database.accounts)
-          .insert(
-            AccountsCompanion.insert(
-              id: id,
-              server: credentials.server.uri.toString(),
-              loginName: credentials.loginName,
-              credentialRef: reference,
-            ),
-          );
+      await database.transaction(() async {
+        _checkCommit(canCommit);
+        await database
+            .into(database.accounts)
+            .insert(
+              AccountsCompanion.insert(
+                id: id,
+                server: credentials.server.uri.toString(),
+                loginName: credentials.loginName,
+                credentialRef: reference,
+                certificateFingerprint: Value(certificateFingerprint),
+              ),
+            );
+        _checkCommit(canCommit);
+      });
     } catch (_) {
       // Failed deletion is repaired by the next startup recovery.
       try {
@@ -50,21 +60,55 @@ final class AccountRepository {
   /// Signs an existing account in again without touching its notes: same id,
   /// same credential reference, only the secret is replaced. Refuses a login
   /// for another server or user.
-  Future<void> reauthenticate(String id, LoginCredentials credentials) =>
-      _serialize(() async {
-        final account = await database.account(id);
-        if (account == null) throw StateError('account_missing');
-        if (account.server != credentials.server.uri.toString() ||
-            account.loginName != credentials.loginName) {
-          throw StateError('identity_mismatch');
-        }
-        await vault.write(account.credentialRef, credentials.appPassword);
+  Future<void> reauthenticate(
+    String id,
+    LoginCredentials credentials, {
+    String? certificateFingerprint,
+    bool Function()? canCommit,
+  }) => _serialize(() async {
+    final account = await database.account(id);
+    if (account == null) throw StateError('account_missing');
+    if (account.server != credentials.server.uri.toString() ||
+        account.loginName != credentials.loginName) {
+      throw StateError('identity_mismatch');
+    }
+    if (account.certificateFingerprint != null &&
+        certificateFingerprint != null &&
+        account.certificateFingerprint != certificateFingerprint) {
+      throw StateError('certificate_changed');
+    }
+    final previous = await vault.read(account.credentialRef);
+    _checkCommit(canCommit);
+    await vault.write(account.credentialRef, credentials.appPassword);
+    try {
+      await database.transaction(() async {
+        _checkCommit(canCommit);
         await (database.update(
           database.accounts,
         )..where((a) => a.id.equals(id))).write(
-          const AccountsCompanion(state: Value('capabilitiesPending')),
+          AccountsCompanion(
+            state: const Value('capabilitiesPending'),
+            certificateFingerprint: Value(
+              certificateFingerprint ?? account.certificateFingerprint,
+            ),
+          ),
         );
+        _checkCommit(canCommit);
       });
+    } catch (_) {
+      if (previous == null) {
+        await vault.delete(account.credentialRef);
+      } else {
+        await vault.write(account.credentialRef, previous);
+      }
+      rethrow;
+    }
+  });
+
+  static void _checkCommit(bool Function()? canCommit) {
+    if (canCommit?.call() == false) throw StateError('onboarding_cancelled');
+  }
+
   Future<void> remove(String id) => _serialize(() async {
     final account = await database.account(id);
     if (account == null) return;

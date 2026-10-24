@@ -37,6 +37,17 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _certificateFingerprintMeta =
+      const VerificationMeta('certificateFingerprint');
+  @override
+  late final GeneratedColumn<String> certificateFingerprint =
+      GeneratedColumn<String>(
+        'certificate_fingerprint',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
   static const VerificationMeta _credentialRefMeta = const VerificationMeta(
     'credentialRef',
   );
@@ -88,6 +99,7 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
     id,
     server,
     loginName,
+    certificateFingerprint,
     credentialRef,
     state,
     generation,
@@ -125,6 +137,15 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
       );
     } else if (isInserting) {
       context.missing(_loginNameMeta);
+    }
+    if (data.containsKey('certificate_fingerprint')) {
+      context.handle(
+        _certificateFingerprintMeta,
+        certificateFingerprint.isAcceptableOrUnknown(
+          data['certificate_fingerprint']!,
+          _certificateFingerprintMeta,
+        ),
+      );
     }
     if (data.containsKey('credential_ref')) {
       context.handle(
@@ -179,6 +200,10 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
         DriftSqlType.string,
         data['${effectivePrefix}login_name'],
       )!,
+      certificateFingerprint: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}certificate_fingerprint'],
+      ),
       credentialRef: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}credential_ref'],
@@ -208,6 +233,7 @@ class Account extends DataClass implements Insertable<Account> {
   final String id;
   final String server;
   final String loginName;
+  final String? certificateFingerprint;
   final String credentialRef;
   final String state;
   final int generation;
@@ -216,6 +242,7 @@ class Account extends DataClass implements Insertable<Account> {
     required this.id,
     required this.server,
     required this.loginName,
+    this.certificateFingerprint,
     required this.credentialRef,
     required this.state,
     required this.generation,
@@ -227,6 +254,9 @@ class Account extends DataClass implements Insertable<Account> {
     map['id'] = Variable<String>(id);
     map['server'] = Variable<String>(server);
     map['login_name'] = Variable<String>(loginName);
+    if (!nullToAbsent || certificateFingerprint != null) {
+      map['certificate_fingerprint'] = Variable<String>(certificateFingerprint);
+    }
     map['credential_ref'] = Variable<String>(credentialRef);
     map['state'] = Variable<String>(state);
     map['generation'] = Variable<int>(generation);
@@ -239,6 +269,9 @@ class Account extends DataClass implements Insertable<Account> {
       id: Value(id),
       server: Value(server),
       loginName: Value(loginName),
+      certificateFingerprint: certificateFingerprint == null && nullToAbsent
+          ? const Value.absent()
+          : Value(certificateFingerprint),
       credentialRef: Value(credentialRef),
       state: Value(state),
       generation: Value(generation),
@@ -255,6 +288,9 @@ class Account extends DataClass implements Insertable<Account> {
       id: serializer.fromJson<String>(json['id']),
       server: serializer.fromJson<String>(json['server']),
       loginName: serializer.fromJson<String>(json['loginName']),
+      certificateFingerprint: serializer.fromJson<String?>(
+        json['certificateFingerprint'],
+      ),
       credentialRef: serializer.fromJson<String>(json['credentialRef']),
       state: serializer.fromJson<String>(json['state']),
       generation: serializer.fromJson<int>(json['generation']),
@@ -268,6 +304,9 @@ class Account extends DataClass implements Insertable<Account> {
       'id': serializer.toJson<String>(id),
       'server': serializer.toJson<String>(server),
       'loginName': serializer.toJson<String>(loginName),
+      'certificateFingerprint': serializer.toJson<String?>(
+        certificateFingerprint,
+      ),
       'credentialRef': serializer.toJson<String>(credentialRef),
       'state': serializer.toJson<String>(state),
       'generation': serializer.toJson<int>(generation),
@@ -279,6 +318,7 @@ class Account extends DataClass implements Insertable<Account> {
     String? id,
     String? server,
     String? loginName,
+    Value<String?> certificateFingerprint = const Value.absent(),
     String? credentialRef,
     String? state,
     int? generation,
@@ -287,6 +327,9 @@ class Account extends DataClass implements Insertable<Account> {
     id: id ?? this.id,
     server: server ?? this.server,
     loginName: loginName ?? this.loginName,
+    certificateFingerprint: certificateFingerprint.present
+        ? certificateFingerprint.value
+        : this.certificateFingerprint,
     credentialRef: credentialRef ?? this.credentialRef,
     state: state ?? this.state,
     generation: generation ?? this.generation,
@@ -297,6 +340,9 @@ class Account extends DataClass implements Insertable<Account> {
       id: data.id.present ? data.id.value : this.id,
       server: data.server.present ? data.server.value : this.server,
       loginName: data.loginName.present ? data.loginName.value : this.loginName,
+      certificateFingerprint: data.certificateFingerprint.present
+          ? data.certificateFingerprint.value
+          : this.certificateFingerprint,
       credentialRef: data.credentialRef.present
           ? data.credentialRef.value
           : this.credentialRef,
@@ -316,6 +362,7 @@ class Account extends DataClass implements Insertable<Account> {
           ..write('id: $id, ')
           ..write('server: $server, ')
           ..write('loginName: $loginName, ')
+          ..write('certificateFingerprint: $certificateFingerprint, ')
           ..write('credentialRef: $credentialRef, ')
           ..write('state: $state, ')
           ..write('generation: $generation, ')
@@ -329,6 +376,7 @@ class Account extends DataClass implements Insertable<Account> {
     id,
     server,
     loginName,
+    certificateFingerprint,
     credentialRef,
     state,
     generation,
@@ -341,6 +389,7 @@ class Account extends DataClass implements Insertable<Account> {
           other.id == this.id &&
           other.server == this.server &&
           other.loginName == this.loginName &&
+          other.certificateFingerprint == this.certificateFingerprint &&
           other.credentialRef == this.credentialRef &&
           other.state == this.state &&
           other.generation == this.generation &&
@@ -351,6 +400,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
   final Value<String> id;
   final Value<String> server;
   final Value<String> loginName;
+  final Value<String?> certificateFingerprint;
   final Value<String> credentialRef;
   final Value<String> state;
   final Value<int> generation;
@@ -360,6 +410,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
     this.id = const Value.absent(),
     this.server = const Value.absent(),
     this.loginName = const Value.absent(),
+    this.certificateFingerprint = const Value.absent(),
     this.credentialRef = const Value.absent(),
     this.state = const Value.absent(),
     this.generation = const Value.absent(),
@@ -370,6 +421,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
     required String id,
     required String server,
     required String loginName,
+    this.certificateFingerprint = const Value.absent(),
     required String credentialRef,
     this.state = const Value.absent(),
     this.generation = const Value.absent(),
@@ -383,6 +435,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
     Expression<String>? id,
     Expression<String>? server,
     Expression<String>? loginName,
+    Expression<String>? certificateFingerprint,
     Expression<String>? credentialRef,
     Expression<String>? state,
     Expression<int>? generation,
@@ -393,6 +446,8 @@ class AccountsCompanion extends UpdateCompanion<Account> {
       if (id != null) 'id': id,
       if (server != null) 'server': server,
       if (loginName != null) 'login_name': loginName,
+      if (certificateFingerprint != null)
+        'certificate_fingerprint': certificateFingerprint,
       if (credentialRef != null) 'credential_ref': credentialRef,
       if (state != null) 'state': state,
       if (generation != null) 'generation': generation,
@@ -405,6 +460,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
     Value<String>? id,
     Value<String>? server,
     Value<String>? loginName,
+    Value<String?>? certificateFingerprint,
     Value<String>? credentialRef,
     Value<String>? state,
     Value<int>? generation,
@@ -415,6 +471,8 @@ class AccountsCompanion extends UpdateCompanion<Account> {
       id: id ?? this.id,
       server: server ?? this.server,
       loginName: loginName ?? this.loginName,
+      certificateFingerprint:
+          certificateFingerprint ?? this.certificateFingerprint,
       credentialRef: credentialRef ?? this.credentialRef,
       state: state ?? this.state,
       generation: generation ?? this.generation,
@@ -434,6 +492,11 @@ class AccountsCompanion extends UpdateCompanion<Account> {
     }
     if (loginName.present) {
       map['login_name'] = Variable<String>(loginName.value);
+    }
+    if (certificateFingerprint.present) {
+      map['certificate_fingerprint'] = Variable<String>(
+        certificateFingerprint.value,
+      );
     }
     if (credentialRef.present) {
       map['credential_ref'] = Variable<String>(credentialRef.value);
@@ -459,6 +522,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
           ..write('id: $id, ')
           ..write('server: $server, ')
           ..write('loginName: $loginName, ')
+          ..write('certificateFingerprint: $certificateFingerprint, ')
           ..write('credentialRef: $credentialRef, ')
           ..write('state: $state, ')
           ..write('generation: $generation, ')
@@ -4298,6 +4362,7 @@ typedef $$AccountsTableCreateCompanionBuilder =
       required String id,
       required String server,
       required String loginName,
+      Value<String?> certificateFingerprint,
       required String credentialRef,
       Value<String> state,
       Value<int> generation,
@@ -4309,6 +4374,7 @@ typedef $$AccountsTableUpdateCompanionBuilder =
       Value<String> id,
       Value<String> server,
       Value<String> loginName,
+      Value<String?> certificateFingerprint,
       Value<String> credentialRef,
       Value<String> state,
       Value<int> generation,
@@ -4453,6 +4519,11 @@ class $$AccountsTableFilterComposer
 
   ColumnFilters<String> get loginName => $composableBuilder(
     column: $table.loginName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get certificateFingerprint => $composableBuilder(
+    column: $table.certificateFingerprint,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4651,6 +4722,11 @@ class $$AccountsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get certificateFingerprint => $composableBuilder(
+    column: $table.certificateFingerprint,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get credentialRef => $composableBuilder(
     column: $table.credentialRef,
     builder: (column) => ColumnOrderings(column),
@@ -4689,6 +4765,11 @@ class $$AccountsTableAnnotationComposer
 
   GeneratedColumn<String> get loginName =>
       $composableBuilder(column: $table.loginName, builder: (column) => column);
+
+  GeneratedColumn<String> get certificateFingerprint => $composableBuilder(
+    column: $table.certificateFingerprint,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<String> get credentialRef => $composableBuilder(
     column: $table.credentialRef,
@@ -4897,6 +4978,7 @@ class $$AccountsTableTableManager
                 Value<String> id = const Value.absent(),
                 Value<String> server = const Value.absent(),
                 Value<String> loginName = const Value.absent(),
+                Value<String?> certificateFingerprint = const Value.absent(),
                 Value<String> credentialRef = const Value.absent(),
                 Value<String> state = const Value.absent(),
                 Value<int> generation = const Value.absent(),
@@ -4906,6 +4988,7 @@ class $$AccountsTableTableManager
                 id: id,
                 server: server,
                 loginName: loginName,
+                certificateFingerprint: certificateFingerprint,
                 credentialRef: credentialRef,
                 state: state,
                 generation: generation,
@@ -4917,6 +5000,7 @@ class $$AccountsTableTableManager
                 required String id,
                 required String server,
                 required String loginName,
+                Value<String?> certificateFingerprint = const Value.absent(),
                 required String credentialRef,
                 Value<String> state = const Value.absent(),
                 Value<int> generation = const Value.absent(),
@@ -4926,6 +5010,7 @@ class $$AccountsTableTableManager
                 id: id,
                 server: server,
                 loginName: loginName,
+                certificateFingerprint: certificateFingerprint,
                 credentialRef: credentialRef,
                 state: state,
                 generation: generation,

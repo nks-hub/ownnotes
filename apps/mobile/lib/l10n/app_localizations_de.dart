@@ -18,7 +18,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get serverUrl => 'Nextcloud-Serveradresse';
 
   @override
-  String get connect => 'Verbinden';
+  String get connect => 'Weiter';
 
   @override
   String get cancel => 'Abbrechen';
@@ -420,7 +420,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get browserUnavailable =>
-      'Der Browser für die Anmeldung konnte nicht geöffnet werden.';
+      'Die Anmeldeseite konnte nicht geöffnet werden.';
 
   @override
   String get loginExpired =>
@@ -428,14 +428,14 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get scannedLoginRejected =>
-      'Der Server hat den gescannten Code abgelehnt. Er ist vielleicht alt oder widerrufen. Erstelle einen neuen.';
+      'Der gescannte Anmeldecode konnte nicht verwendet werden. Erstellen Sie einen neuen auf dem Server.';
 
   @override
-  String get onboardingTitle => 'Deine Notizen in deiner eigenen Nextcloud';
+  String get onboardingTitle => 'Alle Notizen in einer App';
 
   @override
   String get onboardingBody =>
-      'OwnNotes synchronisiert Markdown-Notizen mit der Nextcloud-App Notes. Sie landen auf deinem Server und nirgendwo sonst.';
+      'Verbinden Sie einen beliebigen unterstützten Nextcloud-Server. Konten, ihre gespeicherten Daten und die Hintergrundarbeit bleiben strikt getrennt.';
 
   @override
   String get multiAccountTitle => 'Mehrere Konten';
@@ -452,27 +452,27 @@ class AppLocalizationsDe extends AppLocalizations {
       'Du meldest dich im Browser an. Das Gerät speichert nur ein App-Passwort, das du widerrufen kannst.';
 
   @override
-  String get checkingServer => 'Server wird geprüft …';
+  String get checkingServer => 'Server wird geprüft…';
 
   @override
-  String get waitingForLogin => 'Warten auf die Anmeldung';
+  String get waitingForLogin => 'Schließen Sie die Anmeldung im Browser ab';
 
   @override
   String get waitingForLoginBody =>
-      'Gewähre den Zugriff im Browser und kehre dann zur App zurück.';
+      'Dieser Bildschirm fährt automatisch fort, sobald Nextcloud die App bestätigt.';
 
   @override
   String get savingAccount => 'Anmeldung läuft …';
 
   @override
-  String get scanLoginCode => 'QR-Code scannen';
+  String get scanLoginCode => 'Anmeldecode scannen';
 
   @override
   String get scanLoginCodeHint =>
-      'Richte die Kamera auf den Anmelde-QR-Code aus Nextcloud (Einstellungen, Sicherheit, App-Passwörter).';
+      'Richten Sie die Kamera auf den QR-Code, den Ihr Server unter Einstellungen, Sicherheit, Neues App-Passwort erstellen anzeigt.';
 
   @override
-  String get scanLoginCodeUnreadable => 'Das ist kein Nextcloud-Anmeldecode.';
+  String get scanLoginCodeUnreadable => 'Dies ist kein Nextcloud-Anmeldecode.';
 
   @override
   String get scanCameraDenied =>
@@ -483,7 +483,7 @@ class AppLocalizationsDe extends AppLocalizations {
       'Die Kamera konnte nicht gestartet werden.';
 
   @override
-  String get openAppSettings => 'App-Einstellungen öffnen';
+  String get openAppSettings => 'Einstellungen öffnen';
 
   @override
   String get accounts => 'Konten';
@@ -1941,4 +1941,110 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get telemetrySaveFailed =>
       'Die Diagnoseeinstellung konnte nicht gespeichert werden.';
+
+  @override
+  String get addServerTitle => 'Nextcloud-Server hinzufügen';
+
+  @override
+  String certificateChangedBody(String host) {
+    return '$host verwendet jetzt ein anderes Zertifikat als das, dem dieses Konto vertraut. Wenn Sie das Zertifikat selbst ersetzt haben, entfernen Sie das Konto und fügen Sie es erneut hinzu.';
+  }
+
+  @override
+  String get certificateChangedTitle => 'Serverzertifikat geändert';
+
+  @override
+  String get certificateFingerprintLabel => 'SHA-256-Fingerabdruck';
+
+  @override
+  String get certificateTrustAction => 'Vertrauen und fortfahren';
+
+  @override
+  String certificateUnverifiedBody(String host) {
+    return '$host hat ein Zertifikat vorgelegt, das dieses Gerät nicht überprüfen kann. Fahren Sie nur fort, wenn der folgende Fingerabdruck mit dem Ihres Servers übereinstimmt.';
+  }
+
+  @override
+  String get certificateUnverifiedTitle =>
+      'Nicht verifiziertes Serverzertifikat';
+
+  @override
+  String get close => 'Schließen';
+
+  @override
+  String get invalidResponse =>
+      'Der Server hat eine Antwort gesendet, die diese App nicht sicher verarbeiten kann.';
+
+  @override
+  String get invalidServer =>
+      'Geben Sie eine gültige HTTPS-Adresse von Nextcloud ein.';
+
+  @override
+  String get localPersistenceFailed =>
+      'Das Konto konnte nicht sicher auf diesem Gerät gespeichert werden.';
+
+  @override
+  String get loginTimedOut =>
+      'Die Anmeldeanfrage ist abgelaufen. Starten Sie sie erneut.';
+
+  @override
+  String get multiServerBody =>
+      'Fügen Sie private und berufliche Konten hinzu, ohne die App neu zu erstellen oder ihre Daten zu teilen.';
+
+  @override
+  String get multiServerTitle => 'Für mehrere Server geeignet';
+
+  @override
+  String get openingLogin => 'Sichere Anmeldung wird geöffnet…';
+
+  @override
+  String get reauthenticateAccountAction => 'Erneut anmelden';
+
+  @override
+  String get reauthenticateAccountMismatch =>
+      'Melden Sie sich mit demselben Konto an. Das gespeicherte Konto wurde nicht geändert.';
+
+  @override
+  String get reauthenticateAccountTitle => 'Erneut bei diesem Konto anmelden';
+
+  @override
+  String get scanLoginCodeCameraDenied =>
+      'Der Kamerazugriff ist deaktiviert. Erlauben Sie ihn in den Systemeinstellungen, um einen Anmeldecode zu scannen.';
+
+  @override
+  String get scanLoginCodeCameraUnavailable =>
+      'Dieses Gerät hat keine Kamera, die einen Anmeldecode lesen kann.';
+
+  @override
+  String get secureBody =>
+      'App-Passwörter werden im Keychain oder Keystore des Systems gespeichert, niemals in der Notizdatenbank.';
+
+  @override
+  String get secureTitle => 'Zugangsdaten bleiben auf diesem Gerät';
+
+  @override
+  String get serverAddressHint => 'cloud.example.com';
+
+  @override
+  String get serverAddressLabel => 'Serveradresse';
+
+  @override
+  String get serverMaintenance =>
+      'Dieser Server befindet sich im Wartungsmodus.';
+
+  @override
+  String get serverNotInstalled =>
+      'Nextcloud ist auf diesem Server noch nicht installiert.';
+
+  @override
+  String get serverUnavailable =>
+      'Der Server konnte nicht erreicht werden. Prüfen Sie die Adresse und Ihre Verbindung.';
+
+  @override
+  String get serverUpgrade =>
+      'Der Server muss zuerst die Aktualisierung seiner Datenbank abschließen.';
+
+  @override
+  String get unexpectedError =>
+      'Ein Fehler ist aufgetreten. Es wurden keine Kontodaten geändert.';
 }

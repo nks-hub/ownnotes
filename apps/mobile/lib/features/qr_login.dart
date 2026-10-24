@@ -9,6 +9,7 @@ import 'package:notes_protocol/notes_protocol.dart';
 import 'package:zxing2/qrcode.dart';
 
 import '../l10n/app_localizations.dart';
+import '../design/login_theme.dart';
 
 const _loginPrefix = 'nc://login/';
 const _oneTimePrefix = 'nc://onetime-login/';
@@ -94,7 +95,11 @@ QrLoginPayload? parseQrLoginPayload(String raw) {
   if (user == null && secret == null) {
     return oneTime ? null : QrLoginServerOnly(server);
   }
-  if (user == null || secret == null || user.contains(':')) return null;
+  if (user == null ||
+      secret == null ||
+      user.length > 1024 ||
+      user.contains(':'))
+    return null;
   return QrLoginCredentials(
     server: server,
     loginName: user,
@@ -296,29 +301,42 @@ final class _CameraQrScanSession implements QrScanSession {
   }
 }
 
-/// Full-screen camera view that returns the parsed `nc://login/` payload. The
-/// scanned string carries an app password, so it never leaves this screen
-/// unparsed and is never logged or shown.
-class QrLoginScannerScreen extends StatefulWidget {
+/// Full-screen camera view that reads a Nextcloud `nc://login/` QR code.
+///
+/// The scanned string carries an app password in the clear, so it never leaves
+/// this screen: it is parsed in place and only the parsed payload is handed
+/// back. Nothing derived from it reaches a log, an error message or telemetry.
+final class QrLoginScannerScreen extends StatefulWidget {
   const QrLoginScannerScreen({
     super.key,
     this.openSession = openCameraQrScanSession,
+    this.onOpenSettings = openAppSettings,
   });
+
   final QrScanSessionOpener openSession;
 
-  static Future<QrLoginPayload?> push(BuildContext context) =>
-      Navigator.of(context).push<QrLoginPayload>(
-        MaterialPageRoute(
-          settings: const RouteSettings(name: '/login/qr'),
-          builder: (_) => const QrLoginScannerScreen(),
+  /// Offered on the permission screen; null hides the action.
+  final Future<bool> Function()? onOpenSettings;
+
+  static Future<QrLoginPayload?> push(
+    BuildContext context, {
+    Future<bool> Function()? onOpenSettings,
+  }) {
+    return Navigator.of(context).push<QrLoginPayload>(
+      MaterialPageRoute<QrLoginPayload>(
+        settings: const RouteSettings(name: '/login/qr'),
+        builder: (context) => QrLoginScannerScreen(
+          onOpenSettings: onOpenSettings ?? openAppSettings,
         ),
-      );
+      ),
+    );
+  }
 
   @override
   State<QrLoginScannerScreen> createState() => _QrLoginScannerScreenState();
 }
 
-class _QrLoginScannerScreenState extends State<QrLoginScannerScreen> {
+final class _QrLoginScannerScreenState extends State<QrLoginScannerScreen> {
   QrScanSession? _session;
   StreamSubscription<String>? _subscription;
   QrScanFailure? _failure;
@@ -347,18 +365,28 @@ class _QrLoginScannerScreenState extends State<QrLoginScannerScreen> {
       }
       _subscription = session.payloads.listen(_onPayload);
       setState(() => _session = session);
-    } on QrScanException catch (e) {
-      if (mounted) setState(() => _failure = e.failure);
+    } on QrScanException catch (error) {
+      if (mounted) {
+        setState(() => _failure = error.failure);
+      }
     } on Object {
-      if (mounted) setState(() => _failure = QrScanFailure.unavailable);
+      if (mounted) {
+        setState(() => _failure = QrScanFailure.unavailable);
+      }
     }
   }
 
   void _onPayload(String raw) {
-    if (_handled) return;
+    if (_handled) {
+      return;
+    }
     final payload = parseQrLoginPayload(raw);
     if (payload == null) {
-      if (!_unreadable) setState(() => _unreadable = true);
+      // Whatever this code held is not ours. The value itself is never shown,
+      // stored or reported: a foreign QR code can hold anything.
+      if (!_unreadable) {
+        setState(() => _unreadable = true);
+      }
       return;
     }
     _handled = true;
@@ -366,111 +394,117 @@ class _QrLoginScannerScreenState extends State<QrLoginScannerScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
+  Widget build(BuildContext context) => LoginTheme.scope(context, _build);
+
+  Widget _build(BuildContext context) {
+    final strings = AppLocalizations.of(context)!;
     final failure = _failure;
     final session = _session;
     return Scaffold(
       backgroundColor: Colors.black,
-      appBar: AppBar(title: Text(l.scanLoginCode)),
-      body: failure != null
-          ? _ScannerMessage(
-              message: failure == QrScanFailure.permissionDenied
-                  ? l.scanCameraDenied
-                  : l.scanCameraUnavailable,
-              onOpenSettings: failure == QrScanFailure.permissionDenied
-                  ? openAppSettings
-                  : null,
-              label: l.openAppSettings,
-            )
-          : session == null
-          ? const Center(child: CircularProgressIndicator())
-          : Stack(
-              fit: StackFit.expand,
-              children: [
-                session.buildPreview(),
-                Positioned(
-                  left: 16,
-                  right: 16,
-                  bottom: 24,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.6),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                      child: Text(
-                        _unreadable
-                            ? l.scanLoginCodeUnreadable
-                            : l.scanLoginCodeHint,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(color: Colors.white),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+      appBar: AppBar(title: Text(strings.scanLoginCode)),
+      body: switch ((failure, session)) {
+        (final QrScanFailure failure, _) => _ScannerMessage(
+          key: const Key('qr-login-scanner-failure'),
+          message: failure == QrScanFailure.permissionDenied
+              ? strings.scanLoginCodeCameraDenied
+              : strings.scanLoginCodeCameraUnavailable,
+          onOpenSettings: failure == QrScanFailure.permissionDenied
+              ? widget.onOpenSettings
+              : null,
+          openSettingsLabel: strings.openAppSettings,
+        ),
+        (_, null) => const Center(
+          key: Key('qr-login-scanner-starting'),
+          child: CircularProgressIndicator(),
+        ),
+        (_, final QrScanSession session) => Stack(
+          fit: StackFit.expand,
+          children: [
+            session.buildPreview(),
+            Positioned(
+              left: 16,
+              right: 16,
+              bottom: 24,
+              child: _ScannerBanner(
+                key: _unreadable
+                    ? const Key('qr-login-scanner-unreadable')
+                    : const Key('qr-login-scanner-hint'),
+                text: _unreadable
+                    ? strings.scanLoginCodeUnreadable
+                    : strings.scanLoginCodeHint,
+              ),
             ),
+          ],
+        ),
+      },
     );
   }
 }
 
-class _ScannerMessage extends StatelessWidget {
+final class _ScannerMessage extends StatelessWidget {
   const _ScannerMessage({
+    super.key,
     required this.message,
     required this.onOpenSettings,
-    required this.label,
+    required this.openSettingsLabel,
   });
+
   final String message;
   final Future<bool> Function()? onOpenSettings;
-  final String label;
+  final String openSettingsLabel;
 
   @override
-  Widget build(BuildContext context) => Center(
-    child: SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const ExcludeSemantics(
-            child: Icon(
-              Icons.no_photography_outlined,
-              color: Colors.white70,
-              size: 48,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            message,
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: Colors.white),
-          ),
-          if (onOpenSettings != null) ...[
+  Widget build(BuildContext context) {
+    final openSettings = onOpenSettings;
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.no_photography_outlined, color: Colors.white70),
             const SizedBox(height: 16),
-            FilledButton(
-              style: FilledButton.styleFrom(minimumSize: const Size(0, 48)),
-              onPressed: () => unawaited(onOpenSettings!()),
-              child: Text(label, textAlign: TextAlign.center),
-            ),
-          ],
-          const SizedBox(height: 8),
-          TextButton(
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.white,
-              minimumSize: const Size(0, 48),
-            ),
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(
-              AppLocalizations.of(context)!.scanEnterAddress,
+            Text(
+              message,
               textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.white),
             ),
-          ),
-        ],
+            if (openSettings != null) ...[
+              const SizedBox(height: 16),
+              OutlinedButton(
+                key: const Key('qr-login-scanner-open-settings'),
+                onPressed: () => unawaited(openSettings()),
+                child: Text(openSettingsLabel),
+              ),
+            ],
+          ],
+        ),
       ),
-    ),
-  );
+    );
+  }
+}
+
+final class _ScannerBanner extends StatelessWidget {
+  const _ScannerBanner({super.key, required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.6),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Text(
+          text,
+          textAlign: TextAlign.center,
+          style: const TextStyle(color: Colors.white),
+        ),
+      ),
+    );
+  }
 }

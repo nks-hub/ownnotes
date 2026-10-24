@@ -26,7 +26,9 @@ final serverVersionsProvider = FutureProvider.autoDispose
           .vault
           .read(account.credentialRef);
       if (password == null) throw StateError('reauth_required');
-      final transport = ref.read(accountTransportProvider)();
+      final transport =
+          ref.read(accountTransportProvider)?.call() ??
+          ref.read(runtimeProvider).createAccountTransport(account);
       try {
         return await AttachmentsClient(
           base: ServerBase.parse(account.server),

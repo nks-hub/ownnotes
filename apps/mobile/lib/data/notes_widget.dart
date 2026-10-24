@@ -187,7 +187,7 @@ Future<void> _tail = Future<void>.value();
 
 Future<void> _drainAndUpload() async {
   final runtime = AppRuntime.production(
-    transport: () => BackgroundSyncClient(http.Client()),
+    decorateTransport: BackgroundSyncClient.new,
   );
   try {
     final changed = await publishAllWidgets(runtime.database);

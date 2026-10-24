@@ -6,43 +6,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:notes_protocol/notes_protocol.dart';
 import 'package:notes_store/notes_store.dart' show Account;
-import 'package:url_launcher/url_launcher.dart';
+
 import '../data/account_api.dart';
 import '../data/runtime.dart';
+import '../design/login_theme.dart';
 import '../l10n/app_localizations.dart';
 import 'accounts.dart';
+import 'certificate_prompt.dart';
+import 'login_browser.dart';
+import 'login_view.dart';
 import 'qr_login.dart';
 import 'server_address.dart';
 
-Future<bool> _openBrowser(Uri uri) =>
-    launchUrl(uri, mode: LaunchMode.externalApplication);
-
-enum _Phase { entry, checking, waiting, saving }
-
-enum _Problem {
-  empty,
-  insecure,
-  invalid,
-  noLogin,
-  unreachable,
-  browser,
-  expired,
-  scanRejected,
-  tls,
-  timeout,
-  notesMissing,
-  identityMismatch,
-  cancelled,
-  failed,
-}
-
-class _Mismatch implements Exception {
-  const _Mismatch();
-}
-
-/// Branded entry: server address, Login Flow v2 in the browser, or a scanned
-/// `nc://login/` code. Pops once the account is stored.
-class LoginScreen extends ConsumerStatefulWidget {
+class LoginScreen extends StatelessWidget {
   const LoginScreen({
     super.key,
     this.transport,
@@ -50,172 +26,240 @@ class LoginScreen extends ConsumerStatefulWidget {
     this.scan,
     this.reauthenticate,
   });
-
-  /// Test seams; production uses a fresh HTTP client, the system browser and
-  /// the camera scanner.
   final http.Client? transport;
   final Future<bool> Function(Uri)? openBrowser;
   final Future<QrLoginPayload?> Function(BuildContext)? scan;
-
-  /// When set, signs this account in again in place (same server and user
-  /// required) instead of adding a new one.
   final Account? reauthenticate;
   @override
-  ConsumerState<LoginScreen> createState() => _LoginScreenState();
+  Widget build(BuildContext context) => LoginTheme.scope(
+    context,
+    (_) => _LoginContent(
+      transport: transport,
+      openBrowser: openBrowser,
+      scan: scan,
+      reauthenticate: reauthenticate,
+    ),
+  );
 }
 
-class _LoginScreenState extends ConsumerState<LoginScreen> {
+class _LoginContent extends ConsumerStatefulWidget {
+  const _LoginContent({
+    this.transport,
+    this.openBrowser,
+    this.scan,
+    this.reauthenticate,
+  });
+  final http.Client? transport;
+  final Future<bool> Function(Uri)? openBrowser;
+  final Future<QrLoginPayload?> Function(BuildContext)? scan;
+  final Account? reauthenticate;
+  @override
+  ConsumerState<_LoginContent> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends ConsumerState<_LoginContent> {
   late final _url = TextEditingController(
     text: widget.reauthenticate?.server ?? 'https://',
   );
   final _focus = FocusNode();
-  late final _transport = widget.transport ?? http.Client();
+  http.Client? _transport;
   LoginSession? _session;
-  _Phase _phase = _Phase.entry;
-  _Problem? _problem;
-  // Bumped by every new attempt and by cancel, so a result that arrives for an
-  // older attempt is dropped instead of opening a browser or saving anything.
+  LoginPhase _phase = LoginPhase.entry;
+  String? _problem;
   int _attempt = 0;
   bool _scanning = false;
   ServerBase? _server;
+  String? _usedPin;
+  String? _confirmedPin;
+  String? _confirmedOrigin;
+  Completer<void> _cancelled = Completer<void>();
 
-  bool get _busy => _phase != _Phase.entry;
+  bool get _busy => _phase != LoginPhase.entry;
   bool get _canScan =>
-      widget.reauthenticate == null &&
-      (widget.scan != null ||
-          (!kIsWeb &&
-              (defaultTargetPlatform == TargetPlatform.android ||
-                  defaultTargetPlatform == TargetPlatform.iOS)));
+      widget.scan != null ||
+      !kIsWeb &&
+          (defaultTargetPlatform == TargetPlatform.android ||
+              defaultTargetPlatform == TargetPlatform.iOS);
 
-  /// Lets the user start over when the browser side broke (for example an
-  /// expired server session) instead of waiting for the flow to expire.
-  void _cancel() {
-    _attempt++;
-    _session?.cancel();
-    _back(problem: _Problem.cancelled);
+  @override
+  void initState() {
+    super.initState();
+    _url.selection = TextSelection.collapsed(offset: _url.text.length);
   }
 
   @override
   void dispose() {
+    _attempt++;
+    if (!_cancelled.isCompleted) _cancelled.complete();
     _session?.cancel();
-    if (widget.transport == null) _transport.close();
+    if (widget.transport == null) _transport?.close();
     _url.dispose();
     _focus.dispose();
     super.dispose();
   }
 
-  void _back({_Problem? problem}) {
-    if (!mounted) return;
-    setState(() {
-      _phase = _Phase.entry;
-      _problem = problem;
-    });
+  void _cancel() {
+    if (_phase == LoginPhase.saving) return;
+    _attempt++;
+    if (!_cancelled.isCompleted) _cancelled.complete();
+    _session?.cancel();
+    if (widget.transport == null) _transport?.close();
+    _back();
   }
 
-  _Problem _problemFor(Object error) => switch (error) {
-    LoginException(:final code) => switch (code) {
-      'transport_failed' => _Problem.unreachable,
-      'timeout' => _Problem.timeout,
-      'tls_failed' => _Problem.tls,
-      'browser_unavailable' => _Problem.browser,
-      'start_rejected' ||
-      'invalid_response' ||
-      'invalid_content_type' ||
-      'response_too_large' ||
-      'untrusted_endpoint' => _Problem.noLogin,
-      'flow_closed' => _Problem.expired,
-      _ => _Problem.failed,
-    },
-    AccountApiException(:final code) => switch (code) {
-      'network' => _Problem.unreachable,
-      'rejected' => _Problem.scanRejected,
-      _ => _Problem.failed,
-    },
-    _Mismatch() => _Problem.identityMismatch,
-    NotesHttpException(:final statusCode) => switch (statusCode) {
-      404 => _Problem.notesMissing,
-      401 || 403 => _Problem.scanRejected,
-      _ => _Problem.failed,
-    },
-    NotesTransportException() => _Problem.unreachable,
-    _ => _Problem.failed,
+  void _back({String? problem}) {
+    if (mounted)
+      setState(() {
+        _phase = LoginPhase.entry;
+        _problem = problem;
+      });
+  }
+
+  String _problemFor(Object error) => switch (error) {
+    LoginException(:final code) => code,
+    AccountApiException(code: 'network') => 'transport_failed',
+    AccountApiException(code: 'rejected') => 'scanned_rejected',
+    NotesHttpException(statusCode: 404) => 'notes_missing',
+    NotesHttpException(statusCode: 401 || 403) => 'scanned_rejected',
+    NotesTransportException() => 'transport_failed',
+    StateError(message: 'identity_mismatch') => 'identity_mismatch',
+    StateError(message: 'certificate_changed') => 'certificate_changed',
+    _ => 'unexpected',
   };
+
+  Future<http.Client> _client(ServerBase server, {String? user}) async {
+    if (widget.transport != null) return _transport = widget.transport!;
+    final runtime = ref.read(runtimeProvider);
+    final accounts = await runtime.database.watchAccounts().first;
+    final existing = widget.reauthenticate;
+    final pins = accounts
+        .where(
+          (a) =>
+              a.server == server.uri.toString() &&
+              (existing == null
+                  ? user == null || a.loginName == user
+                  : a.id == existing.id),
+        )
+        .map((a) => a.certificateFingerprint)
+        .whereType<String>()
+        .toSet();
+    if (pins.length > 1) throw StateError('certificate_changed');
+    _usedPin =
+        pins.firstOrNull ??
+        (_confirmedOrigin == server.uri.origin ? _confirmedPin : null);
+    _transport?.close();
+    return _transport = CertificateHttpClient(
+      server: server.uri,
+      fingerprint: _usedPin,
+    );
+  }
+
+  Future<void> _failed(
+    Object error,
+    int attempt,
+    Future<void> Function() retry,
+  ) async {
+    if (!mounted || attempt != _attempt) return;
+    final encounter = (_transport is CertificateHttpClient)
+        ? (_transport as CertificateHttpClient).lastEncounter
+        : null;
+    _back(problem: encounter == null ? _problemFor(error) : null);
+    if (encounter == null) return;
+    final approved = await confirmServerCertificate(context, encounter);
+    if (!mounted ||
+        attempt != _attempt ||
+        !approved ||
+        encounter.outcome.decision != CertificateTrustDecision.ask)
+      return;
+    _confirmedOrigin = _server!.uri.origin;
+    _confirmedPin = encounter.fingerprint;
+    await retry();
+  }
+
+  int _begin(ServerBase server) {
+    _focus.unfocus();
+    final attempt = ++_attempt;
+    _cancelled = Completer<void>();
+    setState(() {
+      _phase = LoginPhase.checking;
+      _problem = null;
+      _server = server;
+    });
+    return attempt;
+  }
+
+  bool _stale(int attempt) => !mounted || attempt != _attempt;
 
   Future<void> _connect([String? address]) async {
     if (_busy) return;
-    _focus.unfocus();
     if (address != null) _url.text = address;
     final ServerBase server;
     try {
       server = parseServerAddress(_url.text);
-    } on ServerAddressException catch (e) {
-      setState(() {
-        _problem = switch (e.problem) {
-          ServerAddressProblem.empty => _Problem.empty,
-          ServerAddressProblem.insecure => _Problem.insecure,
-          ServerAddressProblem.invalid => _Problem.invalid,
-        };
-      });
+    } on ServerAddressException {
+      _back(problem: 'invalid_server');
       return;
     }
-    _url.text = _shown(server);
-    final attempt = ++_attempt;
-    bool stale() => attempt != _attempt;
-    setState(() {
-      _phase = _Phase.checking;
-      _problem = null;
-      _server = server;
-    });
+    final attempt = _begin(server);
     try {
-      final session = await LoginClient(
-        base: server,
-        transport: _transport,
-      ).start();
-      if (stale() || !mounted) {
+      final transport = await _client(server);
+      if (_stale(attempt)) return;
+      final login = LoginClient(base: server, transport: transport);
+      await login.checkServer();
+      if (_stale(attempt)) return;
+      final session = await login.start();
+      if (_stale(attempt)) {
         session.cancel();
         return;
       }
       _session = session;
-      final opened = await (widget.openBrowser ?? _openBrowser)(
-        session.loginUri,
-      );
-      if (stale() || !mounted) {
+      setState(() => _phase = LoginPhase.openingLogin);
+      final opened =
+          await (widget.openBrowser?.call(session.loginUri) ??
+              openLoginBrowser(session.loginUri, _cancelled.future));
+      if (_stale(attempt)) {
         session.cancel();
         return;
       }
       if (!opened) throw const LoginException('browser_unavailable');
-      setState(() => _phase = _Phase.waiting);
-      while (!stale() && mounted && !session.isClosed) {
-        final LoginCredentials? credentials;
+      setState(() => _phase = LoginPhase.waiting);
+      final deadline = DateTime.now().add(const Duration(minutes: 15));
+      while (!_stale(attempt) &&
+          !session.isClosed &&
+          DateTime.now().isBefore(deadline)) {
+        LoginCredentials? credentials;
         try {
           credentials = await session.poll();
-        } on LoginException catch (e) {
-          // Expected while the browser is in front; the session expires itself.
-          if (e.code != 'transport_failed' && e.code != 'timeout') rethrow;
-          await Future<void>.delayed(const Duration(seconds: 2));
-          continue;
+        } on LoginException catch (error) {
+          if (error.code != 'transport_failed' && error.code != 'timeout')
+            rethrow;
+          final encounter = transport is CertificateHttpClient
+              ? transport.lastEncounter
+              : null;
+          if (encounter != null) rethrow;
         }
-        if (stale()) return;
+        if (_stale(attempt)) return;
         if (credentials != null) {
-          // Once received, persist even if the screen is closing.
-          if (mounted) setState(() => _phase = _Phase.saving);
-          await _store(credentials, revokeOnFailure: true);
-          if (mounted) Navigator.of(context).pop();
+          await _store(credentials, transport, attempt, revokeOnFailure: true);
+          if (!_stale(attempt)) Navigator.of(context).pop();
           return;
         }
-        await Future<void>.delayed(const Duration(seconds: 1));
+        await Future.any([
+          Future<void>.delayed(const Duration(seconds: 2)),
+          _cancelled.future,
+        ]);
       }
-      if (!stale()) _back(problem: _Problem.expired);
-    } catch (e) {
+      if (!_stale(attempt)) throw const LoginException('flow_closed');
+    } catch (error) {
       _session?.cancel();
-      if (!stale()) _back(problem: _problemFor(e));
+      await _failed(error, attempt, _connect);
     }
   }
 
-  /// Checks identity and the Notes app, then saves or replaces the account. A
-  /// password the login flow just issued is revoked again when it is refused.
   Future<void> _store(
-    LoginCredentials credentials, {
+    LoginCredentials credentials,
+    http.Client transport,
+    int attempt, {
     required bool revokeOnFailure,
   }) async {
     final runtime = ref.read(runtimeProvider);
@@ -223,18 +267,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     try {
       if (existing != null &&
           (existing.server != credentials.server.uri.toString() ||
-              existing.loginName != credentials.loginName)) {
-        throw const _Mismatch();
-      }
-      // The Notes app may be missing or disabled on a server that has a login.
+              existing.loginName != credentials.loginName))
+        throw StateError('identity_mismatch');
       await NotesClient(
         base: credentials.server,
-        transport: _transport,
+        transport: transport,
         loginName: credentials.loginName,
         appPassword: credentials.appPassword,
       ).list(chunkSize: 1);
-      // Adding an account that is already here signs that one in again, so
-      // the same server and user never appear twice.
+      if (_stale(attempt)) throw const LoginException('cancelled');
       final target =
           existing ??
           (await runtime.database.watchAccounts().first)
@@ -244,25 +285,38 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     a.loginName == credentials.loginName,
               )
               .firstOrNull;
-      if (target == null) {
-        await runtime.accounts.add(credentials);
-      } else {
-        await runtime.accounts.reauthenticate(target.id, credentials);
-        // The last failed pass keeps asking to sign in until a new one runs.
-        unawaited(runtime.sync.sync(target.id).catchError((Object _) {}));
-        // A name read while the old password was refused stays empty otherwise.
-        if (mounted) ref.invalidate(accountDisplayNameProvider);
+      if (_stale(attempt)) throw const LoginException('cancelled');
+      setState(() => _phase = LoginPhase.saving);
+      try {
+        if (target == null) {
+          await runtime.accounts.add(
+            credentials,
+            certificateFingerprint: _usedPin,
+            canCommit: () => !_stale(attempt),
+          );
+        } else {
+          await runtime.accounts.reauthenticate(
+            target.id,
+            credentials,
+            certificateFingerprint: _usedPin,
+            canCommit: () => !_stale(attempt),
+          );
+          unawaited(runtime.sync.sync(target.id).catchError((Object _) {}));
+          if (mounted) ref.invalidate(accountDisplayNameProvider);
+        }
+      } catch (_) {
+        throw const LoginException('local_persistence');
       }
     } catch (_) {
       if (revokeOnFailure) {
         try {
-          await AccountApi(_transport).revoke(
+          await AccountApi(transport).revoke(
             credentials.server,
             credentials.loginName,
             credentials.appPassword,
           );
         } catch (_) {
-          // The user can still revoke it in the Nextcloud security settings.
+          /* The user can revoke an unreachable grant in server settings. */
         }
       }
       rethrow;
@@ -272,7 +326,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Future<void> _scan() async {
     if (_busy || _scanning) return;
     _focus.unfocus();
-    // A double tap would push two scanners that both open the camera.
     _scanning = true;
     final QrLoginPayload? payload;
     try {
@@ -283,48 +336,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (payload == null || !mounted) return;
     switch (payload) {
       case QrLoginServerOnly(:final server):
-        // Nothing secret was scanned: an address the user did not have to type.
-        await _connect(_shown(server));
+        await _connect(server.uri.toString());
       case QrLoginCredentials():
-        // The code carries a secret, so name server and user before using it.
-        if (await _confirmScanned(payload) && mounted) {
-          await _commitScanned(payload);
-        }
+        await _commitScanned(payload);
     }
   }
 
-  Future<bool> _confirmScanned(QrLoginCredentials payload) async {
-    final l = AppLocalizations.of(context)!;
-    return await showDialog<bool>(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: Text(l.scanConfirmTitle),
-            content: Text(
-              l.scanConfirmBody(payload.loginName, payload.server.uri.host),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(false),
-                child: Text(l.cancel),
-              ),
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(true),
-                child: Text(l.connect),
-              ),
-            ],
-          ),
-        ) ??
-        false;
-  }
-
   Future<void> _commitScanned(QrLoginCredentials payload) async {
-    final attempt = ++_attempt;
-    setState(() {
-      _phase = _Phase.saving;
-      _problem = null;
-    });
-    final api = AccountApi(_transport);
+    final attempt = _begin(payload.server);
     try {
+      final transport = await _client(payload.server, user: payload.loginName);
+      if (_stale(attempt)) return;
+      await LoginClient(
+        base: payload.server,
+        transport: transport,
+      ).checkServer();
+      if (_stale(attempt)) return;
+      final api = AccountApi(transport);
       final password = payload.isOneTime
           ? await api.exchangeOneTime(
               payload.server,
@@ -332,483 +360,79 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               payload.secret,
             )
           : payload.secret;
+      if (_stale(attempt)) return;
       await api.signIn(payload.server, payload.loginName, password);
+      if (_stale(attempt)) return;
       await _store(
         LoginCredentials(
           server: payload.server,
           loginName: payload.loginName,
           appPassword: password,
         ),
+        transport,
+        attempt,
         revokeOnFailure: payload.isOneTime,
       );
-      if (mounted) Navigator.of(context).pop();
-    } catch (e) {
-      if (attempt == _attempt) _back(problem: _problemFor(e));
+      if (!_stale(attempt)) Navigator.of(context).pop();
+    } catch (error) {
+      await _failed(error, attempt, () => _commitScanned(payload));
     }
-  }
-
-  static String _shown(ServerBase server) {
-    final text = server.uri.toString();
-    return text.endsWith('/') ? text.substring(0, text.length - 1) : text;
   }
 
   String? _message(AppLocalizations l) => switch (_problem) {
-    null => null,
-    _Problem.empty => l.serverEmpty,
-    _Problem.insecure => l.serverInsecure,
-    _Problem.invalid => l.serverInvalid,
-    _Problem.noLogin => l.serverNoLogin,
-    _Problem.unreachable => l.serverUnreachable,
-    _Problem.browser => l.browserUnavailable,
-    _Problem.expired => l.loginExpired,
-    _Problem.scanRejected => l.scannedLoginRejected,
-    _Problem.tls => l.serverCertificate,
-    _Problem.timeout => l.serverTimeout,
-    _Problem.notesMissing => l.notesAppMissing,
-    _Problem.identityMismatch => l.reauthMismatch,
-    _Problem.cancelled => l.loginCancelled,
-    _Problem.failed => l.loginFailed,
+    null || 'cancelled' => null,
+    'invalid_server' || 'invalid_server_path' => l.invalidServer,
+    'transport_failed' || 'timeout' => l.serverUnavailable,
+    'server_maintenance' => l.serverMaintenance,
+    'server_upgrade' => l.serverUpgrade,
+    'server_not_installed' => l.serverNotInstalled,
+    'browser_unavailable' => l.browserUnavailable,
+    'flow_closed' => l.loginTimedOut,
+    'scanned_rejected' => l.scannedLoginRejected,
+    'notes_missing' => l.notesAppMissing,
+    'identity_mismatch' => l.reauthenticateAccountMismatch,
+    'certificate_changed' => l.certificateChangedTitle,
+    'local_persistence' => l.localPersistenceFailed,
+    'start_rejected' ||
+    'invalid_response' ||
+    'invalid_content_type' ||
+    'response_too_large' ||
+    'untrusted_endpoint' => l.invalidResponse,
+    _ => l.unexpectedError,
   };
 
   @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
-    return PopScope(
-      canPop: _phase != _Phase.saving,
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(
-            widget.reauthenticate == null ? l.addAccount : l.signInAgain,
-          ),
-        ),
-        body: SafeArea(
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 220),
-            child: _phase == _Phase.waiting || _phase == _Phase.saving
-                ? _Waiting(
-                    key: const ValueKey('waiting'),
-                    host: _server?.uri.host ?? '',
-                    saving: _phase == _Phase.saving,
-                    onCancel: _cancel,
-                  )
-                : _Entry(
-                    key: const ValueKey('entry'),
-                    controller: _url,
-                    focus: _focus,
-                    busy: _busy,
-                    account: widget.reauthenticate,
-                    message: _message(l),
-                    fieldError: const {
-                      _Problem.empty,
-                      _Problem.insecure,
-                      _Problem.invalid,
-                    }.contains(_problem),
-                    info: _problem == _Problem.cancelled,
-                    onCancel: _cancel,
-                    onConnect: _connect,
-                    onScan: _canScan ? _scan : null,
-                  ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Wide windows put the introduction beside the form.
-const _wideLoginWidth = 840.0;
-
-class _Entry extends StatelessWidget {
-  const _Entry({
-    super.key,
-    required this.controller,
-    required this.focus,
-    required this.busy,
-    required this.account,
-    required this.message,
-    required this.fieldError,
-    required this.info,
-    required this.onCancel,
-    required this.onConnect,
-    required this.onScan,
-  });
-  final TextEditingController controller;
-  final FocusNode focus;
-  final bool busy;
-
-  /// The account being signed in again; its server and user are fixed.
-  final Account? account;
-  final String? message;
-
-  /// Shows [message] under the address field instead of in a banner.
-  final bool fieldError;
-
-  /// Shows [message] as a neutral notice, not a failure.
-  final bool info;
-  final VoidCallback onCancel;
-  final VoidCallback onConnect;
-  final VoidCallback? onScan;
-
-  @override
-  Widget build(BuildContext context) {
-    final intro = _Intro(account: account);
-    final form = _Form(
-      controller: controller,
-      focus: focus,
-      busy: busy,
-      locked: account != null,
-      message: message,
-      fieldError: fieldError,
-      info: info,
-      onCancel: onCancel,
-      onConnect: onConnect,
-      onScan: onScan,
-    );
-    if (MediaQuery.sizeOf(context).width >= _wideLoginWidth) {
-      return Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 960),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(child: intro),
-                const SizedBox(width: 48),
-                SizedBox(width: 440, child: form),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-    return Center(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 520),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [intro, const SizedBox(height: 24), form],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Brand, title and the two reasons to use the app; for a repair it names the
-/// account that has to be signed in again.
-class _Intro extends StatelessWidget {
-  const _Intro({required this.account});
-  final Account? account;
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    final account = this.account;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const Align(alignment: Alignment.centerLeft, child: BrandMark()),
-        const SizedBox(height: 20),
-        if (account != null) ...[
-          Semantics(
-            header: true,
-            child: Text(
-              account.loginName,
-              style: _welcomeStyle(theme),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            Uri.parse(account.server).host,
-            style: theme.textTheme.titleMedium,
-          ),
-          const SizedBox(height: 12),
-          Text(
-            l.reauthExplain,
-            style: theme.textTheme.bodyLarge?.copyWith(
-              color: scheme.onSurfaceVariant,
-            ),
-          ),
-        ] else ...[
-          Semantics(
-            header: true,
-            child: Text(l.onboardingTitle, style: _welcomeStyle(theme)),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            l.onboardingBody,
-            style: theme.textTheme.bodyLarge?.copyWith(
-              color: scheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: 24),
-          _FeatureLine(
-            icon: Icons.hub_outlined,
-            title: l.multiAccountTitle,
-            body: l.multiAccountBody,
-          ),
-          const SizedBox(height: 16),
-          _FeatureLine(
-            icon: Icons.shield_outlined,
-            title: l.secureLoginTitle,
-            body: l.secureLoginBody,
-          ),
-        ],
-      ],
-    );
-  }
-
-  static TextStyle? _welcomeStyle(ThemeData theme) => theme
-      .textTheme
-      .headlineMedium
-      ?.copyWith(fontSize: 30, height: 38 / 30, fontWeight: FontWeight.w600);
-}
-
-class _Form extends StatelessWidget {
-  const _Form({
-    required this.controller,
-    required this.focus,
-    required this.busy,
-    required this.locked,
-    required this.message,
-    required this.fieldError,
-    required this.info,
-    required this.onCancel,
-    required this.onConnect,
-    required this.onScan,
-  });
-  final TextEditingController controller;
-  final FocusNode focus;
-  final bool busy;
-  final bool locked;
-  final String? message;
-  final bool fieldError;
-  final bool info;
-  final VoidCallback onCancel;
-  final VoidCallback onConnect;
-  final VoidCallback? onScan;
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
-    final scheme = Theme.of(context).colorScheme;
-    const tall = Size.fromHeight(48);
-    final banner = message != null && !fieldError;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        TextField(
-          controller: controller,
-          focusNode: focus,
-          enabled: !busy && !locked,
-          keyboardType: TextInputType.url,
-          textInputAction: TextInputAction.go,
-          onSubmitted: (_) => onConnect(),
-          autofillHints: const [AutofillHints.url],
-          autocorrect: false,
-          enableSuggestions: false,
-          decoration: InputDecoration(
-            labelText: l.serverUrl,
-            hintText: 'https://cloud.example.com',
-            prefixIcon: const Icon(Icons.language_rounded),
-            errorText: fieldError ? message : null,
-            errorMaxLines: 4,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
-          ),
-        ),
-        if (banner) ...[
-          const SizedBox(height: 12),
-          Semantics(
-            liveRegion: true,
-            child: Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: info ? scheme.secondaryContainer : scheme.errorContainer,
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  ExcludeSemantics(
-                    child: Icon(
-                      info
-                          ? Icons.info_outline_rounded
-                          : Icons.error_outline_rounded,
-                      color: info
-                          ? scheme.onSecondaryContainer
-                          : scheme.onErrorContainer,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      message!,
-                      style: TextStyle(
-                        color: info
-                            ? scheme.onSecondaryContainer
-                            : scheme.onErrorContainer,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-        const SizedBox(height: 16),
-        FilledButton.icon(
-          style: FilledButton.styleFrom(minimumSize: tall),
-          onPressed: busy ? null : onConnect,
-          icon: busy
-              ? const SizedBox.square(
-                  dimension: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2.4),
+  Widget build(BuildContext context) => PopScope(
+    canPop: _phase != LoginPhase.waiting && _phase != LoginPhase.saving,
+    onPopInvokedWithResult: (didPop, _) {
+      if (!didPop) _cancel();
+    },
+    child: Scaffold(
+      body: SafeArea(
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 220),
+          child: _phase == LoginPhase.waiting || _phase == LoginPhase.saving
+              ? LoginWaiting(
+                  key: const ValueKey('waiting'),
+                  host: _server?.uri.host ?? '',
+                  saving: _phase == LoginPhase.saving,
+                  onCancel: _cancel,
                 )
-              : const Icon(Icons.arrow_forward_rounded),
-          label: Text(busy ? l.checkingServer : l.connect),
-        ),
-        if (busy) ...[
-          const SizedBox(height: 8),
-          OutlinedButton.icon(
-            style: OutlinedButton.styleFrom(minimumSize: tall),
-            onPressed: onCancel,
-            icon: const Icon(Icons.close_rounded),
-            label: Text(l.cancel),
-          ),
-        ] else if (onScan != null) ...[
-          const SizedBox(height: 8),
-          OutlinedButton.icon(
-            style: OutlinedButton.styleFrom(minimumSize: tall),
-            onPressed: onScan,
-            icon: const Icon(Icons.qr_code_scanner_rounded),
-            label: Text(l.scanLoginCode),
-          ),
-        ],
-      ],
-    );
-  }
-}
-
-/// Browser handoff: waiting for the approval, then saving the account.
-class _Waiting extends StatelessWidget {
-  const _Waiting({
-    super.key,
-    required this.host,
-    required this.saving,
-    required this.onCancel,
-  });
-  final String host;
-  final bool saving;
-  final VoidCallback onCancel;
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
-    final theme = Theme.of(context);
-    return Center(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 520),
-          child: Column(
-            children: [
-              const BrandMark(size: 64),
-              const SizedBox(height: 24),
-              const CircularProgressIndicator(),
-              const SizedBox(height: 24),
-              Semantics(
-                liveRegion: true,
-                child: Text(
-                  saving ? l.savingAccount : l.waitingForLogin,
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.headlineSmall,
+              : LoginEntry(
+                  key: const ValueKey('entry'),
+                  serverController: _url,
+                  serverFocus: _focus,
+                  busy: _busy,
+                  phase: _phase,
+                  reauthentication: widget.reauthenticate != null,
+                  errorMessage: _message(AppLocalizations.of(context)!),
+                  onConnect: _connect,
+                  onScan: _canScan ? _scan : null,
                 ),
-              ),
-              if (!saving) ...[
-                const SizedBox(height: 10),
-                Text(
-                  l.waitingForLoginBody,
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  host,
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.labelLarge,
-                ),
-                const SizedBox(height: 24),
-                OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size(160, 48),
-                  ),
-                  onPressed: onCancel,
-                  icon: const Icon(Icons.close_rounded),
-                  label: Text(l.cancel),
-                ),
-              ],
-            ],
-          ),
         ),
       ),
-    );
-  }
-}
-
-class _FeatureLine extends StatelessWidget {
-  const _FeatureLine({
-    required this.icon,
-    required this.title,
-    required this.body,
-  });
-  final IconData icon;
-  final String title;
-  final String body;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: scheme.primaryContainer,
-            borderRadius: BorderRadius.circular(14),
-          ),
-          child: Icon(icon, color: scheme.onPrimaryContainer),
-        ),
-        const SizedBox(width: 14),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title, style: Theme.of(context).textTheme.titleMedium),
-              const SizedBox(height: 2),
-              Text(
-                body,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: scheme.onSurfaceVariant,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
+    ),
+  );
 }
 
 /// The app icon, shown on the login screen.

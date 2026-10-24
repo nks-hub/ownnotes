@@ -29,9 +29,7 @@ Future<bool> runBackgroundSync({
   if (!await backgroundSyncAllowed()) return !retryWhenBlocked;
   final runtime =
       openRuntime?.call() ??
-      AppRuntime.production(
-        transport: () => BackgroundSyncClient(http.Client()),
-      );
+      AppRuntime.production(decorateTransport: BackgroundSyncClient.new);
   try {
     final db = runtime.database;
     for (final account in await db.select(db.accounts).get()) {

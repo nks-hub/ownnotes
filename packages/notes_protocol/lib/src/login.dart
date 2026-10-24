@@ -53,7 +53,7 @@ final class LoginSession {
     if (token == null) throw const LoginException('flow_closed');
     _busy = true;
     try {
-      final response = await _client._post(_endpoint, {'token': token});
+      final response = await _client._send(_endpoint, {'token': token});
       if (isClosed) throw const LoginException('flow_closed');
       if (response.statusCode == 404) return null;
       cancel();
@@ -109,8 +109,26 @@ final class LoginClient {
   final http.Client transport;
   final Duration timeout;
 
+  Future<void> checkServer() async {
+    final response = await _send(base.uri.resolve('status.php'), null);
+    if (response.statusCode != 200)
+      throw const LoginException('transport_failed');
+    final status = _decode(response);
+    if (status['installed'] is! bool ||
+        status['maintenance'] is! bool ||
+        status['needsDbUpgrade'] is! bool) {
+      throw const LoginException('invalid_response');
+    }
+    if (status['maintenance'] == true)
+      throw const LoginException('server_maintenance');
+    if (status['needsDbUpgrade'] == true)
+      throw const LoginException('server_upgrade');
+    if (status['installed'] != true)
+      throw const LoginException('server_not_installed');
+  }
+
   Future<LoginSession> start() async {
-    final response = await _post(base.uri.resolve('index.php/login/v2'), {});
+    final response = await _send(base.uri.resolve('index.php/login/v2'), {});
     if (response.statusCode != 200) {
       throw const LoginException('start_rejected');
     }
@@ -150,16 +168,20 @@ final class LoginClient {
     return uri;
   }
 
-  Future<http.Response> _post(Uri uri, Map<String, String> fields) async {
+  Future<http.Response> _send(Uri uri, Map<String, String>? fields) async {
     final abort = Completer<void>();
     final request =
-        http.AbortableRequest('POST', uri, abortTrigger: abort.future)
+        http.AbortableRequest(
+            fields == null ? 'GET' : 'POST',
+            uri,
+            abortTrigger: abort.future,
+          )
           ..followRedirects = false
           ..headers.addAll({
             'Accept': 'application/json',
             'User-Agent': 'OwnNotes',
-          })
-          ..bodyFields = fields;
+          });
+    if (fields != null) request.bodyFields = fields;
     try {
       return await (() async {
         final response = await transport.send(request);

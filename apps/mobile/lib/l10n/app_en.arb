@@ -3,7 +3,7 @@
   "appTitle": "OwnNotes",
   "addAccount": "Add account",
   "serverUrl": "Nextcloud server URL",
-  "connect": "Connect",
+  "connect": "Continue",
   "cancel": "Cancel",
   "waitingLogin": "Complete login in your browser…",
   "loginFailed": "Login failed. Check the server address and start again.",
@@ -184,25 +184,25 @@
   "serverInvalid": "That is not a valid server address. Example: cloud.example.com",
   "serverNoLogin": "This server did not offer the Nextcloud login. Check the address.",
   "serverUnreachable": "Could not reach the server. Check the address and your connection.",
-  "browserUnavailable": "Could not open the browser for the login.",
+  "browserUnavailable": "The sign-in page could not be opened.",
   "loginExpired": "The login took too long. Start again.",
-  "scannedLoginRejected": "The server refused the scanned code. It may be old or revoked. Create a new one.",
-  "onboardingTitle": "Your notes on your own Nextcloud",
-  "onboardingBody": "OwnNotes syncs Markdown notes with the Nextcloud Notes app. They go to your server and nowhere else.",
+  "scannedLoginRejected": "The scanned login code could not be used. Create a new one on the server.",
+  "onboardingTitle": "Your notes, one app",
+  "onboardingBody": "Connect any supported Nextcloud server. Accounts, their stored data and background work stay strictly separated.",
   "multiAccountTitle": "Several accounts",
   "multiAccountBody": "Add more servers or users and switch between them any time.",
   "secureLoginTitle": "No password in the app",
   "secureLoginBody": "You sign in in your browser. The phone keeps only an app password that you can revoke.",
-  "checkingServer": "Checking server…",
-  "waitingForLogin": "Waiting for the login",
-  "waitingForLoginBody": "Approve the access in your browser, then come back to the app.",
+  "checkingServer": "Checking the server…",
+  "waitingForLogin": "Finish signing in in your browser",
+  "waitingForLoginBody": "This screen will continue automatically after Nextcloud approves the app.",
   "savingAccount": "Signing in…",
-  "scanLoginCode": "Scan QR code",
-  "scanLoginCodeHint": "Point the camera at the login QR code from Nextcloud (Settings, Security, app passwords).",
-  "scanLoginCodeUnreadable": "That is not a Nextcloud login code.",
+  "scanLoginCode": "Scan a login code",
+  "scanLoginCodeHint": "Point the camera at the QR code your server shows under Settings, Security, Create new app password.",
+  "scanLoginCodeUnreadable": "This is not a Nextcloud login code.",
   "scanCameraDenied": "Camera access is off. Allow it in the app settings to scan the code.",
   "scanCameraUnavailable": "The camera could not be started.",
-  "openAppSettings": "Open app settings",
+  "openAppSettings": "Open settings",
   "accounts": "Accounts",
   "currentAccount": "Current account",
   "accountRemovedRevoked": "Account removed. Its app password is revoked on the server.",
@@ -895,7 +895,16 @@
   "widgetNoAccount": "Sign in to OwnNotes before adding a widget.",
   "widgetSaveFailed": "The widget could not be configured.",
   "aboutVersion": "Version {version} ({build})",
-  "@aboutVersion": {"placeholders": {"version": {"type": "String"}, "build": {"type": "String"}}},
+  "@aboutVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      },
+      "build": {
+        "type": "String"
+      }
+    }
+  },
   "aboutFormatTitle": "Plain Markdown files",
   "aboutFormatBody": "Notes are Markdown files in the Notes folder and categories are folders. The Notes web app, the Text app and other clients open them too.",
   "aboutServer": "Server",
@@ -910,9 +919,21 @@
   "backgroundSyncTitle": "Background sync",
   "backgroundSyncOff": "Off",
   "backgroundSyncMinutes": "Every {minutes} minutes",
-  "@backgroundSyncMinutes": {"placeholders": {"minutes": {"type": "int"}}},
+  "@backgroundSyncMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
   "backgroundSyncHours": "{hours, plural, one {Every hour} other {Every {hours} hours}}",
-  "@backgroundSyncHours": {"placeholders": {"hours": {"type": "int"}}},
+  "@backgroundSyncHours": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
   "backgroundSyncWifi": "Wi-Fi only",
   "backgroundSyncHint": "Applies while the app is closed, including widget changes. The open app uses any available network. Android decides when background work runs.",
   "backgroundSyncLoadFailed": "Cannot read sync settings. Tap to retry.",
@@ -920,5 +941,51 @@
   "telemetryTitle": "Diagnostics and app usage",
   "telemetryDescription": "Sends errors and screen names to Sentry and Rybbit. Note text and credentials are excluded. Disabling takes effect now; enabling takes effect after restarting.",
   "telemetryRestart": "Diagnostics will start the next time you open the app.",
-  "telemetrySaveFailed": "Could not save the diagnostics setting."
+  "telemetrySaveFailed": "Could not save the diagnostics setting.",
+  "addServerTitle": "Add a Nextcloud server",
+  "certificateChangedBody": "{host} now presents a different certificate than the one this account trusts. If you replaced the certificate yourself, remove the account and add it again.",
+  "@certificateChangedBody": {
+    "placeholders": {
+      "host": {
+        "type": "String"
+      }
+    }
+  },
+  "certificateChangedTitle": "Server certificate changed",
+  "certificateFingerprintLabel": "SHA-256 fingerprint",
+  "certificateTrustAction": "Trust and continue",
+  "certificateUnverifiedBody": "{host} presented a certificate this device cannot verify. Continue only if the fingerprint below is the one your server shows.",
+  "@certificateUnverifiedBody": {
+    "placeholders": {
+      "host": {
+        "type": "String"
+      }
+    }
+  },
+  "certificateUnverifiedTitle": "Unverified server certificate",
+  "close": "Close",
+  "invalidResponse": "The server returned a response this app cannot safely use.",
+  "invalidServer": "Enter a valid HTTPS Nextcloud address.",
+  "localPersistenceFailed": "The account could not be stored securely on this device.",
+  "loginTimedOut": "The sign-in request expired. Start it again.",
+  "multiServerBody": "Add personal and work accounts without rebuilding the app or sharing their data.",
+  "multiServerTitle": "Built for multiple servers",
+  "openingLogin": "Opening secure sign-in…",
+  "reauthenticateAccountAction": "Sign in again",
+  "reauthenticateAccountMismatch": "Sign in with the same account. The stored account was not changed.",
+  "reauthenticateAccountTitle": "Sign in to this account again",
+  "@scanLoginCode": {
+    "description": "Button that opens the camera to scan a Nextcloud login QR code"
+  },
+  "scanLoginCodeCameraDenied": "Camera access is turned off. Allow it in system settings to scan a login code.",
+  "scanLoginCodeCameraUnavailable": "This device has no camera that can read a login code.",
+  "secureBody": "App passwords are stored in the system Keychain or Keystore, never in the notes database.",
+  "secureTitle": "Credentials stay on this device",
+  "serverAddressHint": "cloud.example.com",
+  "serverAddressLabel": "Server address",
+  "serverMaintenance": "This server is currently in maintenance mode.",
+  "serverNotInstalled": "Nextcloud is not installed on this server yet.",
+  "serverUnavailable": "The server could not be reached. Check the address and your connection.",
+  "serverUpgrade": "The server must finish its database upgrade first.",
+  "unexpectedError": "Something went wrong. No account data was changed."
 }

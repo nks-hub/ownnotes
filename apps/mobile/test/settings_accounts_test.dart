@@ -455,7 +455,7 @@ void main() {
       await settle(tester);
     }
 
-    testWidgets('an invalid address is explained under the field', (
+    testWidgets('an invalid address is explained in the family login banner', (
       tester,
     ) async {
       SharedPreferencesAsyncPlatform.instance =
@@ -463,10 +463,14 @@ void main() {
       await boot(tester, const Size(411, 900));
       await openLogin(tester, MockClient((r) async => http.Response('', 500)));
       await tester.enterText(find.byType(TextField), 'http://plain.test');
-      await tester.tap(find.text('Connect'));
+      await tester.tap(find.text('Continue'));
       await settle(tester);
       final field = tester.widget<TextField>(find.byType(TextField));
-      expect(field.decoration!.errorText, contains('https://'));
+      expect(field.decoration!.errorText, isNull);
+      expect(
+        find.text('Enter a valid HTTPS Nextcloud address.'),
+        findsOneWidget,
+      );
       expect(field.controller!.text, 'http://plain.test');
       await close(tester);
     });
@@ -482,9 +486,12 @@ void main() {
         MockClient((r) async => throw http.ClientException('down')),
       );
       await tester.enterText(find.byType(TextField), 'https://down.test');
-      await tester.tap(find.text('Connect'));
+      await tester.tap(find.text('Continue'));
       await settle(tester, steps: 8);
-      expect(find.textContaining('Could not reach the server'), findsOneWidget);
+      expect(
+        find.textContaining('The server could not be reached'),
+        findsOneWidget,
+      );
       expect(
         tester.widget<TextField>(find.byType(TextField)).controller!.text,
         'https://down.test',
@@ -492,13 +499,23 @@ void main() {
       await close(tester);
     });
 
-    testWidgets('cancel returns to the form with a neutral notice', (
+    testWidgets('cancel returns to the form without an error notice', (
       tester,
     ) async {
       SharedPreferencesAsyncPlatform.instance =
           InMemorySharedPreferencesAsync.empty();
       await boot(tester, const Size(411, 900));
       final server = MockClient((r) async {
+        if (r.url.path == '/status.php')
+          return http.Response(
+            jsonEncode({
+              'installed': true,
+              'maintenance': false,
+              'needsDbUpgrade': false,
+            }),
+            200,
+            headers: {'content-type': 'application/json'},
+          );
         if (r.url.path == '/index.php/login/v2') {
           return http.Response(
             jsonEncode({
@@ -516,16 +533,13 @@ void main() {
       });
       await openLogin(tester, server);
       await tester.enterText(find.byType(TextField), 'https://cloud.test');
-      await tester.tap(find.text('Connect'));
+      await tester.tap(find.text('Continue'));
       await settle(tester, steps: 4);
-      expect(find.text('Waiting for the login'), findsOneWidget);
+      expect(find.text('Finish signing in in your browser'), findsOneWidget);
       await tester.tap(find.text('Cancel'));
       await settle(tester);
-      expect(
-        find.text('Sign-in cancelled. Nothing was saved.'),
-        findsOneWidget,
-      );
-      expect(find.text('Connect'), findsOneWidget);
+      expect(find.text('Sign-in cancelled. Nothing was saved.'), findsNothing);
+      expect(find.text('Continue'), findsOneWidget);
       await close(tester);
     });
 
@@ -540,8 +554,8 @@ void main() {
         MockClient((r) async => http.Response('', 500)),
         reauth: accounts.first,
       );
-      expect(find.text('sam'), findsOneWidget);
-      expect(find.text('one.test'), findsOneWidget);
+      expect(find.text('Sign in to this account again'), findsOneWidget);
+      expect(find.text('Sign in again'), findsOneWidget);
       final field = tester.widget<TextField>(find.byType(TextField));
       expect(field.enabled, isFalse);
       expect(field.controller!.text, 'https://one.test');
@@ -555,9 +569,7 @@ void main() {
           InMemorySharedPreferencesAsync.empty();
       await boot(tester, const Size(1100, 800));
       await openLogin(tester, MockClient((r) async => http.Response('', 500)));
-      final title = tester.getTopLeft(
-        find.text('Your notes on your own Nextcloud'),
-      );
+      final title = tester.getTopLeft(find.text('Your notes, one app'));
       final field = tester.getTopLeft(find.byType(TextField));
       expect(field.dx, greaterThan(title.dx + 300));
       await close(tester);

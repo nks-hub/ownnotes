@@ -30,7 +30,10 @@ final attachmentServiceProvider = FutureProvider<AttachmentService>((
     if (password == null) throw StateError('reauth_required');
     AttachmentsClient make(AttachmentRoute route) => AttachmentsClient(
       base: ServerBase.parse(account.server),
-      transport: transports.putIfAbsent(account.id, http.Client.new),
+      transport: transports.putIfAbsent(
+        account.id,
+        () => runtime.createAccountTransport(account),
+      ),
       loginName: account.loginName,
       appPassword: password,
       route: route,

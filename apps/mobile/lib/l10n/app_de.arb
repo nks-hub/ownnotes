@@ -3,7 +3,7 @@
   "appTitle": "OwnNotes",
   "addAccount": "Konto hinzufügen",
   "serverUrl": "Nextcloud-Serveradresse",
-  "connect": "Verbinden",
+  "connect": "Weiter",
   "cancel": "Abbrechen",
   "waitingLogin": "Schließe die Anmeldung im Browser ab …",
   "loginFailed": "Anmeldung fehlgeschlagen. Prüfe die Serveradresse und starte erneut.",
@@ -118,25 +118,25 @@
   "serverInvalid": "Das ist keine gültige Serveradresse. Beispiel: cloud.example.com",
   "serverNoLogin": "Dieser Server bietet keine Nextcloud-Anmeldung an. Prüfe die Adresse.",
   "serverUnreachable": "Der Server ist nicht erreichbar. Prüfe die Adresse und deine Verbindung.",
-  "browserUnavailable": "Der Browser für die Anmeldung konnte nicht geöffnet werden.",
+  "browserUnavailable": "Die Anmeldeseite konnte nicht geöffnet werden.",
   "loginExpired": "Die Anmeldung hat zu lange gedauert. Starte erneut.",
-  "scannedLoginRejected": "Der Server hat den gescannten Code abgelehnt. Er ist vielleicht alt oder widerrufen. Erstelle einen neuen.",
-  "onboardingTitle": "Deine Notizen in deiner eigenen Nextcloud",
-  "onboardingBody": "OwnNotes synchronisiert Markdown-Notizen mit der Nextcloud-App Notes. Sie landen auf deinem Server und nirgendwo sonst.",
+  "scannedLoginRejected": "Der gescannte Anmeldecode konnte nicht verwendet werden. Erstellen Sie einen neuen auf dem Server.",
+  "onboardingTitle": "Alle Notizen in einer App",
+  "onboardingBody": "Verbinden Sie einen beliebigen unterstützten Nextcloud-Server. Konten, ihre gespeicherten Daten und die Hintergrundarbeit bleiben strikt getrennt.",
   "multiAccountTitle": "Mehrere Konten",
   "multiAccountBody": "Füge weitere Server oder Benutzer hinzu und wechsle jederzeit zwischen ihnen.",
   "secureLoginTitle": "Kein Passwort in der App",
   "secureLoginBody": "Du meldest dich im Browser an. Das Gerät speichert nur ein App-Passwort, das du widerrufen kannst.",
-  "checkingServer": "Server wird geprüft …",
-  "waitingForLogin": "Warten auf die Anmeldung",
-  "waitingForLoginBody": "Gewähre den Zugriff im Browser und kehre dann zur App zurück.",
+  "checkingServer": "Server wird geprüft…",
+  "waitingForLogin": "Schließen Sie die Anmeldung im Browser ab",
+  "waitingForLoginBody": "Dieser Bildschirm fährt automatisch fort, sobald Nextcloud die App bestätigt.",
   "savingAccount": "Anmeldung läuft …",
-  "scanLoginCode": "QR-Code scannen",
-  "scanLoginCodeHint": "Richte die Kamera auf den Anmelde-QR-Code aus Nextcloud (Einstellungen, Sicherheit, App-Passwörter).",
-  "scanLoginCodeUnreadable": "Das ist kein Nextcloud-Anmeldecode.",
+  "scanLoginCode": "Anmeldecode scannen",
+  "scanLoginCodeHint": "Richten Sie die Kamera auf den QR-Code, den Ihr Server unter Einstellungen, Sicherheit, Neues App-Passwort erstellen anzeigt.",
+  "scanLoginCodeUnreadable": "Dies ist kein Nextcloud-Anmeldecode.",
   "scanCameraDenied": "Der Kamerazugriff ist aus. Erlaube ihn in den App-Einstellungen, um den Code zu scannen.",
   "scanCameraUnavailable": "Die Kamera konnte nicht gestartet werden.",
-  "openAppSettings": "App-Einstellungen öffnen",
+  "openAppSettings": "Einstellungen öffnen",
   "accounts": "Konten",
   "currentAccount": "Aktuelles Konto",
   "accountRemovedRevoked": "Konto entfernt. Sein App-Passwort ist auf dem Server widerrufen.",
@@ -706,9 +706,21 @@
   "backgroundSyncTitle": "Hintergrundsynchronisierung",
   "backgroundSyncOff": "Aus",
   "backgroundSyncMinutes": "Alle {minutes} Minuten",
-  "@backgroundSyncMinutes": {"placeholders": {"minutes": {"type": "int"}}},
+  "@backgroundSyncMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
   "backgroundSyncHours": "{hours, plural, one {Jede Stunde} other {Alle {hours} Stunden}}",
-  "@backgroundSyncHours": {"placeholders": {"hours": {"type": "int"}}},
+  "@backgroundSyncHours": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
   "backgroundSyncWifi": "Nur WLAN",
   "backgroundSyncHint": "Gilt bei geschlossener App, auch für Widget-Änderungen. Die geöffnete App nutzt jedes verfügbare Netzwerk. Android bestimmt den Zeitpunkt der Hintergrundausführung.",
   "backgroundSyncLoadFailed": "Synchronisierungseinstellungen können nicht gelesen werden. Zum Wiederholen tippen.",
@@ -716,5 +728,48 @@
   "telemetryTitle": "Diagnose und App-Nutzung",
   "telemetryDescription": "Sendet Fehler und Bildschirmnamen an Sentry und Rybbit. Notiztexte und Zugangsdaten werden nicht gesendet. Ausschalten gilt sofort, Einschalten nach einem Neustart.",
   "telemetryRestart": "Die Diagnose startet beim nächsten Öffnen der App.",
-  "telemetrySaveFailed": "Die Diagnoseeinstellung konnte nicht gespeichert werden."
+  "telemetrySaveFailed": "Die Diagnoseeinstellung konnte nicht gespeichert werden.",
+  "multiServerTitle": "Für mehrere Server geeignet",
+  "multiServerBody": "Fügen Sie private und berufliche Konten hinzu, ohne die App neu zu erstellen oder ihre Daten zu teilen.",
+  "secureTitle": "Zugangsdaten bleiben auf diesem Gerät",
+  "secureBody": "App-Passwörter werden im Keychain oder Keystore des Systems gespeichert, niemals in der Notizdatenbank.",
+  "addServerTitle": "Nextcloud-Server hinzufügen",
+  "serverAddressLabel": "Serveradresse",
+  "serverAddressHint": "cloud.example.com",
+  "openingLogin": "Sichere Anmeldung wird geöffnet…",
+  "reauthenticateAccountTitle": "Erneut bei diesem Konto anmelden",
+  "reauthenticateAccountAction": "Erneut anmelden",
+  "reauthenticateAccountMismatch": "Melden Sie sich mit demselben Konto an. Das gespeicherte Konto wurde nicht geändert.",
+  "invalidServer": "Geben Sie eine gültige HTTPS-Adresse von Nextcloud ein.",
+  "serverUnavailable": "Der Server konnte nicht erreicht werden. Prüfen Sie die Adresse und Ihre Verbindung.",
+  "invalidResponse": "Der Server hat eine Antwort gesendet, die diese App nicht sicher verarbeiten kann.",
+  "unexpectedError": "Ein Fehler ist aufgetreten. Es wurden keine Kontodaten geändert.",
+  "loginTimedOut": "Die Anmeldeanfrage ist abgelaufen. Starten Sie sie erneut.",
+  "localPersistenceFailed": "Das Konto konnte nicht sicher auf diesem Gerät gespeichert werden.",
+  "serverNotInstalled": "Nextcloud ist auf diesem Server noch nicht installiert.",
+  "serverMaintenance": "Dieser Server befindet sich im Wartungsmodus.",
+  "serverUpgrade": "Der Server muss zuerst die Aktualisierung seiner Datenbank abschließen.",
+  "scanLoginCodeCameraDenied": "Der Kamerazugriff ist deaktiviert. Erlauben Sie ihn in den Systemeinstellungen, um einen Anmeldecode zu scannen.",
+  "scanLoginCodeCameraUnavailable": "Dieses Gerät hat keine Kamera, die einen Anmeldecode lesen kann.",
+  "certificateChangedTitle": "Serverzertifikat geändert",
+  "certificateUnverifiedTitle": "Nicht verifiziertes Serverzertifikat",
+  "certificateChangedBody": "{host} verwendet jetzt ein anderes Zertifikat als das, dem dieses Konto vertraut. Wenn Sie das Zertifikat selbst ersetzt haben, entfernen Sie das Konto und fügen Sie es erneut hinzu.",
+  "certificateUnverifiedBody": "{host} hat ein Zertifikat vorgelegt, das dieses Gerät nicht überprüfen kann. Fahren Sie nur fort, wenn der folgende Fingerabdruck mit dem Ihres Servers übereinstimmt.",
+  "certificateFingerprintLabel": "SHA-256-Fingerabdruck",
+  "certificateTrustAction": "Vertrauen und fortfahren",
+  "close": "Schließen",
+  "@certificateChangedBody": {
+    "placeholders": {
+      "host": {
+        "type": "String"
+      }
+    }
+  },
+  "@certificateUnverifiedBody": {
+    "placeholders": {
+      "host": {
+        "type": "String"
+      }
+    }
+  }
 }
