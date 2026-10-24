@@ -506,7 +506,7 @@ void main() {
           InMemorySharedPreferencesAsync.empty();
       await boot(tester, const Size(411, 900));
       final server = MockClient((r) async {
-        if (r.url.path == '/status.php')
+        if (r.url.path == '/status.php') {
           return http.Response(
             jsonEncode({
               'installed': true,
@@ -516,6 +516,7 @@ void main() {
             200,
             headers: {'content-type': 'application/json'},
           );
+        }
         if (r.url.path == '/index.php/login/v2') {
           return http.Response(
             jsonEncode({

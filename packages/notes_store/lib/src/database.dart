@@ -201,8 +201,9 @@ class NotesDatabase extends _$NotesDatabase {
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) => m.createAll(),
     onUpgrade: (m, from, to) async {
-      if (from < 9)
+      if (from < 9) {
         await m.addColumn(accounts, accounts.certificateFingerprint);
+      }
       if (from < 2) await m.createTable(syncLeases);
       if (from < 3) {
         await m.addColumn(localNotes, localNotes.kind);

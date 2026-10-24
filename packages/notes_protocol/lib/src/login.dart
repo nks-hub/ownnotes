@@ -111,20 +111,24 @@ final class LoginClient {
 
   Future<void> checkServer() async {
     final response = await _send(base.uri.resolve('status.php'), null);
-    if (response.statusCode != 200)
+    if (response.statusCode != 200) {
       throw const LoginException('transport_failed');
+    }
     final status = _decode(response);
     if (status['installed'] is! bool ||
         status['maintenance'] is! bool ||
         status['needsDbUpgrade'] is! bool) {
       throw const LoginException('invalid_response');
     }
-    if (status['maintenance'] == true)
+    if (status['maintenance'] == true) {
       throw const LoginException('server_maintenance');
-    if (status['needsDbUpgrade'] == true)
+    }
+    if (status['needsDbUpgrade'] == true) {
       throw const LoginException('server_upgrade');
-    if (status['installed'] != true)
+    }
+    if (status['installed'] != true) {
       throw const LoginException('server_not_installed');
+    }
   }
 
   Future<LoginSession> start() async {

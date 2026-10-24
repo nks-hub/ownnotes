@@ -218,7 +218,7 @@ void main() {
       headers: {'content-type': 'application/json'},
     );
     final server = MockClient((r) async {
-      if (r.url.path == '/status.php')
+      if (r.url.path == '/status.php') {
         return http.Response(
           jsonEncode({
             'installed': true,
@@ -228,6 +228,7 @@ void main() {
           200,
           headers: {'content-type': 'application/json'},
         );
+      }
       if (r.url.path == '/index.php/login/v2') {
         return js({
           'login': 'https://one.test/index.php/login/v2/flow/x',
@@ -312,7 +313,7 @@ void main() {
     );
     var user = 'anna';
     server = MockClient((r) async {
-      if (r.url.path == '/status.php')
+      if (r.url.path == '/status.php') {
         return http.Response(
           jsonEncode({
             'installed': true,
@@ -322,6 +323,7 @@ void main() {
           200,
           headers: {'content-type': 'application/json'},
         );
+      }
       if (r.url.path == '/index.php/login/v2') {
         return http.Response(
           jsonEncode({

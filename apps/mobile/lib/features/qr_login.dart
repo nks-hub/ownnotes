@@ -98,8 +98,9 @@ QrLoginPayload? parseQrLoginPayload(String raw) {
   if (user == null ||
       secret == null ||
       user.length > 1024 ||
-      user.contains(':'))
+      user.contains(':')) {
     return null;
+  }
   return QrLoginCredentials(
     server: server,
     loginName: user,

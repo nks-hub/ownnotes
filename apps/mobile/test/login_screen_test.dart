@@ -73,7 +73,7 @@ void main() {
   MockClient server({required bool grant}) {
     polls = 0;
     return MockClient((r) async {
-      if (r.url.path == '/status.php')
+      if (r.url.path == '/status.php') {
         return http.Response(
           jsonEncode({
             'installed': true,
@@ -83,6 +83,7 @@ void main() {
           200,
           headers: {'content-type': 'application/json'},
         );
+      }
       if (r.url.path == '/index.php/login/v2') {
         return json({
           'login': 'https://cloud.test/index.php/login/v2/flow/x',

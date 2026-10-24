@@ -39,7 +39,10 @@ final class AppRuntime {
     http.Client Function()? transport,
     bool serverChecks = false,
     http.Client Function(http.Client)? decorateTransport,
+    // Public injection names stay separate from their private fields.
+    // ignore: prefer_initializing_formals
   }) : _transport = transport,
+       // ignore: prefer_initializing_formals
        _decorateTransport = decorateTransport {
     accounts = AccountRepository(database, vault);
     sync = SyncCoordinator(

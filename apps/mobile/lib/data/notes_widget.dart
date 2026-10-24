@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'dart:ui' show PluginUtilities;
 import 'package:home_widget/home_widget.dart';
-import 'package:http/http.dart' as http;
 import 'package:notes_store/notes_store.dart';
 import '../features/widgets/widget_config_main.dart' show widgetConfigMain;
 import 'runtime.dart';

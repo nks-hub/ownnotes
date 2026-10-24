@@ -108,11 +108,12 @@ class _LoginScreenState extends ConsumerState<_LoginContent> {
   }
 
   void _back({String? problem}) {
-    if (mounted)
+    if (mounted) {
       setState(() {
         _phase = LoginPhase.entry;
         _problem = problem;
       });
+    }
   }
 
   String _problemFor(Object error) => switch (error) {
@@ -169,8 +170,9 @@ class _LoginScreenState extends ConsumerState<_LoginContent> {
     if (!mounted ||
         attempt != _attempt ||
         !approved ||
-        encounter.outcome.decision != CertificateTrustDecision.ask)
+        encounter.outcome.decision != CertificateTrustDecision.ask) {
       return;
+    }
     _confirmedOrigin = _server!.uri.origin;
     _confirmedPin = encounter.fingerprint;
     await retry();
@@ -231,8 +233,9 @@ class _LoginScreenState extends ConsumerState<_LoginContent> {
         try {
           credentials = await session.poll();
         } on LoginException catch (error) {
-          if (error.code != 'transport_failed' && error.code != 'timeout')
+          if (error.code != 'transport_failed' && error.code != 'timeout') {
             rethrow;
+          }
           final encounter = transport is CertificateHttpClient
               ? transport.lastEncounter
               : null;
@@ -241,7 +244,7 @@ class _LoginScreenState extends ConsumerState<_LoginContent> {
         if (_stale(attempt)) return;
         if (credentials != null) {
           await _store(credentials, transport, attempt, revokeOnFailure: true);
-          if (!_stale(attempt)) Navigator.of(context).pop();
+          if (mounted && !_stale(attempt)) Navigator.of(context).pop();
           return;
         }
         await Future.any([
@@ -267,8 +270,9 @@ class _LoginScreenState extends ConsumerState<_LoginContent> {
     try {
       if (existing != null &&
           (existing.server != credentials.server.uri.toString() ||
-              existing.loginName != credentials.loginName))
+              existing.loginName != credentials.loginName)) {
         throw StateError('identity_mismatch');
+      }
       await NotesClient(
         base: credentials.server,
         transport: transport,
@@ -373,7 +377,7 @@ class _LoginScreenState extends ConsumerState<_LoginContent> {
         attempt,
         revokeOnFailure: payload.isOneTime,
       );
-      if (!_stale(attempt)) Navigator.of(context).pop();
+      if (mounted && !_stale(attempt)) Navigator.of(context).pop();
     } catch (error) {
       await _failed(error, attempt, () => _commitScanned(payload));
     }

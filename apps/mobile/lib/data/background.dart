@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:http/http.dart' as http;
 import 'package:workmanager/workmanager.dart';
 import 'background_policy.dart';
 import 'notes_widget.dart';
