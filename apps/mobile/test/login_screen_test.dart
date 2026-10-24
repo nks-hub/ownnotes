@@ -132,24 +132,27 @@ void main() {
         final requests = <String>[];
         final transport = MockClient((r) async {
           requests.add('${r.method} ${r.url.path}');
-          if (r.url.path == '/status.php')
+          if (r.url.path == '/status.php') {
             return json({
               'installed': true,
               'maintenance': false,
               'needsDbUpgrade': false,
             });
-          if (r.url.path.endsWith('getapppassword-onetime'))
+          }
+          if (r.url.path.endsWith('getapppassword-onetime')) {
             return json({
               'ocs': {
                 'data': {'apppassword': 'exchanged'},
               },
             });
-          if (r.url.path.endsWith('/cloud/user'))
+          }
+          if (r.url.path.endsWith('/cloud/user')) {
             return json({
               'ocs': {
                 'data': {'displayname': 'Test user'},
               },
             });
+          }
           if (r.url.path.endsWith('/notes')) return json([]);
           throw StateError('unexpected request');
         });
@@ -219,7 +222,7 @@ void main() {
       },
     );
     await tester.pump();
-    await tester.pageBack();
+    await tester.binding.handlePopRoute();
     status.complete(
       json({'installed': true, 'maintenance': false, 'needsDbUpgrade': false}),
     );
