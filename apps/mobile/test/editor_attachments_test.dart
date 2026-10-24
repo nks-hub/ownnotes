@@ -307,6 +307,17 @@ void main() {
       note.content,
       '$_markdown\n\n![later.png](.attachments.7/later.png)',
     );
+    // The new thumbnail must finish writing before teardown removes its cache.
+    await until(
+      tester,
+      () => find
+          .descendant(
+            of: find.byKey(const Key('ref-.attachments.7/later.png')),
+            matching: find.byType(Image),
+          )
+          .evaluate()
+          .isNotEmpty,
+    );
     await close(tester);
   });
 
