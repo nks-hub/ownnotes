@@ -251,8 +251,6 @@ void main() {
   testWidgets(
     'the validation error remains an independently announced accessibility node',
     (tester) async {
-      final semantics = tester.ensureSemantics();
-      addTearDown(semantics.dispose);
       await open(
         tester,
         MockClient((_) async => throw StateError('No request expected')),
@@ -261,16 +259,21 @@ void main() {
       await tester.enterText(find.byType(TextField), 'http://cloud.test');
       await tester.ensureVisible(find.text('Continue'));
       await tester.tap(find.text('Continue'));
-      await tester.pumpAndSettle();
-      expect(
-        find.text('Enter a valid HTTPS Nextcloud address.'),
-        findsOneWidget,
-      );
-      expect(
-        find.bySemanticsLabel('Enter a valid HTTPS Nextcloud address.'),
-        findsOneWidget,
-      );
-      expect(find.text('Server address'), findsOneWidget);
+      final semantics = tester.ensureSemantics();
+      try {
+        await tester.pumpAndSettle();
+        expect(
+          find.text('Enter a valid HTTPS Nextcloud address.'),
+          findsOneWidget,
+        );
+        expect(
+          find.bySemanticsLabel('Enter a valid HTTPS Nextcloud address.'),
+          findsOneWidget,
+        );
+        expect(find.text('Server address'), findsOneWidget);
+      } finally {
+        semantics.dispose();
+      }
     },
   );
 
