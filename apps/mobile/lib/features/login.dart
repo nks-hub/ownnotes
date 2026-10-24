@@ -89,21 +89,22 @@ class _LoginScreenState extends ConsumerState<_LoginContent> {
 
   @override
   void dispose() {
-    _attempt++;
-    if (!_cancelled.isCompleted) _cancelled.complete();
-    _session?.cancel();
-    if (widget.transport == null) _transport?.close();
+    _stopAttempt();
     _url.dispose();
     _focus.dispose();
     super.dispose();
   }
 
-  void _cancel() {
-    if (_phase == LoginPhase.saving) return;
+  void _stopAttempt() {
     _attempt++;
     if (!_cancelled.isCompleted) _cancelled.complete();
     _session?.cancel();
     if (widget.transport == null) _transport?.close();
+  }
+
+  void _cancel() {
+    if (_phase == LoginPhase.saving) return;
+    _stopAttempt();
     _back();
   }
 
@@ -128,10 +129,15 @@ class _LoginScreenState extends ConsumerState<_LoginContent> {
     _ => 'unexpected',
   };
 
-  Future<http.Client> _client(ServerBase server, {String? user}) async {
+  Future<http.Client> _client(
+    ServerBase server,
+    int attempt, {
+    String? user,
+  }) async {
     if (widget.transport != null) return _transport = widget.transport!;
     final runtime = ref.read(runtimeProvider);
     final accounts = await runtime.database.watchAccounts().first;
+    if (_stale(attempt)) throw const LoginException('cancelled');
     final existing = widget.reauthenticate;
     final pins = accounts
         .where(
@@ -204,7 +210,7 @@ class _LoginScreenState extends ConsumerState<_LoginContent> {
     }
     final attempt = _begin(server);
     try {
-      final transport = await _client(server);
+      final transport = await _client(server, attempt);
       if (_stale(attempt)) return;
       final login = LoginClient(base: server, transport: transport);
       await login.checkServer();
@@ -349,7 +355,11 @@ class _LoginScreenState extends ConsumerState<_LoginContent> {
   Future<void> _commitScanned(QrLoginCredentials payload) async {
     final attempt = _begin(payload.server);
     try {
-      final transport = await _client(payload.server, user: payload.loginName);
+      final transport = await _client(
+        payload.server,
+        attempt,
+        user: payload.loginName,
+      );
       if (_stale(attempt)) return;
       await LoginClient(
         base: payload.server,
@@ -409,7 +419,11 @@ class _LoginScreenState extends ConsumerState<_LoginContent> {
   Widget build(BuildContext context) => PopScope(
     canPop: _phase != LoginPhase.waiting && _phase != LoginPhase.saving,
     onPopInvokedWithResult: (didPop, _) {
-      if (!didPop) _cancel();
+      if (didPop) {
+        _stopAttempt();
+      } else {
+        _cancel();
+      }
     },
     child: Scaffold(
       body: SafeArea(

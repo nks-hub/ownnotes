@@ -4,6 +4,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:notes_protocol/notes_protocol.dart';
 import 'package:notes_store/notes_store.dart';
+import 'account_transport.dart';
 
 final runtimeProvider = Provider<AppRuntime>(
   (ref) => throw StateError('runtime_missing'),
@@ -82,12 +83,7 @@ final class AppRuntime {
   final http.Client Function(http.Client)? _decorateTransport;
 
   http.Client createAccountTransport(Account account) {
-    final client =
-        _transport?.call() ??
-        CertificateHttpClient(
-          server: ServerBase.parse(account.server).uri,
-          fingerprint: account.certificateFingerprint,
-        );
+    final client = _transport?.call() ?? AccountTransport(database, account.id);
     return _decorateTransport?.call(client) ?? client;
   }
 
