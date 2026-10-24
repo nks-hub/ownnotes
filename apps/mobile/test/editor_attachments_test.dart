@@ -161,6 +161,11 @@ void main() {
     await tester.pumpAndSettle();
     // Pending directory reads need their fake-zone continuations before teardown.
     await _settle(tester);
+    // Queue a final cache operation so Windows handles close before deletion.
+    var cacheIdle = false;
+    final size = service.cache.sizeBytes().whenComplete(() => cacheIdle = true);
+    await until(tester, () => cacheIdle);
+    await size;
   }
 
   Future<void> attachments(WidgetTester tester) async {
@@ -306,17 +311,6 @@ void main() {
     expect(
       note.content,
       '$_markdown\n\n![later.png](.attachments.7/later.png)',
-    );
-    // The new thumbnail must finish writing before teardown removes its cache.
-    await until(
-      tester,
-      () => find
-          .descendant(
-            of: find.byKey(const Key('ref-.attachments.7/later.png')),
-            matching: find.byType(Image),
-          )
-          .evaluate()
-          .isNotEmpty,
     );
     await close(tester);
   });
