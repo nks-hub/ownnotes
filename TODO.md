@@ -58,6 +58,14 @@ references: [docs/research/review-2026-10-20.md](docs/research/review-2026-10-20
 - [ ] Fast start: measure cold start to a cursor in a new note and keep it
       under 1 s on the S9.
 
+## Shared sign-in with OwnTalk and OwnDeck
+
+Owner's wish: when one of the apps already has a signed-in account, the others offer to use it, on desktop and mobile. Contract and decision in OwnDeck `docs/shared-login.md` (OwnDeck TODO SL01–SL07).
+
+- [ ] SS01 Offer an account found in OwnTalk or OwnDeck on the sign-in screen ("Continue as {name} on {server}", plus Other account), never automatically; proof: widget tests and screen reader.
+- [ ] SS02 Expose this app's accounts to the sibling apps the way the shared contract decides (Android signature-protected provider or confirming activity, iOS shared keychain group, desktop shared credential store); proof: OwnDeck offers an OwnNotes account on S21, the iOS simulator and Windows.
+- [ ] SS03 Removing the account here must not sign out the other apps (separate tokens, or revoke a shared token only with its last user); proof: test and E2E with two apps installed.
+
 ## Desktop
 
 Breakdown from the audit of OwnTalk's desktop mode (summary in OwnDeck `docs/desktop.md`), in dependency order.
