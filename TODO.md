@@ -54,9 +54,44 @@ references: [docs/research/review-2026-10-20.md](docs/research/review-2026-10-20
 - [ ] File versions and trash from Nextcloud (DAV), restore keeps the draft.
 - [ ] Instant updates through notify_push when the server has it, instead
       of asking every 4 s while a note is open.
-- [ ] Desktop builds (Windows, macOS) like OwnTalk.
+- [ ] Desktop builds: see the Desktop section below.
 - [ ] Fast start: measure cold start to a cursor in a new note and keep it
       under 1 s on the S9.
+
+## Desktop
+
+Breakdown from the audit of OwnTalk's desktop mode (summary in OwnDeck `docs/desktop.md`), in dependency order.
+
+- [ ] DN01 Decide the desktop platforms (Windows and macOS, plus Linux like OwnTalk) and record the decision here.
+- [ ] DN02 Create the desktop platforms in `apps/mobile` with bundle ID `com.nkshub.nextcloudnotes`, name OwnNotes and icons; proof: `flutter build <os> --release` and the window opens.
+- [ ] DN03 Windows build workaround for `local_auth_windows` (`CL=/D_SILENCE_EXPERIMENTAL_COROUTINE_DEPRECATION_WARNINGS`, as in OwnTalk CI) and Linux packages (gstreamer, libsecret, libcurl); proof: builds pass on windows-latest and ubuntu-latest.
+- [ ] DN04 Workmanager, home_widget, QR camera and `setSecure` never run on desktop; proof: first-start log on Windows and macOS without MissingPluginException.
+- [ ] DN05 Hide the Camera item where there is no camera (`format_dock.dart:153`, `attach_sources.dart:33`); proof: widget test for Windows, macOS and Linux, photo picking stays.
+- [ ] DN06 Check `pickMultiImage` and `FilePicker.pickFiles` on desktop; proof: an image and a PDF attached on each OS reach the server.
+- [ ] DN07 Check voice notes (`record`, `audioplayers`) on desktop, hide recording on Linux if `record` does not work there; proof: record and play a 10 s note on each supported OS.
+- [ ] DN08 Check `share_plus` on desktop, fall back to copying on Linux if needed; proof: sharing text and a file opens the system dialog on Windows and macOS.
+- [ ] DN09 macOS keychain: `MacOsOptions(usesDataProtectionKeychain: false)` in `data/runtime.dart` and macOS entitlements like OwnTalk; proof: sign-in survives a restart.
+- [ ] DN10 A locked Linux keyring must not block startup (`accounts.recover` reads everything); port OwnTalk's marker-file pattern; proof: the window shows within 3 s with a locked keyring.
+- [ ] DN11 Login Flow v2 in the system browser and the certificate prompt on desktop; proof: sign-in against a test server with a custom certificate on each OS.
+- [ ] DN12 App lock with Windows Hello and Touch ID through `local_auth`, hidden on Linux; proof: lock and unlock on Windows and macOS, option absent on Linux.
+- [ ] DN13 Secure window on desktop (`WDA_EXCLUDEFROMCAPTURE` on Windows, `sharingType = .none` on macOS) or hide the option there; proof: a screenshot of the protected window is blank.
+- [ ] DN14 Window minimum size and remembered position (OwnTalk `MainFlutterWindow.swift`, `window_state.cpp`); proof: size and position survive a restart, shrinking stops at the minimum.
+- [ ] DN15 Wide windows: list with the editor beside it at 720/1024/1440/1920 px and a remembered pane width; proof: widget tests without overflow, width survives a restart.
+- [ ] DN16 Shortcuts Ctrl/Cmd+S (save and sync now), Ctrl/Cmd+W (close note) and Ctrl/Cmd+, (settings) next to the existing ones; proof: a widget test per shortcut.
+- [ ] DN17 Right-click menu on a note row (pin, category, share, delete) and hover; proof: widget test with a secondary click.
+- [ ] DN18 Drop files and text onto the editor and the list (OwnTalk `desktop_drop` fork): a file becomes an attachment, text a new note; proof: real drag from Explorer and Finder.
+- [ ] DN19 Foreground sync loop on desktop instead of Workmanager (interval, wake-up, network change), optional autostart from OwnTalk; proof: a web edit shows up in the running app within the interval.
+- [ ] DN20 Telemetry on desktop with uploaded debug symbols (`--split-debug-info`, sentry-cli); proof: a test crash from desktop is readable in Sentry and opting out works.
+- [ ] DN21 Update check and install taken from OwnTalk with repository nks-hub/ownnotes, off by default; proof: ported tests pass and a real release query returns the right state.
+- [ ] DN22 Single-user Inno Setup installer for Windows with a smoke test and a new AppId; proof: install, upgrade while running, refused downgrade and uninstall that keeps data.
+- [ ] DN23 Authenticode signing with signtool in CI. BLOCKED: no Windows code-signing certificate. Proof: `Get-AuthenticodeSignature` returns Valid.
+- [ ] DN24 macOS release script in `tool/` (sign inside-out, notarytool, stapler, `ownnotes-macos-<version>-<build>.zip`). BLOCKED: Developer ID and notarization access are held by the owner. Proof: spctl reports Notarized Developer ID and stapler validate passes.
+- [ ] DN25 Sparkle for OwnNotes: its own EdDSA key pair, SUFeedURL on nks-hub/ownnotes, an appcast for every tag. BLOCKED: key generation in the release Mac keychain. Proof: build N updates to N+1 with the sandbox on.
+- [ ] DN26 Linux (only if approved in item 1): tarball with `.desktop` file and icon plus OwnTalk's folder swap; proof: an update on real Linux works and a failed start restores the previous version.
+- [ ] DN27 CI jobs for Windows and Linux (tests and artifacts) and a release with SHA256SUMS; proof: a green workflow_dispatch with all artifacts.
+- [ ] DN28 Desktop tests: hidden camera, shortcuts, mouse, drop, foreground sync, updates, plus an integration test on Windows; proof: `flutter test` and `flutter test integration_test -d windows` pass.
+- [ ] DN29 E2E on real machines: sign-in, new note, offline edit and sync, conflict, attachment, lock, update, restart. BLOCKED: a Mac with a display and native Linux. Proof: results recorded in `docs/history.md` with commit and build.
+- [ ] DN30 First desktop release: tag, GitHub release with artifacts and SHA256SUMS, macOS ZIP with appcast; proof: download, install and start on each supported OS.
 
 ## Ideas
 
