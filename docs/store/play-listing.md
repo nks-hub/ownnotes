@@ -107,9 +107,14 @@ Oficiální buildy mají volitelnou diagnostiku a statistiku. V Nastavení ji lz
 vypnout ihned; zapnutí platí po novém spuštění. Vlastní build bez `telemetry.env`
 nic neodesílá. Při zapnuté volbě se odesílá:
 
-- **Crash logs and diagnostics** to the project's self-hosted Sentry: stack
-  trace and error type, free-form messages and requests removed, a
-  random installation id; no note text, titles or server address.
+- **Crash logs and diagnostics** to the project's self-hosted Sentry: error
+  type, error message, stack trace, device/OS/app version context and a
+  random installation id. In the error message, http(s) URLs are cut to
+  `scheme://<host>` and Authorization headers and Bearer/Basic tokens are
+  removed; the rest stays readable, so it can incidentally contain a server
+  name written without a scheme or part of a note (e.g. its title) when the
+  error quotes it. Requests, free-form messages and extras are removed;
+  outside the error message there is no note text, title or server address.
 - **App interactions** to the project's self-hosted Rybbit: screen names
   (`/`, `/note`, `/login`, `/recovery`) and app open, with the random
   installation id; Rybbit derives approximate location from the IP address.
