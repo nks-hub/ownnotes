@@ -1,1 +1,1 @@
-Sentry-Diagnose und Rybbit-Nutzungsstatistik lassen sich in den Einstellungen ausschalten. Die Änderung gilt sofort und bleibt nach einem Neustart erhalten. Übermittelt werden nur bekannte Bildschirmnamen, keine Notiztexte, Zugangsdaten oder Fehlermeldungen.
+Die Anmeldung sieht aus und funktioniert wie in OwnTalk und OwnDeck, einschließlich QR-Code. Die App merkt sich das Zertifikat des eigenen Servers und lehnt bei erneuter Anmeldung eine fremde Identität ab. Fehler gelangen als lesbarer Text ohne Zugangsdaten und Adressen zu Sentry.

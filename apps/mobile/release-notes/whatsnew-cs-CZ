@@ -1,1 +1,1 @@
-V Nastavení lze vypnout diagnostiku Sentry a statistiku Rybbit. Vypnutí platí ihned a zůstane uložené po restartu. Odesílají se jen známé názvy obrazovek; texty poznámek, přihlašovací údaje a zprávy výjimek se neodesílají.
+Přihlášení vypadá a funguje stejně jako v OwnTalk a OwnDeck, včetně QR kódu. Aplikace si pamatuje certifikát vlastního serveru a odmítne cizí identitu při opětovném přihlášení. Chyby se do Sentry posílají jako čitelný text bez přihlašovacích údajů a adres.

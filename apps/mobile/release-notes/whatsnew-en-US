@@ -1,1 +1,1 @@
-Turn off Sentry diagnostics and Rybbit usage statistics in Settings. Disabling takes effect immediately and is remembered after restart. Only known screen names are reported; note text, credentials and exception messages are excluded.
+Sign-in looks and works like OwnTalk and OwnDeck, including the QR code. The app remembers the certificate of your own server and rejects a foreign identity on re-sign-in. Errors reach Sentry as readable text without credentials and addresses.
