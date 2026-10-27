@@ -37,7 +37,7 @@ void main() {
     expect(crumb.data, {'to': '/note'});
   });
 
-  test('parser messages and console breadcrumbs cannot send note text', () {
+  test('messages and console breadcrumbs cannot send note text', () {
     final event = scrubSentryEvent(
       SentryEvent(
         message: SentryMessage('Private note contents'),
@@ -49,7 +49,7 @@ void main() {
         exceptions: [
           SentryException(
             type: 'FormatException',
-            value: 'Private note contents',
+            value: 'Unexpected character (at offset 4)',
           ),
         ],
         breadcrumbs: [
@@ -60,5 +60,16 @@ void main() {
     expect(event.toJson().toString(), isNot(contains('Private note contents')));
     expect(event.user, isNull);
     expect(event.exceptions!.single.type, 'FormatException');
+  });
+
+  test('error text stays readable for diagnosis', () {
+    final event = scrubSentryEvent(
+      SentryEvent(
+        exceptions: [
+          SentryException(type: 'StateError', value: 'Bad state: No element'),
+        ],
+      ),
+    );
+    expect(event.exceptions!.single.value, 'Bad state: No element');
   });
 }

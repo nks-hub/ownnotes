@@ -143,8 +143,11 @@ SentryEvent scrubSentryEvent(SentryEvent event) {
       ? SentryUser(id: id)
       : null;
   for (final exception in event.exceptions ?? const <SentryException>[]) {
-    // Parser errors may quote note text without a URL or credential marker.
-    exception.value = '<redacted>';
+    // Error text stays readable; credentials and server addresses are cut out.
+    final value = exception.value;
+    if (value != null) {
+      exception.value = const TelemetryScrubber().scrub(value);
+    }
   }
   event.breadcrumbs = event.breadcrumbs
       ?.map((crumb) => scrubSentryBreadcrumb(crumb, Hint()))
