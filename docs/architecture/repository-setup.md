@@ -1,6 +1,6 @@
 # Repository setup
 
-Source lives in the private repository https://github.com/nks-hub/ownnotes.
+Source lives in the public repository https://github.com/nks-hub/ownnotes.
 The first push happened on 2026-10-19 over SSH (`git@github.com:nks-hub/ownnotes.git`)
 from a checkout restored from the supplied Git bundle.
 

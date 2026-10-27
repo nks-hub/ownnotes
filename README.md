@@ -1,63 +1,54 @@
 # OwnNotes
 
-OwnNotes je mobilní klient Nextcloud Notes ve Flutteru pro Android a iOS.
-Poznámky ukládá také do zařízení, aby šly upravovat bez připojení.
-Na serveru zůstávají obyčejné soubory Markdown a kategorie odpovídají složkám.
+[![Mobile](https://github.com/nks-hub/ownnotes/actions/workflows/mobile.yml/badge.svg)](https://github.com/nks-hub/ownnotes/actions/workflows/mobile.yml)
+[![Version](https://img.shields.io/github/v/tag/nks-hub/ownnotes?label=version)](https://github.com/nks-hub/ownnotes/tags)
+[![Platform](https://img.shields.io/badge/platform-Android%207.0%2B%20%7C%20iOS%2015%2B-blue)](#requirements)
+[![Flutter](https://img.shields.io/badge/Flutter-3.47.7-02569B)](https://flutter.dev)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-## Co je implementované
+> Nextcloud Notes client for Android and iOS, written in Flutter. Notes are kept on the device too, so you can edit them offline; the server keeps plain Markdown files and categories map to folders.
 
-- Více účtů, přihlášení přes Nextcloud Login Flow v2 a bezpečné úložiště přístupových údajů.
-- Lokální databáze SQLite, průběžné ukládání, synchronizace a ruční řešení konfliktů.
-- Editor Markdownu, výslovně zapínaný náhled, seznamy úkolů, šablony, historie úprav a hledání v poznámce.
-- Kategorie, oblíbené, uložené pohledy a filtry pro přílohy, úkoly a stav synchronizace.
-- Přílohy s frontou přenosů a lokální mezipamětí, sdílení přes Nextcloud a příjem obsahu z jiných aplikací.
-- Widgety, zámek aplikace, světlý a tmavý vzhled, čeština, angličtina a němčina.
-- Rozložení se seznamem a editorem vedle sebe na širších obrazovkách.
-- Synchronizace na pozadí v Androidu přes WorkManager; systém rozhoduje o skutečném čase spuštění.
-- Volitelné Sentry a Rybbit, zapínané nastavením při sestavení.
+[Česky](README.cs.md)
 
-Tento seznam popisuje kód. Rozsah automatických a fyzických testů je uveden
-v [historii](docs/history.md); otevřené úkoly jsou v [TODO.md](TODO.md).
-Starší audity popisují své uvedené revize, nikoli vždy dnešní stav.
+## Features
 
-## Otevřené části
+- 👥 **Accounts** - several Nextcloud accounts, sign-in through Login Flow v2, credentials in the Android Keystore or Apple Keychain
+- 💾 **Offline** - local SQLite database, autosave, sync and manual conflict resolution
+- ✍️ **Editor** - Markdown with an opt-in preview, checklists, templates, edit history and in-note search
+- 🗂️ **Organizing** - categories, favourites, saved views and filters for attachments, tasks and sync state
+- 📎 **Attachments** - transfer queue with a local cache, sharing through Nextcloud, receiving content from other apps
+- 📱 **Device** - home screen widgets, app lock, light and dark theme, list and editor side by side on wide screens
+- 🔄 **Background sync** - Android WorkManager; the system decides when it actually runs
+- 🌍 **Languages** - Czech, English and German
+- 📊 **Telemetry** - optional Sentry and Rybbit, compiled in only when configured at build time and switchable off in Settings
 
-Export ZIP obsahuje poznámky Markdown, ale zatím nejde o úplnou obnovitelnou
-zálohu s metadaty a přílohami. Otevřené jsou také serverová historie a koš,
-nastavení intervalu a Wi-Fi pro Android, synchronizace na pozadí v iOS,
-`notify_push` a desktopové sestavení.
+Open items (full backup export, server trash and history, background sync on iOS, `notify_push`, desktop builds) are tracked in [TODO.md](TODO.md).
 
-SQLite databáze není šifrovaná. Fyzický Fold, tablet, QR přihlášení kamerou
-a některé scénáře iOS stále vyžadují ověření podle TODO. Sestavení aplikace
-samo o sobě nedokládá funkčnost těchto scénářů.
+## Requirements
 
-## Run and verify
+- Nextcloud server with the [Notes app](https://apps.nextcloud.com/apps/notes)
+- Android 7.0 (API 24) or newer, iOS 15.0 or newer
+- Flutter 3.47.7 and Dart 3.13.5 for building (pinned in `.flutter-version`)
 
-Flutter is pinned to **3.47.7** (`.flutter-version`), Dart **3.13.5**. Use the
-committed dependency lockfiles. Install hooks after cloning:
+## Installation
+
+- Android: closed testing on Google Play, opt in at https://play.google.com/apps/testing/com.nkshub.nextcloudnotes
+- iOS: TestFlight
+
+Build from source:
 
 ```bash
-git config user.name LuRy
-git config user.email lury@lury.cz
-git config core.hooksPath .githooks
-bash tool/check.sh
-bash tool/check_mobile.sh
-cd apps/mobile
+git clone https://github.com/nks-hub/ownnotes.git
+cd ownnotes/apps/mobile
+flutter pub get
 flutter run
 ```
 
-`check_mobile.sh` serializes Flutter tests using `flock` on Linux/macOS systems
-with that command installed. Windows runners must serialize this checkout too.
-Build-host SDK telemetry is suppressed by the verification scripts. On restricted
-root containers, `TAR_OPTIONS=--no-same-owner` may be needed for SDK extraction.
+## Configuration
 
-The app is **OwnNotes**, `com.nkshub.nextcloudnotes` on Android and iOS, and
-ships through Google Play. A build to test beside the installed app uses
-`--android-project-arg=candidate=true`, which gives
-`com.nkshub.nextcloudnotes.candidate` labelled "OwnNotes Candidate". Release
-builds need `apps/mobile/android/key.properties` (gitignored) pointing at the
-upload keystore; there is no fallback to the debug key. GitHub CI includes an
-Android debug build.
+Release builds read `apps/mobile/android/key.properties` (gitignored) with the upload keystore; there is no fallback to the debug key. `--android-project-arg=candidate=true` builds `com.nkshub.nextcloudnotes.candidate` ("OwnNotes Candidate"), which installs next to the store app.
+
+Crash reporting and analytics stay off unless the build gets a configuration, see [`apps/mobile/telemetry.env.example`](apps/mobile/telemetry.env.example). The iOS signing team is passed on the `xcodebuild` command line as `DEVELOPMENT_TEAM`.
 
 ## Documentation
 
@@ -67,7 +58,34 @@ Android debug build.
 - [Candidate behavior and limitations](docs/architecture/candidate.md)
 - [Evidence and remaining gates](docs/acceptance/status.md)
 - [Protocol sources](contracts/notes/README.md)
-- [Original supplied research](docs/research/original-plan.cs.md)
 
-Source is published in the private repository `nks-hub/ownnotes`. All commits
-must have author and committer `LuRy <lury@lury.cz>`. Final licensing is undecided.
+## Development
+
+```bash
+git config core.hooksPath .githooks
+bash tool/check.sh
+bash tool/check_mobile.sh
+```
+
+`check_mobile.sh` serializes Flutter tests with `flock` where it is installed; on Windows run one checkout at a time.
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/my-change`)
+3. Commit your changes (`git commit -m 'feat: add my change'`)
+4. Push the branch (`git push origin feature/my-change`)
+5. Open a Pull Request
+
+## Support
+
+- 📧 **Email:** dev@nks-hub.cz
+- 🐛 **Bug reports:** [GitHub Issues](https://github.com/nks-hub/ownnotes/issues)
+
+## License
+
+MIT License — see [LICENSE](LICENSE) for details.
+
+---
+
+<p align="center">Made with ❤️ by <a href="https://github.com/nks-hub">NKS Hub</a></p>
