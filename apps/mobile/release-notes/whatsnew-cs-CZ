@@ -1,1 +1,1 @@
-Přihlášení vypadá a funguje stejně jako v OwnTalk a OwnDeck, včetně QR kódu. Aplikace si pamatuje certifikát vlastního serveru a odmítne cizí identitu při opětovném přihlášení. Chyby se do Sentry posílají jako čitelný text bez přihlašovacích údajů a adres.
+Přihlášení vypadá a funguje stejně jako v OwnTalk a OwnDeck, včetně QR kódu. Aplikace si pamatuje certifikát vlastního serveru a odmítne cizí identitu při opětovném přihlášení. Chyby se do Sentry posílají jako čitelný text bez přihlašovacích údajů a adres. Na iPhonu a iPadu se přihlašovací stránka otevře přímo v aplikaci.

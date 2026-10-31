@@ -1,1 +1,1 @@
-Sign-in looks and works like OwnTalk and OwnDeck, including the QR code. The app remembers the certificate of your own server and rejects a foreign identity on re-sign-in. Errors reach Sentry as readable text without credentials and addresses.
+Sign-in looks and works like OwnTalk and OwnDeck, including the QR code. The app remembers the certificate of your own server and rejects a foreign identity on re-sign-in. Errors reach Sentry as readable text without credentials and addresses. On iPhone and iPad the sign-in page opens inside the app.
