@@ -73,6 +73,7 @@ class _LoginScreenState extends ConsumerState<_LoginContent> {
   String? _confirmedPin;
   String? _confirmedOrigin;
   Completer<void> _cancelled = Completer<void>();
+  bool _browserOpen = false;
 
   bool get _busy => _phase != LoginPhase.entry;
   bool get _canScan =>
@@ -99,7 +100,14 @@ class _LoginScreenState extends ConsumerState<_LoginContent> {
     _attempt++;
     if (!_cancelled.isCompleted) _cancelled.complete();
     _session?.cancel();
+    _closeBrowser();
     if (widget.transport == null) _transport?.close();
+  }
+
+  void _closeBrowser() {
+    if (!_browserOpen) return;
+    _browserOpen = false;
+    unawaited(closeLoginBrowser());
   }
 
   void _cancel() {
@@ -228,11 +236,14 @@ class _LoginScreenState extends ConsumerState<_LoginContent> {
       }
       _session = session;
       setState(() => _phase = LoginPhase.openingLogin);
+      final custom = widget.openBrowser;
       final opened =
-          await (widget.openBrowser?.call(session.loginUri) ??
+          await (custom?.call(session.loginUri) ??
               openLoginBrowser(session.loginUri, _cancelled.future));
+      _browserOpen = opened && custom == null;
       if (_stale(attempt)) {
         session.cancel();
+        _closeBrowser();
         return;
       }
       if (!opened) throw const LoginException('browser_unavailable');
@@ -255,6 +266,7 @@ class _LoginScreenState extends ConsumerState<_LoginContent> {
         }
         if (_stale(attempt)) return;
         if (credentials != null) {
+          _closeBrowser();
           await _store(credentials, transport, attempt, revokeOnFailure: true);
           if (mounted && !_stale(attempt)) Navigator.of(context).pop();
           return;
@@ -267,6 +279,7 @@ class _LoginScreenState extends ConsumerState<_LoginContent> {
       if (!_stale(attempt)) throw const LoginException('flow_closed');
     } catch (error) {
       _session?.cancel();
+      _closeBrowser();
       await _failed(error, attempt, _connect);
     }
   }
